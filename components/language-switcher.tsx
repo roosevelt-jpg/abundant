@@ -1,8 +1,8 @@
 'use client';
 
-import { useLanguage } from '@/context/LanguageContext';
 import { Globe } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useContext } from 'react';
+import { LanguageContext } from '@/context/LanguageContext';
 
 const languages = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -10,8 +10,20 @@ const languages = [
 ];
 
 export const LanguageSwitcher = () => {
-  const { language, setLanguage } = useLanguage();
+  const context = useContext(LanguageContext);
   const [isOpen, setIsOpen] = useState(false);
+
+  // If context is not available, render a disabled version
+  if (!context) {
+    return (
+      <button className="p-2 rounded-lg hover:bg-accent/20 transition-colors flex items-center gap-2 opacity-50 cursor-not-allowed">
+        <Globe className="w-5 h-5 text-accent" />
+        <span className="text-sm font-medium">EN</span>
+      </button>
+    );
+  }
+
+  const { language, setLanguage } = context;
 
   return (
     <div className="relative">

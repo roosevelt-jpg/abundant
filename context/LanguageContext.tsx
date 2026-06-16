@@ -81,4 +81,4 @@ export const useLanguage = () => {
   return context;
 };
 
-export { translations };
+export { translations, LanguageContext };
