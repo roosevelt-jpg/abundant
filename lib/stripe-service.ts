@@ -1,8 +1,15 @@
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-10.acacia' as any,
-});
+let stripe: Stripe | null = null;
+
+function getStripeClient(): Stripe {
+  if (!stripe && process.env.STRIPE_SECRET_KEY) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2024-12-10.acacia' as any,
+    });
+  }
+  return stripe as any;
+}
 
 export interface SubscriptionPlan {
   id: string;
@@ -17,8 +24,11 @@ export interface SubscriptionPlan {
 // Get or create Stripe customer
 export async function getOrCreateStripeCustomer(userId: string, email: string, name?: string) {
   try {
+    const stripeClient = getStripeClient();
+    if (!stripeClient) throw new Error('Stripe not configured');
+    
     // Search for existing customer
-    const customers = await stripe.customers.list({
+    const customers = await stripeClient.customers.list({
       email,
       limit: 1
     });
@@ -28,7 +38,7 @@ export async function getOrCreateStripeCustomer(userId: string, email: string, n
     }
 
     // Create new customer
-    return await stripe.customers.create({
+    return await stripeClient.customers.create({
       email,
       name: name || 'Member',
       metadata: { userId }
@@ -46,7 +56,10 @@ export async function createSubscriptionCheckout(
   returnUrl: string
 ) {
   try {
-    const session = await stripe.checkout.sessions.create({
+    const stripeClient = getStripeClient();
+    if (!stripeClient) throw new Error('Stripe not configured');
+    
+    const session = await stripeClient.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
       line_items: [
@@ -73,7 +86,10 @@ export async function createSubscriptionCheckout(
 // Get subscription status
 export async function getSubscriptionStatus(subscriptionId: string) {
   try {
-    return await stripe.subscriptions.retrieve(subscriptionId);
+    const stripeClient = getStripeClient();
+    if (!stripeClient) throw new Error('Stripe not configured');
+    
+    return await stripeClient.subscriptions.retrieve(subscriptionId);
   } catch (error) {
     console.error('Error getting subscription status:', error);
     throw error;
@@ -83,7 +99,10 @@ export async function getSubscriptionStatus(subscriptionId: string) {
 // Cancel subscription
 export async function cancelSubscription(subscriptionId: string) {
   try {
-    return await stripe.subscriptions.update(subscriptionId, {
+    const stripeClient = getStripeClient();
+    if (!stripeClient) throw new Error('Stripe not configured');
+    
+    return await stripeClient.subscriptions.update(subscriptionId, {
       cancel_at_period_end: true
     });
   } catch (error) {
@@ -95,7 +114,10 @@ export async function cancelSubscription(subscriptionId: string) {
 // Get customer subscriptions
 export async function getCustomerSubscriptions(customerId: string) {
   try {
-    const subscriptions = await stripe.subscriptions.list({
+    const stripeClient = getStripeClient();
+    if (!stripeClient) throw new Error('Stripe not configured');
+    
+    const subscriptions = await stripeClient.subscriptions.list({
       customer: customerId,
       status: 'all'
     });
@@ -109,7 +131,10 @@ export async function getCustomerSubscriptions(customerId: string) {
 // Get product and prices
 export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
   try {
-    const products = await stripe.products.list({
+    const stripeClient = getStripeClient();
+    if (!stripeClient) return [];
+    
+    const products = await stripeClient.products.list({
       active: true,
       limit: 100
     });
@@ -117,7 +142,7 @@ export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
     const plans: SubscriptionPlan[] = [];
 
     for (const product of products.data) {
-      const prices = await stripe.prices.list({
+      const prices = await stripeClient.prices.list({
         product: product.id,
         active: true
       });
@@ -154,7 +179,10 @@ export async function createSubscriptionProduct(
   features?: string[]
 ) {
   try {
-    const product = await stripe.products.create({
+    const stripeClient = getStripeClient();
+    if (!stripeClient) throw new Error('Stripe not configured');
+    
+    const product = await stripeClient.products.create({
       name,
       description,
       metadata: {
@@ -162,7 +190,7 @@ export async function createSubscriptionProduct(
       }
     });
 
-    const stripePrice = await stripe.prices.create({
+    const stripePrice = await stripeClient.prices.create({
       product: product.id,
       unit_amount: Math.round(price * 100),
       currency: 'usd',
