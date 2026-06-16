@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import { useAuth } from '@/context/AuthContext';
 import { Header } from '@/components/header';
