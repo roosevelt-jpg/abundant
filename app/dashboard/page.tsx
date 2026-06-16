@@ -52,12 +52,12 @@ export default function Dashboard() {
             <div className="p-6 bg-card rounded-xl border border-border">
               <h3 className="font-heading font-bold mb-4">Your Status</h3>
               <p className="text-sm text-muted-foreground mb-2">
-                <span className="font-semibold text-foreground capitalize">{userData.approvalStatus}</span>
+                <span className="font-semibold text-foreground capitalize">{userData.status}</span>
               </p>
               <p className="text-xs text-muted-foreground">
-                {userData.approvalStatus === 'pending' && 'Awaiting admin approval'}
-                {userData.approvalStatus === 'approved' && 'Account is active'}
-                {userData.approvalStatus === 'rejected' && 'Please contact support'}
+                {userData.status === 'active' && 'Your account is active'}
+                {userData.status === 'inactive' && 'Your account is inactive'}
+                {userData.status === 'suspended' && 'Your account is suspended - contact support'}
               </p>
             </div>
 

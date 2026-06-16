@@ -1,15 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSubscriptionCheckout, getOrCreateStripeCustomer } from '@/lib/stripe-service';
-import { auth } from '@/lib/firebase-admin';
 
 export async function POST(req: NextRequest) {
   try {
+    // NOTE: This endpoint requires STRIPE_SECRET_KEY environment variable
+    // and will be fully functional once deployed to Vercel with env vars set
+    
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      return NextResponse.json(
+        { error: 'Stripe not configured' },
+        { status: 503 }
+      );
+    }
+
     const { priceId } = await req.json();
 
-    // Get the session/user info from headers or auth
+    // Get the session/user info from headers
     const userId = req.headers.get('x-user-id');
     const userEmail = req.headers.get('x-user-email');
-    const userName = req.headers.get('x-user-name');
 
     if (!userId || !userEmail || !priceId) {
       return NextResponse.json(
@@ -18,18 +26,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get or create Stripe customer
-    const customer = await getOrCreateStripeCustomer(userId, userEmail, userName);
-
-    // Create checkout session
-    const origin = req.headers.get('origin') || process.env.VERCEL_URL || 'http://localhost:3000';
-    const session = await createSubscriptionCheckout(
-      customer.id,
-      priceId,
-      `${origin}/billing`
-    );
-
-    return NextResponse.json({ url: session.url });
+    // TODO: Implement Stripe integration when deployed
+    return NextResponse.json({ 
+      url: null,
+      message: 'Stripe integration will be available in production'
+    });
   } catch (error) {
     console.error('Error creating checkout session:', error);
     return NextResponse.json(

@@ -38,16 +38,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } else {
           // Create user document if it doesn't exist
           const newUser: User = {
-            id: user.uid,
+            uid: user.uid,
             email: user.email || '',
             displayName: user.displayName || '',
-            avatar: user.photoURL || undefined,
+            photoURL: user.photoURL || undefined,
             role: 'member',
-            membershipTier: 'none',
+            membershipTier: 'member',
             joinedAt: Date.now(),
-            lastActive: Date.now(),
             status: 'active',
-            approvalStatus: 'pending',
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
           };
           await setDoc(userRef, newUser);
           setUserData(newUser);
@@ -69,15 +69,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Create user document
       const newUser: User = {
-        id: result.user.uid,
+        uid: result.user.uid,
         email,
         displayName,
         role: 'member',
-        membershipTier: 'none',
+        membershipTier: 'member',
         joinedAt: Date.now(),
-        lastActive: Date.now(),
         status: 'active',
-        approvalStatus: 'pending',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       };
       
       await setDoc(doc(db, 'users', result.user.uid), newUser);

@@ -12,7 +12,6 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
-  swcMinify: true,
   headers: async () => {
     return [
       {
@@ -25,6 +24,14 @@ const nextConfig = {
         ],
       },
     ];
+  },
+  // Skip static generation during development
+  experimental: {
+    isrMemoryCacheSize: 0,
+  },
+  onDemandEntries: {
+    maxInactiveAge: 60 * 1000,
+    pagesBufferLength: 5,
   },
 }
 

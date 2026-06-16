@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-06-20'
+  apiVersion: '2024-12-10.acacia' as any,
 });
 
 export interface SubscriptionPlan {
@@ -83,7 +83,9 @@ export async function getSubscriptionStatus(subscriptionId: string) {
 // Cancel subscription
 export async function cancelSubscription(subscriptionId: string) {
   try {
-    return await stripe.subscriptions.del(subscriptionId);
+    return await stripe.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: true
+    });
   } catch (error) {
     console.error('Error cancelling subscription:', error);
     throw error;

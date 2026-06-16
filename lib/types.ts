@@ -1,3 +1,17 @@
+// User types for Firestore
+export interface User {
+  uid: string;
+  email: string;
+  displayName?: string;
+  photoURL?: string;
+  role: 'member' | 'admin';
+  membershipTier: 'member' | 'elite' | 'inner-circle';
+  joinedAt: number;
+  status: 'active' | 'inactive' | 'suspended';
+  createdAt: number;
+  updatedAt: number;
+}
+
 // Event types for Firestore
 export interface Event {
   id: string;
