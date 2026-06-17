@@ -1,76 +1,151 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { Plus, Trash2, Eye, EyeOff, X } from 'lucide-react';
-
-const DEFAULT_TESTIMONIALS = [
-  {
-    id: '1',
-    author: 'Sarah Johnson',
-    role: 'Entrepreneur',
-    content: 'Abundant Global Club transformed my business network and opened doors I never knew existed.',
-    status: 'published',
-    createdAt: Date.now()
-  },
-  {
-    id: '2',
-    author: 'Ahmed Al-Mansouri',
-    role: 'Business Owner',
-    content: 'The exclusive events and networking opportunities have been invaluable for my growth.',
-    status: 'pending',
-    createdAt: Date.now()
-  },
-  {
-    id: '3',
-    author: 'Maria Garcia',
-    role: 'Executive',
-    content: 'Being part of this elite community has accelerated my professional development significantly.',
-    status: 'published',
-    createdAt: Date.now()
-  }
-];
+import type { Testimonial } from '@/lib/types';
 
 export default function AdminTestimonialsEditor() {
-  const [testimonials, setTestimonials] = useState(DEFAULT_TESTIMONIALS);
+  const { currentUser } = useAuth();
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [newTestimonial, setNewTestimonial] = useState({
-    author: '',
-    role: '',
-    content: ''
+    authorName: '',
+    authorTitle: '',
+    content: '',
+    rating: 5,
+    isPublished: false
   });
 
-  const handleAddTestimonial = () => {
-    if (!newTestimonial.author || !newTestimonial.content) {
+  // Fetch testimonials
+  useEffect(() => {
+    fetchTestimonials();
+  }, []);
+
+  const fetchTestimonials = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/testimonials');
+      if (response.ok) {
+        const data = await response.json();
+        setTestimonials(data);
+      }
+    } catch (error) {
+      console.error('[v0] Error fetching testimonials:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getToken = async () => {
+    return await currentUser?.getIdToken();
+  };
+
+  const handleAddTestimonial = async () => {
+    if (!newTestimonial.authorName || !newTestimonial.content) {
       alert('Please fill in author name and content');
       return;
     }
 
-    const testimonial = {
-      id: String(testimonials.length + 1),
-      ...newTestimonial,
-      status: 'pending',
-      createdAt: Date.now()
-    };
+    try {
+      const token = await getToken();
+      if (!token) {
+        alert('Not authenticated');
+        return;
+      }
 
-    setTestimonials([...testimonials, testimonial]);
-    setNewTestimonial({ author: '', role: '', content: '' });
-    setShowModal(false);
-  };
+      const method = editingId ? 'PUT' : 'POST';
+      const url = editingId ? `/api/testimonials/${editingId}` : '/api/testimonials';
 
-  const handlePublish = (id: string) => {
-    setTestimonials(testimonials.map(t => 
-      t.id === id ? { ...t, status: t.status === 'published' ? 'pending' : 'published' } : t
-    ));
-  };
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(newTestimonial),
+      });
 
-  const handleDeleteTestimonial = (id: string) => {
-    if (confirm('Are you sure you want to delete this testimonial?')) {
-      setTestimonials(testimonials.filter(t => t.id !== id));
+      if (response.ok) {
+        await fetchTestimonials();
+        setNewTestimonial({ authorName: '', authorTitle: '', content: '', rating: 5, isPublished: false });
+        setEditingId(null);
+        setShowModal(false);
+      } else {
+        alert('Failed to save testimonial');
+      }
+    } catch (error) {
+      console.error('[v0] Error saving testimonial:', error);
+      alert('Error saving testimonial');
     }
   };
 
-  const published = testimonials.filter(t => t.status === 'published').length;
-  const pending = testimonials.filter(t => t.status === 'pending').length;
+  const handlePublish = async (id: string, currentStatus: boolean) => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const response = await fetch(`/api/testimonials/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ isPublished: !currentStatus }),
+      });
+
+      if (response.ok) {
+        await fetchTestimonials();
+      }
+    } catch (error) {
+      console.error('[v0] Error updating testimonial:', error);
+    }
+  };
+
+  const handleDeleteTestimonial = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this testimonial?')) return;
+
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const response = await fetch(`/api/testimonials/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setTestimonials(testimonials.filter(t => t.id !== id));
+      }
+    } catch (error) {
+      console.error('[v0] Error deleting testimonial:', error);
+    }
+  };
+
+  const handleEdit = (testimonial: Testimonial) => {
+    setEditingId(testimonial.id);
+    setNewTestimonial({
+      authorName: testimonial.authorName,
+      authorTitle: testimonial.authorTitle || '',
+      content: testimonial.content,
+      rating: testimonial.rating,
+      isPublished: testimonial.isPublished,
+    });
+    setShowModal(true);
+  };
+
+  const published = testimonials.filter(t => t.isPublished).length;
+  const pending = testimonials.filter(t => !t.isPublished).length;
+
+  const openAddModal = () => {
+    setEditingId(null);
+    setNewTestimonial({ authorName: '', authorTitle: '', content: '', rating: 5, isPublished: false });
+    setShowModal(true);
+  };
 
   return (
     <div>
@@ -80,7 +155,7 @@ export default function AdminTestimonialsEditor() {
           <p className="text-muted-foreground">Manage member testimonials and reviews</p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={openAddModal}
           className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg font-semibold hover:bg-accent/90 transition-colors"
         >
           <Plus className="w-5 h-5" />
@@ -105,7 +180,7 @@ export default function AdminTestimonialsEditor() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg border border-border max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-heading font-bold text-lg">Add Testimonial</h2>
+              <h2 className="font-heading font-bold text-lg">{editingId ? 'Edit' : 'Add'} Testimonial</h2>
               <button onClick={() => setShowModal(false)} className="p-1 hover:bg-background rounded">
                 <X className="w-5 h-5" />
               </button>
@@ -116,18 +191,18 @@ export default function AdminTestimonialsEditor() {
                 <label className="block text-sm font-medium mb-2">Author Name</label>
                 <input
                   type="text"
-                  value={newTestimonial.author}
-                  onChange={(e) => setNewTestimonial({ ...newTestimonial, author: e.target.value })}
+                  value={newTestimonial.authorName}
+                  onChange={(e) => setNewTestimonial({ ...newTestimonial, authorName: e.target.value })}
                   placeholder="Author name"
                   className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Role/Title</label>
+                <label className="block text-sm font-medium mb-2">Title/Position</label>
                 <input
                   type="text"
-                  value={newTestimonial.role}
-                  onChange={(e) => setNewTestimonial({ ...newTestimonial, role: e.target.value })}
+                  value={newTestimonial.authorTitle}
+                  onChange={(e) => setNewTestimonial({ ...newTestimonial, authorTitle: e.target.value })}
                   placeholder="e.g., Entrepreneur"
                   className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
                 />
@@ -143,6 +218,31 @@ export default function AdminTestimonialsEditor() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium mb-2">Rating</label>
+                <select
+                  value={newTestimonial.rating}
+                  onChange={(e) => setNewTestimonial({ ...newTestimonial, rating: parseInt(e.target.value) })}
+                  className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                >
+                  <option value="1">1 Star</option>
+                  <option value="2">2 Stars</option>
+                  <option value="3">3 Stars</option>
+                  <option value="4">4 Stars</option>
+                  <option value="5">5 Stars</option>
+                </select>
+              </div>
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={newTestimonial.isPublished}
+                  onChange={(e) => setNewTestimonial({ ...newTestimonial, isPublished: e.target.checked })}
+                  className="rounded"
+                />
+                <span className="text-sm">Publish immediately</span>
+              </label>
+
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => setShowModal(false)}
@@ -154,7 +254,7 @@ export default function AdminTestimonialsEditor() {
                   onClick={handleAddTestimonial}
                   className="flex-1 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-semibold"
                 >
-                  Add Testimonial
+                  {editingId ? 'Update' : 'Add'}
                 </button>
               </div>
             </div>
@@ -162,28 +262,49 @@ export default function AdminTestimonialsEditor() {
         </div>
       )}
 
-      {/* Testimonials List */}
-      <div className="space-y-4">
+      {loading ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="p-6 bg-muted rounded-lg animate-pulse h-32"></div>
+          ))}
+        </div>
+      ) : testimonials.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground mb-4">No testimonials yet</p>
+          <button
+            onClick={openAddModal}
+            className="px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90"
+          >
+            Add First Testimonial
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-4">
         {testimonials.map((testimonial) => (
           <div
             key={testimonial.id}
             className={`p-6 bg-card rounded-lg border transition-colors ${
-              testimonial.status === 'published'
+              testimonial.isPublished
                 ? 'border-green-500/20 bg-green-500/5'
                 : 'border-yellow-500/20 bg-yellow-500/5'
             }`}
           >
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="font-semibold text-lg">{testimonial.author}</h3>
-                <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                <h3 className="font-semibold text-lg">{testimonial.authorName}</h3>
+                <p className="text-sm text-muted-foreground">{testimonial.authorTitle}</p>
+                <div className="flex gap-1 mt-1">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <span key={i} className="text-yellow-500">★</span>
+                  ))}
+                </div>
               </div>
               <span className={`px-2 py-1 text-xs font-semibold rounded ${
-                testimonial.status === 'published'
+                testimonial.isPublished
                   ? 'bg-green-500/10 text-green-600'
                   : 'bg-yellow-500/10 text-yellow-600'
               }`}>
-                {testimonial.status === 'published' ? 'Published' : 'Pending'}
+                {testimonial.isPublished ? 'Published' : 'Pending'}
               </span>
             </div>
 
@@ -191,20 +312,17 @@ export default function AdminTestimonialsEditor() {
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => handlePublish(testimonial.id)}
+                onClick={() => handleEdit(testimonial)}
                 className="flex-1 flex items-center justify-center gap-2 p-2 border border-border rounded-lg hover:bg-accent/10 transition-colors text-sm font-medium"
               >
-                {testimonial.status === 'published' ? (
-                  <>
-                    <EyeOff className="w-4 h-4" />
-                    Unpublish
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-4 h-4" />
-                    Publish
-                  </>
-                )}
+                <Eye className="w-4 h-4" />
+                Edit
+              </button>
+              <button
+                onClick={() => handlePublish(testimonial.id, testimonial.isPublished)}
+                className="flex-1 flex items-center justify-center gap-2 p-2 border border-border rounded-lg hover:bg-accent/10 transition-colors text-sm font-medium"
+              >
+                {testimonial.isPublished ? 'Unpublish' : 'Publish'}
               </button>
               <button
                 onClick={() => handleDeleteTestimonial(testimonial.id)}
@@ -216,7 +334,8 @@ export default function AdminTestimonialsEditor() {
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
