@@ -66,6 +66,7 @@
   --gold-light: #D4AF87;
   --midnight: #0A0A0A;
   --navy: #0F1B2E;
+  --navy-footer: #001F3F;
   --white: #FFFFFF;
   
   /* Light theme */
@@ -184,6 +185,20 @@
   }
   html {
     @apply font-sans;
+  }
+
+  /* Gradient Button Styles */
+  .btn-gradient {
+    @apply bg-gradient-to-r from-[#B8973A] via-[#D4AF87] to-[#B8973A] text-white font-semibold py-3 px-6 rounded-lg hover:shadow-lg transition-all duration-200 hover:scale-105;
+  }
+
+  .btn-gradient:hover {
+    background: linear-gradient(to right, #D4AF87, #B8973A, #D4AF87);
+  }
+
+  /* Utility class for footer background */
+  .footer-bg {
+    background-color: #001F3F;
   }
 }
 

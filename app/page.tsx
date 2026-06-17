@@ -52,7 +52,7 @@ export default function Home() {
                   Join an exclusive community of high-achievers, entrepreneurs, and visionaries committed to abundant living and collective success.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Link href="/signup" className="inline-flex items-center justify-center px-6 py-3 bg-accent text-accent-foreground rounded-lg font-semibold hover:bg-accent/90 transition-colors gap-2">
+                  <Link href="/signup" className="btn-gradient inline-flex items-center justify-center gap-2">
                     Join Now
                     <ArrowRight className="w-5 h-5" />
                   </Link>
@@ -159,11 +159,7 @@ export default function Home() {
                       </li>
                     ))}
                   </ul>
-                  <button className={`w-full py-2 rounded-lg font-semibold transition-colors ${
-                    tier.highlighted
-                      ? 'bg-accent text-accent-foreground hover:bg-accent/90'
-                      : 'border border-accent text-accent hover:bg-accent hover:text-accent-foreground'
-                  }`}>
+                  <button className={`w-full py-2 rounded-lg font-semibold transition-colors btn-gradient`}>
                     Learn More
                   </button>
                 </div>
@@ -174,11 +170,11 @@ export default function Home() {
         )}
 
         {/* CTA Section */}
-        <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-accent text-accent-foreground">
+        <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-[#B8973A] to-[#001F3F]">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="font-heading text-3xl md:text-4xl font-bold mb-6">Ready to Join Abundant?</h2>
-            <p className="text-lg mb-8 opacity-90">Start your journey towards abundant living and global success today.</p>
-            <Link href="/signup" className="inline-flex items-center justify-center px-8 py-3 bg-accent-foreground text-accent rounded-lg font-semibold hover:opacity-90 transition-opacity gap-2">
+            <h2 className="font-heading text-3xl md:text-4xl font-bold mb-6 text-white">Ready to Join Abundant?</h2>
+            <p className="text-lg mb-8 text-gray-100">Start your journey towards abundant living and global success today.</p>
+            <Link href="/signup" className="inline-flex items-center justify-center px-8 py-3 bg-white text-[#B8973A] rounded-lg font-semibold hover:bg-gray-100 transition-colors gap-2">
               Get Started Now
               <ArrowRight className="w-5 h-5" />
             </Link>
