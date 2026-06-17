@@ -1,18 +1,4 @@
-import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
 import { NextRequest, NextResponse } from 'next/server';
-import { initializeApp } from 'firebase/app';
-
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,6 +10,22 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Dynamically import Firebase modules only at runtime
+    const { getAuth, sendPasswordResetEmail } = await import('firebase/auth');
+    const { initializeApp } = await import('firebase/app');
+
+    const firebaseConfig = {
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
     // Send password reset email
     await sendPasswordResetEmail(auth, email);
