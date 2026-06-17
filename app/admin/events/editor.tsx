@@ -241,14 +241,34 @@ export default function AdminEventsEditor() {
 
               <div>
                 <label className="block text-sm font-medium mb-2">Event Image Banner</label>
-                <input
-                  type="url"
-                  value={newEvent.imageBanner}
-                  onChange={(e) => setNewEvent({ ...newEvent, imageBanner: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
-                  className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                />
-                <p className="text-xs text-muted-foreground mt-1">Enter image URL for the event banner</p>
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const formData = new FormData();
+                          formData.append('file', file);
+                          const response = await fetch('/api/upload', {
+                            method: 'POST',
+                            body: formData
+                          });
+                          if (response.ok) {
+                            const data = await response.json();
+                            setNewEvent({ ...newEvent, imageBanner: data.url });
+                          }
+                        } catch (error) {
+                          console.error('[v0] Error uploading image:', error);
+                          alert('Failed to upload image');
+                        }
+                      }
+                    }}
+                    className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Upload an image file for the event banner (JPG, PNG, WebP)</p>
                 {newEvent.imageBanner && (
                   <div className="mt-3 rounded-lg overflow-hidden border border-border h-32">
                     <img src={newEvent.imageBanner} alt="Preview" className="w-full h-full object-cover" />

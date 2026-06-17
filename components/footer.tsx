@@ -63,7 +63,7 @@ export const Footer = () => {
         </div>
 
         <div className="border-t border-gray-700 pt-8 flex items-center justify-between">
-          <p className="text-sm text-gray-400">© 2026 Abundant Global Club. All rights reserved. Made with ❤️ by <span className="font-light">FLYN.AI</span></p>
+          <p className="text-sm text-gray-400">© 2026 Abundant Global Club. All rights reserved. Made with ❤️ by <Link href="https://myflynai.com" target="_blank" rel="noopener noreferrer" className="font-light hover:text-white transition-colors">FLYN.AI</Link></p>
         </div>
       </div>
     </footer>
