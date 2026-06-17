@@ -22,9 +22,13 @@ export default function Dashboard() {
 
   // If admin, redirect to admin dashboard
   useEffect(() => {
-    if (!loading && currentUser && userData?.role === 'admin') {
-      console.log('[v0] Admin user detected, redirecting to /admin/dashboard');
-      router.push('/admin/dashboard');
+    if (!loading && currentUser) {
+      // Check both role and email to ensure admin detection works
+      const isAdmin = userData?.role === 'admin' || currentUser.email === 'admin@abundantglobalclub.com';
+      if (isAdmin) {
+        console.log('[v0] Admin user detected, redirecting to /admin/dashboard');
+        router.push('/admin/dashboard');
+      }
     }
   }, [currentUser, userData, loading, router]);
 
