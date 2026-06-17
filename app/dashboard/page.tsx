@@ -4,12 +4,13 @@ import { useAuth } from '@/context/AuthContext';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 export default function Dashboard() {
   const { currentUser, userData, loading } = useAuth();
   const router = useRouter();
+  const [showTimeout, setShowTimeout] = useState(false);
 
   useEffect(() => {
     // If auth has finished loading and no user, redirect to login
@@ -19,13 +20,42 @@ export default function Dashboard() {
     }
   }, [currentUser, loading, router]);
 
+  // If admin, redirect to admin dashboard
+  useEffect(() => {
+    if (!loading && currentUser && userData?.role === 'admin') {
+      console.log('[v0] Admin user detected, redirecting to /admin');
+      router.push('/admin');
+    }
+  }, [currentUser, userData, loading, router]);
+
+  // Show timeout message if loading takes too long
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        setShowTimeout(true);
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   // Show loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto"></div>
           <p className="text-muted-foreground">Loading your dashboard...</p>
+          {showTimeout && (
+            <div className="text-sm text-orange-600 mt-4">
+              <p>Taking longer than expected.</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="text-accent hover:underline mt-2"
+              >
+                Try refreshing the page
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
