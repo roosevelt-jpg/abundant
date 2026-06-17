@@ -109,6 +109,49 @@ export interface Page {
   updatedAt?: number;
 }
 
+// Content Page type - for managing About pages and related content
+export interface ContentPage {
+  id: string;
+  title: string;
+  slug: string;
+  subtitle?: string;
+  description?: string;
+  content?: string;
+  heroImage?: string;
+  navLabel: string; // Label shown in navigation dropdown
+  category: 'about' | 'what-we-do' | 'why-agc' | 'leadership' | 'careers' | 'custom';
+  order: number;
+  isPublished: boolean;
+  sections?: ContentSection[];
+  createdBy?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+// Content section for rich content building
+export interface ContentSection {
+  id: string;
+  type: 'hero' | 'text' | 'cards' | 'gallery' | 'features' | 'testimonials' | 'cta';
+  title?: string;
+  subtitle?: string;
+  content?: string;
+  image?: string;
+  items?: ContentItem[];
+  order: number;
+  backgroundColor?: string;
+  textAlignment?: 'left' | 'center' | 'right';
+}
+
+export interface ContentItem {
+  id?: string;
+  title: string;
+  description?: string;
+  icon?: string;
+  image?: string;
+  content?: string;
+  link?: string;
+}
+
 // Settings type
 export interface Settings {
   id: string;
