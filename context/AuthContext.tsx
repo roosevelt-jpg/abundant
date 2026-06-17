@@ -41,7 +41,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (!isMounted) return;
           
           if (userSnap.exists()) {
-            setUserData(userSnap.data() as User);
+            const userData = userSnap.data() as User;
+            
+            // If this is the admin email and role isn't set to admin, update it
+            const isAdmin = user.email === 'admin@abundantglobalclub.com';
+            if (isAdmin && userData.role !== 'admin') {
+              await getDoc(userRef).then(doc => {
+                doc.ref.update({ role: 'admin', updatedAt: Date.now() }).catch(err => {
+                  console.error('[v0] Failed to update admin role:', err);
+                });
+              });
+              userData.role = 'admin';
+            }
+            
+            setUserData(userData);
           } else {
             // Create user document if it doesn't exist
             const isAdmin = user.email === 'admin@abundantglobalclub.com';
