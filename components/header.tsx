@@ -19,23 +19,29 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 z-40 bg-card border-b border-border">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
-            <span className="text-accent-foreground font-bold text-sm">A</span>
-          </div>
-          <span className="font-heading text-lg font-bold text-accent">ABUNDANT</span>
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+        <Link href="/" className="flex-shrink-0">
+          <Image 
+            src="/logo-text.png" 
+            alt="Abundant Global Club Logo"
+            width={120}
+            height={40}
+            className="h-10 w-auto"
+          />
         </Link>
 
         <div className="hidden md:flex items-center gap-6">
-          <Link href="/membership" className="text-sm hover:text-accent transition-colors">
-            Membership
+          <Link href="/" className="text-sm hover:text-accent transition-colors">
+            Home
+          </Link>
+          <Link href="/about" className="text-sm hover:text-accent transition-colors">
+            About
           </Link>
           <Link href="/events" className="text-sm hover:text-accent transition-colors">
             Events
           </Link>
-          <Link href="/about" className="text-sm hover:text-accent transition-colors">
-            About
+          <Link href="/membership" className="text-sm hover:text-accent transition-colors">
+            Membership
           </Link>
           <Link href="/contact" className="text-sm hover:text-accent transition-colors">
             Contact
