@@ -200,6 +200,11 @@ export interface Settings {
     description?: string;
     videosPerPage?: number;
   };
+  logos?: {
+    header?: string; // URL to header logo image stored in Firestore
+    footer?: string; // URL to footer logo image
+    login?: string; // URL to login page logo
+  };
   updatedAt: number;
   updatedBy: string;
 }

@@ -36,11 +36,30 @@ export default function Login() {
     try {
       console.log('[v0] Attempting sign in with email:', email);
       await signIn(email, password);
+      console.log('[v0] Sign in successful, waiting for context update');
       
-      // Wait a moment for userData to be populated in context
-      setTimeout(() => {
-        console.log('[v0] Sign in successful, checking user role');
-        // The useEffect above will handle the redirect
+      // Wait for userData to be populated before redirecting
+      let attempts = 0;
+      const checkUserData = setInterval(() => {
+        attempts++;
+        console.log('[v0] Checking user data, attempt:', attempts);
+        
+        if (currentUser && userData) {
+          clearInterval(checkUserData);
+          console.log('[v0] User data loaded, redirecting. Role:', userData.role);
+          if (userData.role === 'admin') {
+            router.push('/admin');
+          } else {
+            router.push('/dashboard');
+          }
+        }
+        
+        // Give up after 3 seconds
+        if (attempts > 6) {
+          clearInterval(checkUserData);
+          console.log('[v0] Timeout waiting for user data, redirecting to dashboard');
+          router.push('/dashboard');
+        }
       }, 500);
     } catch (err: any) {
       console.error('[v0] Sign in error:', err);
