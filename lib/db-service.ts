@@ -11,7 +11,7 @@ import {
   updateDoc,
   Timestamp
 } from 'firebase/firestore';
-import { Page, Settings } from '@/lib/types';
+import { Page, Settings, User } from '@/lib/types';
 
 // Pages CRUD
 export const pagesRef = collection(db, 'pages');
@@ -168,5 +168,30 @@ export async function initializeSettings(): Promise<Settings> {
   } catch (error) {
     console.error('Error initializing settings:', error);
     throw error;
+  }
+}
+
+// User Profile Management
+export async function updateUserProfile(userId: string, updates: Partial<User>): Promise<void> {
+  try {
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, {
+      ...updates,
+      updatedAt: Date.now(),
+    });
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    throw error;
+  }
+}
+
+export async function getUserProfile(userId: string): Promise<User | null> {
+  try {
+    const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
+    return userSnap.exists() ? (userSnap.data() as User) : null;
+  } catch (error) {
+    console.error('Error getting user profile:', error);
+    return null;
   }
 }

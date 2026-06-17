@@ -10,6 +10,9 @@ export interface User {
   status: 'active' | 'inactive' | 'suspended';
   createdAt: number;
   updatedAt: number;
+  phone?: string;
+  bio?: string;
+  title?: string;
 }
 
 // Event types for Firestore

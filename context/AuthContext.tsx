@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (user) {
         try {
-          // Fetch user data from Firestore
+          // Fetch user data from Firestore with error handling
           const userRef = doc(db, 'users', user.uid);
           const userSnap = await getDoc(userRef);
           
@@ -44,12 +44,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUserData(userSnap.data() as User);
           } else {
             // Create user document if it doesn't exist
+            const isAdmin = user.email === 'admin@abundantglobalclub.com';
             const newUser: User = {
               uid: user.uid,
               email: user.email || '',
-              displayName: user.displayName || '',
-              photoURL: user.photoURL || undefined,
-              role: 'member',
+              displayName: user.displayName || 'User',
+              photoURL: user.photoURL || '',
+              role: isAdmin ? 'admin' : 'member',
               membershipTier: 'member',
               joinedAt: Date.now(),
               status: 'active',
@@ -63,7 +64,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         } catch (error) {
           console.error('[v0] Error fetching user data:', error);
-          // Continue even if Firestore fails
+          // Continue even if Firestore fails - set user data with basic info
+          const isAdmin = user.email === 'admin@abundantglobalclub.com';
+          if (isMounted) {
+            setUserData({
+              uid: user.uid,
+              email: user.email || '',
+              displayName: user.displayName || 'User',
+              photoURL: user.photoURL || '',
+              role: isAdmin ? 'admin' : 'member',
+              membershipTier: 'member',
+              joinedAt: Date.now(),
+              status: 'active',
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            });
+          }
         }
       } else {
         setUserData(null);

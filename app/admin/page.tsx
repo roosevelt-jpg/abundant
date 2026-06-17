@@ -2,9 +2,37 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { Users, Calendar, MessageSquare, Settings } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export default function AdminDashboard() {
   const { userData } = useAuth();
+  const [currentTime, setCurrentTime] = useState('');
+  const [currentDate, setCurrentDate] = useState('');
+
+  useEffect(() => {
+    // Set initial time and date
+    const updateDateTime = () => {
+      const now = new Date();
+      const time = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+      const date = now.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      setCurrentTime(time);
+      setCurrentDate(date);
+    };
+
+    updateDateTime();
+    const interval = setInterval(updateDateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const stats = [
     {
@@ -37,7 +65,17 @@ export default function AdminDashboard() {
     <div>
       <div className="mb-8">
         <h1 className="font-heading text-3xl font-bold mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back, {userData?.displayName}</p>
+        <p className="text-muted-foreground">Welcome back, {userData?.displayName || 'Admin'}</p>
+        <div className="flex items-center gap-6 mt-4 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">Current Time:</span>
+            <span className="font-mono font-semibold text-accent">{currentTime}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">Date:</span>
+            <span className="font-mono font-semibold text-accent">{currentDate}</span>
+          </div>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -80,14 +118,14 @@ export default function AdminDashboard() {
         <div className="p-6 bg-card rounded-xl border border-border">
           <h2 className="font-heading font-bold text-lg mb-4">Quick Actions</h2>
           <div className="space-y-3">
+            <a href="/admin/profile" className="block p-4 bg-background rounded-lg border border-border hover:border-accent transition-colors text-sm font-medium">
+              → View Your Profile
+            </a>
             <a href="/admin/members" className="block p-4 bg-background rounded-lg border border-border hover:border-accent transition-colors text-sm font-medium">
               → Manage Members
             </a>
             <a href="/admin/events" className="block p-4 bg-background rounded-lg border border-border hover:border-accent transition-colors text-sm font-medium">
               → Create Event
-            </a>
-            <a href="/admin/testimonials" className="block p-4 bg-background rounded-lg border border-border hover:border-accent transition-colors text-sm font-medium">
-              → Review Testimonials
             </a>
             <a href="/admin/settings" className="block p-4 bg-background rounded-lg border border-border hover:border-accent transition-colors text-sm font-medium">
               → Configure Settings
@@ -98,3 +136,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

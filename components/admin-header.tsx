@@ -1,13 +1,13 @@
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
-import { LogOut, Menu } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from './theme-toggle';
 import { LanguageSwitcher } from './language-switcher';
 
 export const AdminHeader = () => {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, userData, logout } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -29,9 +29,18 @@ export const AdminHeader = () => {
         <div className="flex items-center gap-4">
           {currentUser && (
             <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
-              <span className="text-sm text-muted-foreground">{currentUser.email}</span>
+              <span className="text-sm font-medium">{userData?.displayName || 'Admin'}</span>
+              <span className="text-xs text-muted-foreground">{currentUser.email}</span>
             </div>
           )}
+
+          <button
+            onClick={() => router.push('/admin/profile')}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent/10 text-muted-foreground hover:text-accent transition-colors"
+            title="Profile"
+          >
+            <User className="w-5 h-5" />
+          </button>
 
           <ThemeToggle />
           <LanguageSwitcher />
