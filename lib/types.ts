@@ -6,6 +6,10 @@ export interface User {
   photoURL?: string;
   role?: 'member' | 'admin';
   membershipTier?: 'member' | 'elite' | 'inner-circle' | 'founder';
+  membershipPlanId?: string;
+  subscriptionStatus?: 'active' | 'inactive' | 'expired' | 'cancelled';
+  subscriptionStartDate?: number;
+  subscriptionEndDate?: number;
   joinedAt?: number;
   status?: 'pending' | 'approved' | 'rejected' | 'active' | 'inactive' | 'suspended';
   createdAt?: number;
@@ -49,6 +53,32 @@ export interface EventRegistration {
   registeredAt: number;
   status: 'registered' | 'attended' | 'cancelled';
   checkInTime?: number;
+}
+
+// Membership Plan types for Firestore
+export interface MembershipPlan {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  billingCycle: 'monthly' | 'annual';
+  features: string[];
+  maxEventRegistrations?: number;
+  prioritySupport: boolean;
+  accessLevel: number; // 1 = member, 2 = elite, 3 = inner-circle, 4 = founder
+  stripeProductId?: string;
+  stripePriceId?: string;
+  isPublic: boolean;
+  status: 'draft' | 'active' | 'discontinued';
+  order: number; // Display order
+  color?: string;
+  badge?: string;
+  isMostPopular?: boolean;
+  createdBy?: string;
+  createdAt?: number;
+  updatedAt?: number;
+  subscribers?: number;
 }
 
 // Testimonial types

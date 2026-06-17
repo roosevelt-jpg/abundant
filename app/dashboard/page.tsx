@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Calendar, AlertCircle, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import MemberUpcomingEvents from '@/components/member-upcoming-events';
+import MembershipSubscriptionWidget from '@/components/membership-subscription-widget';
 
 export default function DashboardHome() {
   const { userData } = useAuth();
@@ -91,6 +92,11 @@ export default function DashboardHome() {
             Account Settings
           </Link>
         </div>
+      </div>
+
+      {/* Membership Plans Section */}
+      <div className="p-6 bg-card rounded-lg border border-border">
+        <MembershipSubscriptionWidget />
       </div>
 
       {/* Upcoming Events Section */}
