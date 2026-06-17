@@ -3,7 +3,6 @@
   "devCommand": "next dev --port 3000",
   "installCommand": "pnpm install --frozen-lockfile",
   "framework": "nextjs",
-  "nodeVersion": "18.x",
   "git": {
     "silent": false
   }
