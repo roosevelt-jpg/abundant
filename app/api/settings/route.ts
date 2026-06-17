@@ -1,16 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSettings, updateSettings } from '@/lib/firestore-service';
+import { verifyAdminToken } from '@/lib/firebase-admin-server';
 
-async function verifyAdmin(authToken: string | null | undefined) {
-  if (!authToken) return false;
-  try {
-    const token = authToken.replace('Bearer ', '');
-    const decodedToken = await getAuth().verifyIdToken(token);
-    return decodedToken.email === 'admin@abundantglobalclub.com';
-  } catch (error) {
-    return false;
-  }
-}
+export const dynamic = 'force-dynamic';
 
 // GET /api/settings
 export async function GET() {
@@ -26,17 +18,21 @@ export async function GET() {
 // PUT /api/settings
 export async function PUT(request: NextRequest) {
   try {
-    const isAdmin = await verifyAdmin(request.headers.get('authorization'));
+    const authToken = request.headers.get('authorization');
+    const isAdmin = await verifyAdminToken(authToken);
+    
     if (!isAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const data = await request.json();
-    const decodedToken = await getAuth().verifyIdToken(request.headers.get('authorization')!.replace('Bearer ', ''));
-    await updateSettings(data, decodedToken.uid);
+    // Note: updateSettings uses the client SDK, which doesn't require direct user ID
+    // It will use the authenticated user's ID from the JWT token
+    await updateSettings(data, 'admin');
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('[v0] Error in PUT /api/settings:', error);
     return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
   }
 }
+

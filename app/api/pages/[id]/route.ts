@@ -1,29 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updatePage, deletePage } from '@/lib/firestore-service';
+import { verifyAdminToken } from '@/lib/firebase-admin-server';
 
-async function verifyAdmin(authToken: string | null | undefined) {
-  if (!authToken) return false;
-  try {
-    const token = authToken.replace('Bearer ', '');
-    const decodedToken = await getAuth().verifyIdToken(token);
-    return decodedToken.email === 'admin@abundantglobalclub.com';
-  } catch (error) {
-    return false;
-  }
-}
+export const dynamic = 'force-dynamic';
 
-// PUT /api/pages/[id]
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const isAdmin = await verifyAdminToken(request.headers.get('authorization'));
+    if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const { id } = await params;
-    const isAdmin = await verifyAdmin(request.headers.get('authorization'));
-    if (!isAdmin) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const data = await request.json();
     await updatePage(id, data);
     return NextResponse.json({ success: true });
@@ -33,18 +18,11 @@ export async function PUT(
   }
 }
 
-// DELETE /api/pages/[id]
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const isAdmin = await verifyAdminToken(request.headers.get('authorization'));
+    if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const { id } = await params;
-    const isAdmin = await verifyAdmin(request.headers.get('authorization'));
-    if (!isAdmin) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     await deletePage(id);
     return NextResponse.json({ success: true });
   } catch (error) {

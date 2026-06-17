@@ -1,25 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPages, addPage, updatePage, deletePage } from '@/lib/firestore-service';
+import { getPages, addPage } from '@/lib/firestore-service';
+import { verifyAdminToken } from '@/lib/firebase-admin-server';
 
-async function verifyAdmin(authToken: string | null | undefined) {
-  if (!authToken) return false;
+export const dynamic = 'force-dynamic';
+
+export async function GET() {
   try {
-    const token = authToken.replace('Bearer ', '');
-    const decodedToken = await getAuth().verifyIdToken(token);
-    return decodedToken.email === 'admin@abundantglobalclub.com';
-  } catch (error) {
-    return false;
-  }
-}
-
-// GET /api/pages
-export async function GET(request: NextRequest) {
-  try {
-    const isAdmin = await verifyAdmin(request.headers.get('authorization'));
-    if (!isAdmin) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const pages = await getPages();
     return NextResponse.json(pages);
   } catch (error) {
@@ -28,17 +14,12 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/pages
 export async function POST(request: NextRequest) {
   try {
-    const isAdmin = await verifyAdmin(request.headers.get('authorization'));
-    if (!isAdmin) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    const isAdmin = await verifyAdminToken(request.headers.get('authorization'));
+    if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const data = await request.json();
-    const decodedToken = await getAuth().verifyIdToken(request.headers.get('authorization')!.replace('Bearer ', ''));
-    const id = await addPage(data, decodedToken.uid);
+    const id = await addPage(data, 'admin');
     return NextResponse.json({ id, ...data }, { status: 201 });
   } catch (error) {
     console.error('[v0] Error in POST /api/pages:', error);

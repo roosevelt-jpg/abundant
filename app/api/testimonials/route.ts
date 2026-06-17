@@ -1,17 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTestimonials, addTestimonial, updateTestimonial, deleteTestimonial, publishTestimonial } from '@/lib/firestore-service';
+import { getTestimonials, addTestimonial, updateTestimonial, deleteTestimonial } from '@/lib/firestore-service';
+import { verifyAdminToken } from '@/lib/firebase-admin-server';
 
-// Initialize Firebase Admin
-async function verifyAdmin(authToken: string | null | undefined) {
-  if (!authToken) return false;
-  try {
-    const token = authToken.replace('Bearer ', '');
-    const decodedToken = await getAuth().verifyIdToken(token);
-    return decodedToken.email === 'admin@abundantglobalclub.com';
-  } catch (error) {
-    return false;
-  }
-}
+export const dynamic = 'force-dynamic';
 
 // GET /api/testimonials
 export async function GET() {
@@ -27,7 +18,7 @@ export async function GET() {
 // POST /api/testimonials
 export async function POST(request: NextRequest) {
   try {
-    const isAdmin = await verifyAdmin(request.headers.get('authorization'));
+    const isAdmin = await verifyAdminToken(request.headers.get('authorization'));
     if (!isAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
