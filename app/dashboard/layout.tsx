@@ -38,11 +38,14 @@ export default function DashboardLayout({
       if (loading) {
         setShowTimeout(true);
       }
-    }, 5000);
+    }, 8000);
     return () => clearTimeout(timer);
   }, [loading]);
 
-  if (loading) {
+  // Only show loading on main dashboard page, not on sub-pages
+  const isMainDashboard = pathname === '/dashboard';
+  
+  if (loading && isMainDashboard) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -64,7 +67,7 @@ export default function DashboardLayout({
     );
   }
 
-  if (!currentUser) {
+  if (!currentUser && loading) {
     return null;
   }
 
@@ -106,7 +109,7 @@ export default function DashboardLayout({
                     </div>
                     <div className="flex-1">
                       <p className="font-semibold text-sm text-foreground">{userData?.displayName || 'Member'}</p>
-                      <p className="text-xs text-muted-foreground">{currentUser.email}</p>
+                      <p className="text-xs text-muted-foreground">{currentUser?.email || 'user@example.com'}</p>
                     </div>
                   </div>
                   <div className="space-y-1">
