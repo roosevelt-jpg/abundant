@@ -93,17 +93,7 @@ export default function Contact() {
 
                 <div className="mt-12">
                   <h3 className="font-heading font-bold mb-6">Follow Us</h3>
-                  <div className="flex gap-4">
-                    {['LinkedIn', 'Twitter', 'Instagram'].map((social, i) => (
-                      <a
-                        key={i}
-                        href="#"
-                        className="w-10 h-10 rounded-lg border border-border hover:border-accent hover:bg-accent/10 transition-colors flex items-center justify-center"
-                      >
-                        {social.charAt(0)}
-                      </a>
-                    ))}
-                  </div>
+                  <p className="text-sm text-muted-foreground">Social media links configured in admin settings</p>
                 </div>
               </div>
 

@@ -84,6 +84,11 @@ export interface Settings {
     linkedin?: string;
     instagram?: string;
     facebook?: string;
+    whatsapp?: string;
+    tiktok?: string;
+    youtube?: string;
+    telegram?: string;
+    email?: string;
   };
   colors?: {
     primary: string;

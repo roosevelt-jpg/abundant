@@ -37,11 +37,7 @@ export const Footer = () => {
 
           <div>
             <h3 className="font-heading font-bold mb-4 text-[#B8973A]">Connect</h3>
-            <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Twitter</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">LinkedIn</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Instagram</a></li>
-            </ul>
+            <p className="text-sm text-gray-400">Follow us on social media</p>
           </div>
         </div>
 

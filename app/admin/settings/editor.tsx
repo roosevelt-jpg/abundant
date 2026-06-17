@@ -170,21 +170,32 @@ export default function AdminSettingsEditor() {
         {/* Social Links */}
         <div className="p-6 bg-card rounded-xl border border-border">
           <h2 className="font-heading font-bold text-lg mb-4">Social Media Links</h2>
+          <p className="text-sm text-muted-foreground mb-4">Add your social media profiles. Leave blank to hide from public pages.</p>
           <div className="space-y-4">
-            {Object.entries(settings.socialLinks || {}).map(([platform, url]) => (
-              <div key={platform}>
-                <label className="block text-sm font-medium mb-2 capitalize">{platform}</label>
+            {[
+              { key: 'email', label: 'Email Address', placeholder: 'hello@example.com' },
+              { key: 'whatsapp', label: 'WhatsApp Number', placeholder: '+1234567890' },
+              { key: 'facebook', label: 'Facebook URL', placeholder: 'https://facebook.com/...' },
+              { key: 'twitter', label: 'Twitter URL', placeholder: 'https://twitter.com/...' },
+              { key: 'linkedin', label: 'LinkedIn URL', placeholder: 'https://linkedin.com/company/...' },
+              { key: 'instagram', label: 'Instagram URL', placeholder: 'https://instagram.com/...' },
+              { key: 'youtube', label: 'YouTube URL', placeholder: 'https://youtube.com/@...' },
+              { key: 'tiktok', label: 'TikTok URL', placeholder: 'https://tiktok.com/@...' },
+              { key: 'telegram', label: 'Telegram URL', placeholder: 'https://t.me/...' }
+            ].map(({ key, label, placeholder }) => (
+              <div key={key}>
+                <label className="block text-sm font-medium mb-2">{label}</label>
                 <input
-                  type="url"
-                  value={url}
+                  type="text"
+                  value={settings.socialLinks?.[key as keyof typeof settings.socialLinks] || ''}
                   onChange={(e) => 
                     handleSettingChange('socialLinks', {
                       ...settings.socialLinks,
-                      [platform]: e.target.value
+                      [key]: e.target.value
                     })
                   }
                   className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                  placeholder={`https://${platform}.com/...`}
+                  placeholder={placeholder}
                 />
               </div>
             ))}
