@@ -66,22 +66,8 @@ export const HeroSlider = ({ settings: initialSettings }: HeroSliderProps) => {
   const slide = slides[currentSlide];
 
   return (
-    <section className="relative w-full py-4 md:py-6">
-      {/* Red wavy border wrapper */}
-      <div className="relative px-4 md:px-6">
-        {/* SVG wavy border - top and sides */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 1000 700" preserveAspectRatio="none">
-          <path
-            d="M 10,50 Q 100,20 200,30 T 400,40 T 600,35 T 800,45 T 990,40 L 990,680 Q 900,700 700,690 T 300,700 T 10,680 Z"
-            fill="none"
-            stroke="#B91C1C"
-            strokeWidth="8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-
-        {/* Hero slider content */}
+    <section className="relative w-full py-8 md:py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
         <div className="relative w-full h-[400px] md:h-[550px] overflow-hidden rounded-lg">
           {/* Slides */}
           {slides.map((s, idx) => (
