@@ -46,7 +46,7 @@ export const Footer = () => {
         </div>
 
         <div className="border-t border-border pt-8 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">© 2024 Abundant Global Club. All rights reserved.</p>
+          <p className="text-sm text-muted-foreground">© 2026 Abundant Global Club. All rights reserved.</p>
         </div>
       </div>
     </footer>
