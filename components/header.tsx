@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { ThemeToggle } from './theme-toggle';
 import { LanguageSwitcher } from './language-switcher';
+import { AboutDropdown } from './about-dropdown';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
@@ -36,7 +37,7 @@ export const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-card border-b border-border">
+    <header className="sticky top-0 z-40 header-footer-bg border-b border-border">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
         <Link href="/" className="flex-shrink-0">
           <Image 
@@ -48,13 +49,11 @@ export const Header = () => {
           />
         </Link>
 
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden md:flex items-center gap-6 text-white">
           <Link href="/" className="text-sm hover:text-accent transition-colors">
             Home
           </Link>
-          <Link href="/about" className="text-sm hover:text-accent transition-colors">
-            About
-          </Link>
+          <AboutDropdown />
           <Link href="/events" className="text-sm hover:text-accent transition-colors">
             Events
           </Link>
@@ -77,7 +76,7 @@ export const Header = () => {
               </Link>
               <button
                 onClick={handleLogout}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm font-medium text-white hover:text-accent transition-colors"
               >
                 Logout
               </button>

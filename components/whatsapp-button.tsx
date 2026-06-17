@@ -1,47 +1,48 @@
 'use client';
 
-import { Settings } from '@/lib/types';
+import { useEffect, useState } from 'react';
 import { MessageCircle } from 'lucide-react';
-import { useState } from 'react';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
-interface WhatsAppButtonProps {
-  settings: Settings;
-}
+export const WhatsAppButton = () => {
+  const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
+  const [message, setMessage] = useState<string>('Hi! I am interested in learning more about Abundant Global Club.');
 
-export const WhatsAppButton = ({ settings }: WhatsAppButtonProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
+        if (settingsDoc.exists()) {
+          const data = settingsDoc.data();
+          if (data.whatsappNumber) {
+            setPhoneNumber(data.whatsappNumber);
+          }
+          if (data.whatsappMessage) {
+            setMessage(data.whatsappMessage);
+          }
+        }
+      } catch (error) {
+        console.error('[v0] Error fetching WhatsApp settings:', error);
+      }
+    };
 
-  if (!settings.socialLinks?.whatsapp) return null;
+    fetchSettings();
+  }, []);
 
-  // Extract phone number and format for WhatsApp
-  const phoneNumber = settings.socialLinks.whatsapp.replace(/\D/g, '');
-  const whatsappLink = `https://wa.me/${phoneNumber}?text=Hello! I would like to chat with Abundant Global Club.`;
+  if (!phoneNumber) return null;
+
+  const whatsappUrl = `https://wa.me/${phoneNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
 
   return (
-    <>
-      {/* Fixed WhatsApp Button */}
-      <div className="fixed bottom-6 right-6 z-40">
-        <button
-          onClick={() => window.open(whatsappLink, '_blank')}
-          className="bg-gradient-to-r from-[#B8973A] via-[#D4AF87] to-[#B8973A] text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200"
-          title="Chat with us on WhatsApp"
-        >
-          <MessageCircle size={24} />
-        </button>
-      </div>
-
-      {/* Optional: Floating chat bubble */}
-      <div className="fixed bottom-24 right-6 z-40 bg-white rounded-lg shadow-lg p-4 max-w-xs hidden sm:block">
-        <p className="text-sm text-gray-700 mb-3">
-          Hey! 👋 Need help? Chat with us on WhatsApp!
-        </p>
-        <button
-          onClick={() => window.open(whatsappLink, '_blank')}
-          className="btn-gradient w-full py-2 text-sm"
-        >
-          Start Chat
-        </button>
-      </div>
-    </>
+    <a
+      href={whatsappUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fixed bottom-6 right-6 z-40 bg-green-500 hover:bg-green-600 text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:scale-110 flex items-center justify-center"
+      title="Chat on WhatsApp"
+    >
+      <MessageCircle className="w-6 h-6" />
+    </a>
   );
 };

@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { WhatsAppButton } from '@/components/whatsapp-button';
 import { HeroSlider } from '@/components/hero-slider';
 import { YouTubeWidget } from '@/components/youtube-widget';
 import { UpcomingEventsWidget } from '@/components/upcoming-events-widget';
@@ -39,6 +40,7 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
+      <WhatsAppButton />
       
       <main className="flex-1">
         {/* Hero Slider - Load independently */}

@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { AdminProtectedLayout } from '@/components/admin-protected-layout';
-import { Upload, Save, Image as ImageIcon, Check } from 'lucide-react';
+import { Upload, Save, Image as ImageIcon, Check, MessageCircle } from 'lucide-react';
 
 export default function BrandingPage() {
   const { currentUser, userData } = useAuth();
@@ -19,9 +19,33 @@ export default function BrandingPage() {
     login: { url: '', preview: '', file: null as File | null },
   });
 
+  const [whatsapp, setWhatsapp] = useState({
+    number: '',
+    message: 'Hi! I am interested in learning more about Abundant Global Club.',
+  });
+
   useEffect(() => {
     loadLogos();
+    loadWhatsApp();
   }, []);
+
+  const loadWhatsApp = async () => {
+    try {
+      const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
+      if (settingsDoc.exists()) {
+        const data = settingsDoc.data();
+        if (data.whatsappNumber) {
+          setWhatsapp(prev => ({
+            ...prev,
+            number: data.whatsappNumber,
+            message: data.whatsappMessage || prev.message,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('[v0] Error loading WhatsApp settings:', error);
+    }
+  };
 
   const loadLogos = async () => {
     try {
@@ -134,6 +158,40 @@ export default function BrandingPage() {
     }
   };
 
+  const handleSaveWhatsApp = async () => {
+    try {
+      setSaving(true);
+      setMessage({ type: '', text: '' });
+
+      const settingsRef = doc(db, 'settings', 'general');
+      const settingsDoc = await getDoc(settingsRef);
+
+      if (settingsDoc.exists()) {
+        await setDoc(settingsRef, {
+          ...settingsDoc.data(),
+          whatsappNumber: whatsapp.number,
+          whatsappMessage: whatsapp.message,
+          updatedAt: Date.now(),
+          updatedBy: currentUser?.email || 'unknown',
+        });
+      } else {
+        await setDoc(settingsRef, {
+          whatsappNumber: whatsapp.number,
+          whatsappMessage: whatsapp.message,
+          updatedAt: Date.now(),
+          updatedBy: currentUser?.email || 'unknown',
+        });
+      }
+
+      setMessage({ type: 'success', text: 'WhatsApp settings saved successfully!' });
+    } catch (error) {
+      console.error('[v0] Error saving WhatsApp settings:', error);
+      setMessage({ type: 'error', text: 'Failed to save WhatsApp settings. Please try again.' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const LogoUploadSection = ({ title, type, description }: { title: string; type: 'header' | 'footer' | 'login'; description: string }) => (
     <div className="bg-background rounded-lg border border-border p-6 mb-6">
       <div className="flex items-start justify-between mb-4">
@@ -236,11 +294,56 @@ export default function BrandingPage() {
         <button
           onClick={handleSave}
           disabled={saving || (!logos.header.file && !logos.footer.file && !logos.login.file)}
-          className="w-full bg-accent hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
+          className="w-full bg-accent hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition-colors mb-8"
         >
           <Save className="w-5 h-5" />
           {saving ? 'Saving...' : 'Save All Logos'}
         </button>
+
+        {/* WhatsApp Section */}
+        <div className="border-t border-border pt-8 mt-8">
+          <div className="mb-8">
+            <h2 className="font-heading text-2xl font-bold mb-2 flex items-center gap-2">
+              <MessageCircle className="w-6 h-6 text-green-500" />
+              WhatsApp Settings
+            </h2>
+            <p className="text-muted-foreground">Configure WhatsApp contact button for your website</p>
+          </div>
+
+          <div className="space-y-6">
+            <div className="bg-background rounded-lg border border-border p-6">
+              <label className="block mb-3 text-sm font-medium">WhatsApp Phone Number</label>
+              <input
+                type="text"
+                placeholder="+1234567890 (include country code)"
+                value={whatsapp.number}
+                onChange={(e) => setWhatsapp(prev => ({ ...prev, number: e.target.value }))}
+                className="w-full px-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+              />
+              <p className="text-xs text-muted-foreground mt-2">Enter the phone number with country code (e.g., +971501234567)</p>
+            </div>
+
+            <div className="bg-background rounded-lg border border-border p-6">
+              <label className="block mb-3 text-sm font-medium">Default Message</label>
+              <textarea
+                placeholder="Default message to send when user clicks the WhatsApp button..."
+                value={whatsapp.message}
+                onChange={(e) => setWhatsapp(prev => ({ ...prev, message: e.target.value }))}
+                className="w-full px-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent min-h-[100px] resize-none"
+              />
+              <p className="text-xs text-muted-foreground mt-2">This message will be pre-filled when users click the WhatsApp button</p>
+            </div>
+
+            <button
+              onClick={handleSaveWhatsApp}
+              disabled={saving || !whatsapp.number}
+              className="w-full bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
+            >
+              <Save className="w-5 h-5" />
+              {saving ? 'Saving...' : 'Save WhatsApp Settings'}
+            </button>
+          </div>
+        </div>
 
         <p className="text-xs text-muted-foreground mt-4 text-center">
           Your logos will be saved to Firestore and displayed across your site within seconds.

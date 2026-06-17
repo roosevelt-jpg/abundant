@@ -47,7 +47,20 @@ export function UpcomingEventsWidget() {
   }
 
   if (events.length === 0) {
-    return null;
+    return (
+      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-card/50">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="p-12 bg-background rounded-xl border border-border/50">
+            <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No Upcoming Events</h3>
+            <p className="text-muted-foreground mb-6">Check back soon for exciting events and networking opportunities</p>
+            <Link href="/events" className="inline-flex items-center gap-2 text-accent hover:text-accent/80 font-semibold">
+              View All Events <ArrowRight className="w-5 h-5" />
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (

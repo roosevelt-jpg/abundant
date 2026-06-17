@@ -196,7 +196,11 @@
     background: linear-gradient(to right, #D4AF87, #B8973A, #D4AF87);
   }
 
-  /* Utility class for footer background */
+  /* Utility class for header and footer background - consistent dark navy color */
+  .header-footer-bg {
+    background-color: #001F3F;
+  }
+
   .footer-bg {
     background-color: #001F3F;
   }
