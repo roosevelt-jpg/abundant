@@ -153,7 +153,13 @@ export async function initializeSettings(): Promise<Settings> {
       languages: ['en', 'ar'],
       defaultLanguage: 'en',
       theme: 'dark',
-      heroSlider: [],
+      heroSlider: {
+        enabled: true,
+        speed: 5000,
+        transition: 'fade',
+        autoPlay: true,
+        slides: []
+      },
       youtubeSection: {
         enabled: false,
         title: 'Featured Videos',

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Settings, Users, FileText, Calendar, MessageSquare, Home } from 'lucide-react';
+import { Settings, Users, FileText, Calendar, MessageSquare, Home, Image } from 'lucide-react';
 import { useState } from 'react';
 
 export const AdminSidebar = () => {
@@ -12,6 +12,7 @@ export const AdminSidebar = () => {
     { icon: Users, label: 'Members', href: '/admin/members' },
     { icon: Calendar, label: 'Events', href: '/admin/events' },
     { icon: MessageSquare, label: 'Testimonials', href: '/admin/testimonials' },
+    { icon: Image, label: 'Hero Slider', href: '/admin/hero-slider' },
     { icon: FileText, label: 'Pages', href: '/admin/pages' },
     { icon: Settings, label: 'Settings', href: '/admin/settings' },
   ];

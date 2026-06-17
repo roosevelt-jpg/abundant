@@ -186,14 +186,21 @@ export interface Settings {
   languages: string[];
   defaultLanguage: string;
   theme: 'light' | 'dark' | 'system';
-  heroSlider?: Array<{
-    id?: string;
-    image: string;
-    title: string;
-    subtitle?: string;
-    cta?: { text?: string; link?: string };
-    order?: number;
-  }>;
+  heroSlider?: {
+    enabled?: boolean;
+    speed?: number; // milliseconds (3000, 5000, 10000, etc)
+    transition?: 'fade' | 'slide'; // fade or slide animation
+    autoPlay?: boolean;
+    slides: Array<{
+      id?: string;
+      type: 'image' | 'video'; // image or video
+      url: string; // URL to image or video (Firestore storage URL)
+      title?: string;
+      subtitle?: string;
+      cta?: { text?: string; link?: string };
+      order?: number;
+    }>;
+  };
   youtubeSection?: {
     enabled?: boolean;
     title?: string;
