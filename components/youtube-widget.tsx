@@ -92,7 +92,32 @@ export const YouTubeWidget = ({ settings: initialSettings }: YouTubeWidgetProps)
   }, [settings?.integrations?.youtube, settings?.youtubeSection?.enabled]);
 
   if (!settings?.youtubeSection?.enabled) {
-    return null;
+    return (
+      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-card/50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center">
+            <h2 className="font-heading text-3xl md:text-4xl font-bold mb-4">Featured Videos</h2>
+            <p className="text-muted-foreground mb-8">Check back soon for our latest videos and content</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-background rounded-lg border border-border overflow-hidden">
+                  <div className="w-full h-40 bg-muted flex items-center justify-center">
+                    <div className="text-muted-foreground text-sm">Video placeholder</div>
+                  </div>
+                  <div className="p-4">
+                    <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-muted rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-8">
+              Admin: Configure YouTube in Settings to display live videos
+            </p>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (
