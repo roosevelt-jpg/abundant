@@ -12,13 +12,16 @@ export const AdminSidebar = () => {
   const { logout } = useAuth();
   const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
     try {
+      setIsLoggingOut(true);
       await logout();
-      router.push('/');
+      router.push('/login');
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error('[v0] Logout failed:', error);
+      setIsLoggingOut(false);
     }
   };
 
@@ -65,10 +68,11 @@ export const AdminSidebar = () => {
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors text-sm font-medium"
+          disabled={isLoggingOut}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors text-sm font-medium disabled:opacity-50"
         >
           <LogOut className="w-5 h-5" />
-          {!isCollapsed && 'Logout'}
+          {!isCollapsed && (isLoggingOut ? 'Logging out...' : 'Logout')}
         </button>
       </div>
 
