@@ -1,7 +1,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Header } from '@/components/header';
@@ -15,7 +15,18 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signIn, userData, currentUser } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (currentUser && userData) {
+      if (userData.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
+    }
+  }, [currentUser, userData, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,8 +36,12 @@ export default function Login() {
     try {
       console.log('[v0] Attempting sign in with email:', email);
       await signIn(email, password);
-      console.log('[v0] Sign in successful, redirecting to dashboard');
-      router.push('/dashboard');
+      
+      // Wait a moment for userData to be populated in context
+      setTimeout(() => {
+        console.log('[v0] Sign in successful, checking user role');
+        // The useEffect above will handle the redirect
+      }, 500);
     } catch (err: any) {
       console.error('[v0] Sign in error:', err);
       
