@@ -276,7 +276,18 @@ export default function AdminSettingsEditor() {
               <span className="text-sm font-medium">Enable</span>
             </label>
           </div>
-          <p className="text-sm text-muted-foreground mb-4">For event location autocomplete</p>
+          <p className="text-sm text-muted-foreground mb-4">For event location autocomplete with Google Places predictions</p>
+          <div>
+            <label className="block text-sm font-medium mb-2">API Key</label>
+            <input
+              type="password"
+              value={settings.integrations?.googlePlaces?.apiKey || ''}
+              onChange={(e) => updateIntegrations('googlePlaces', { ...settings.integrations?.googlePlaces, apiKey: e.target.value })}
+              className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+              placeholder="AIza..."
+            />
+            <p className="text-xs text-muted-foreground mt-2">Get your API key from Google Cloud Console with Places API enabled</p>
+          </div>
         </div>
 
         {/* WhatsApp Chat Integration */}

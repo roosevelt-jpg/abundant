@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Plus, Trash2, Edit, X, Calendar, MapPin } from 'lucide-react';
+import { GooglePlacesAutocomplete } from '@/components/google-places-autocomplete';
 import type { Event } from '@/lib/types';
 
 export default function AdminEventsEditor() {
@@ -219,12 +220,10 @@ export default function AdminEventsEditor() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Location</label>
-                  <input
-                    type="text"
+                  <GooglePlacesAutocomplete
                     value={newEvent.location}
-                    onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
-                    placeholder="Event location"
-                    className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                    onChange={(location) => setNewEvent({ ...newEvent, location })}
+                    placeholder="Enter event location..."
                   />
                 </div>
               </div>

@@ -179,7 +179,7 @@ export interface Settings {
   integrations: {
     stripe?: { publishableKey?: string; configured: boolean };
     sendgrid?: { configured: boolean };
-    googlePlaces?: { configured: boolean };
+    googlePlaces?: { apiKey?: string; configured: boolean };
     whatsapp?: { phoneNumber?: string; configured: boolean };
     youtube?: { apiKey?: string; channelId?: string; configured: boolean };
   };
