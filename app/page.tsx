@@ -3,6 +3,8 @@ export const dynamic = 'force-dynamic';
 
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { HeroSlider } from '@/components/hero-slider';
+import { YouTubeWidget } from '@/components/youtube-widget';
 import Link from 'next/link';
 import { ArrowRight, Users, Calendar, Zap, Globe, Eye, EyeOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -10,6 +12,8 @@ import { useEffect, useState } from 'react';
 export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [showMembership, setShowMembership] = useState(true);
+  const [settings, setSettings] = useState(null);
+  const [loadingSettings, setLoadingSettings] = useState(true);
 
   useEffect(() => {
     setMounted(true);
@@ -18,6 +22,7 @@ export default function Home() {
     if (savedVisibility !== null) {
       setShowMembership(JSON.parse(savedVisibility));
     }
+    setLoadingSettings(false);
   }, []);
 
   const handleToggleMembership = () => {
@@ -35,7 +40,10 @@ export default function Home() {
       <Header />
       
       <main className="flex-1">
-        {/* Hero Section */}
+        {/* Hero Slider - Load independently */}
+        <HeroSlider settings={null} />
+        
+        {/* Hero Section - Base Default */}
         <section className="relative overflow-hidden py-20 md:py-32 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -72,6 +80,9 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* YouTube Widget - Load independently */}
+        <YouTubeWidget settings={null} />
 
         {/* Features Section */}
         <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-card/50">

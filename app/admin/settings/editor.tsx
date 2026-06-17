@@ -202,6 +202,228 @@ export default function AdminSettingsEditor() {
           </div>
         </div>
 
+        {/* YouTube Integration */}
+        <div className="p-6 bg-card rounded-xl border border-border">
+          <h2 className="font-heading font-bold text-lg mb-4">YouTube Integration</h2>
+          <p className="text-sm text-muted-foreground mb-4">Configure YouTube to display latest videos on homepage</p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">YouTube API Key</label>
+              <input
+                type="password"
+                value={settings.integrations?.youtube?.apiKey || ''}
+                onChange={(e) =>
+                  handleSettingChange('integrations', {
+                    ...settings.integrations,
+                    youtube: {
+                      ...settings.integrations?.youtube,
+                      apiKey: e.target.value
+                    }
+                  })
+                }
+                className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                placeholder="Get from Google Cloud Console"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Create a project in Google Cloud Console and enable YouTube Data API v3
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">YouTube Channel ID</label>
+              <input
+                type="text"
+                value={settings.integrations?.youtube?.channelId || ''}
+                onChange={(e) =>
+                  handleSettingChange('integrations', {
+                    ...settings.integrations,
+                    youtube: {
+                      ...settings.integrations?.youtube,
+                      channelId: e.target.value
+                    }
+                  })
+                }
+                className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                placeholder="e.g., UC..."
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Find your channel ID at youtube.com/account_advanced
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Enable YouTube Widget</label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.youtubeSection?.enabled || false}
+                  onChange={(e) =>
+                    handleSettingChange('youtubeSection', {
+                      ...settings.youtubeSection,
+                      enabled: e.target.checked
+                    })
+                  }
+                  className="w-5 h-5 rounded border-border"
+                />
+                <span className="text-sm">Display YouTube videos on homepage</span>
+              </label>
+            </div>
+
+            {settings.youtubeSection?.enabled && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Section Title</label>
+                  <input
+                    type="text"
+                    value={settings.youtubeSection?.title || ''}
+                    onChange={(e) =>
+                      handleSettingChange('youtubeSection', {
+                        ...settings.youtubeSection,
+                        title: e.target.value
+                      })
+                    }
+                    className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                    placeholder="Featured Videos"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Section Description</label>
+                  <textarea
+                    value={settings.youtubeSection?.description || ''}
+                    onChange={(e) =>
+                      handleSettingChange('youtubeSection', {
+                        ...settings.youtubeSection,
+                        description: e.target.value
+                      })
+                    }
+                    className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                    placeholder="Add a description for your YouTube section"
+                    rows={3}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Hero Slider */}
+        <div className="p-6 bg-card rounded-xl border border-border">
+          <h2 className="font-heading font-bold text-lg mb-4">Hero Slider</h2>
+          <p className="text-sm text-muted-foreground mb-4">Create and manage hero banner slides</p>
+          
+          {settings.heroSlider && settings.heroSlider.length > 0 && (
+            <div className="space-y-4 mb-6">
+              {settings.heroSlider.map((slide, idx) => (
+                <div key={idx} className="p-4 bg-muted/30 rounded-lg border border-border">
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="font-semibold">Slide {idx + 1}</h3>
+                    <button
+                      onClick={() => {
+                        const newSlides = settings.heroSlider?.filter((_, i) => i !== idx) || [];
+                        handleSettingChange('heroSlider', newSlides);
+                      }}
+                      className="text-sm px-2 py-1 bg-destructive/20 text-destructive rounded hover:bg-destructive/30 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Image URL</label>
+                      <input
+                        type="text"
+                        value={slide.image || ''}
+                        onChange={(e) => {
+                          const newSlides = [...(settings.heroSlider || [])];
+                          newSlides[idx].image = e.target.value;
+                          handleSettingChange('heroSlider', newSlides);
+                        }}
+                        className="w-full px-3 py-2 bg-input border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        placeholder="https://..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Title</label>
+                      <input
+                        type="text"
+                        value={slide.title || ''}
+                        onChange={(e) => {
+                          const newSlides = [...(settings.heroSlider || [])];
+                          newSlides[idx].title = e.target.value;
+                          handleSettingChange('heroSlider', newSlides);
+                        }}
+                        className="w-full px-3 py-2 bg-input border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        placeholder="Slide title"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Subtitle (optional)</label>
+                      <input
+                        type="text"
+                        value={slide.subtitle || ''}
+                        onChange={(e) => {
+                          const newSlides = [...(settings.heroSlider || [])];
+                          newSlides[idx].subtitle = e.target.value;
+                          handleSettingChange('heroSlider', newSlides);
+                        }}
+                        className="w-full px-3 py-2 bg-input border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        placeholder="Slide subtitle"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">CTA Text</label>
+                        <input
+                          type="text"
+                          value={slide.cta?.text || ''}
+                          onChange={(e) => {
+                            const newSlides = [...(settings.heroSlider || [])];
+                            if (!newSlides[idx].cta) newSlides[idx].cta = { text: '', link: '' };
+                            newSlides[idx].cta!.text = e.target.value;
+                            handleSettingChange('heroSlider', newSlides);
+                          }}
+                          className="w-full px-3 py-2 bg-input border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                          placeholder="Button text"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">CTA Link</label>
+                        <input
+                          type="text"
+                          value={slide.cta?.link || ''}
+                          onChange={(e) => {
+                            const newSlides = [...(settings.heroSlider || [])];
+                            if (!newSlides[idx].cta) newSlides[idx].cta = { text: '', link: '' };
+                            newSlides[idx].cta!.link = e.target.value;
+                            handleSettingChange('heroSlider', newSlides);
+                          }}
+                          className="w-full px-3 py-2 bg-input border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                          placeholder="/path"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button
+            onClick={() => {
+              const newSlide = { image: '', title: '', subtitle: '', cta: { text: '', link: '' } };
+              handleSettingChange('heroSlider', [...(settings.heroSlider || []), newSlide]);
+            }}
+            className="w-full px-4 py-2 border-2 border-dashed border-border hover:border-accent rounded-lg font-semibold text-sm transition-colors"
+          >
+            + Add Slide
+          </button>
+        </div>
+
         {/* Save Button */}
         <div className="flex justify-end">
           <button

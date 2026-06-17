@@ -100,20 +100,24 @@ export interface Settings {
     sendgrid?: { configured: boolean };
     googlePlaces?: { configured: boolean };
     whatsapp?: { phoneNumber?: string; configured: boolean };
+    youtube?: { apiKey?: string; channelId?: string; configured: boolean };
   };
   languages: string[];
   defaultLanguage: string;
   theme: 'light' | 'dark' | 'system';
   heroSlider?: Array<{
+    id?: string;
     image: string;
     title: string;
     subtitle?: string;
     cta?: { text: string; link: string };
+    order?: number;
   }>;
   youtubeSection?: {
     enabled: boolean;
     title?: string;
     description?: string;
+    videosPerPage?: number;
   };
   updatedAt: number;
   updatedBy: string;
