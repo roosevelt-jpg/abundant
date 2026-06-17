@@ -26,6 +26,7 @@ export default function DashboardLayout({
   useEffect(() => {
     if (!loading && currentUser && userData) {
       // Redirect to admin dashboard if user has admin role (regardless of email)
+      console.log('[v0] Dashboard - Checking role:', { email: currentUser.email, role: userData.role, loading });
       const isAdmin = userData.role === 'admin';
       if (isAdmin) {
         console.log('[v0] Admin user detected, redirecting to admin dashboard');
