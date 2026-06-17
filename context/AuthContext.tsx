@@ -25,41 +25,58 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Set a timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        console.log('[v0] Auth timeout - setting loading to false');
+        setLoading(false);
+      }
+    }, 5000); // 5 second timeout
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       
       if (user) {
-        // Fetch user data from Firestore
-        const userRef = doc(db, 'users', user.uid);
-        const userSnap = await getDoc(userRef);
-        
-        if (userSnap.exists()) {
-          setUserData(userSnap.data() as User);
-        } else {
-          // Create user document if it doesn't exist
-          const newUser: User = {
-            uid: user.uid,
-            email: user.email || '',
-            displayName: user.displayName || '',
-            photoURL: user.photoURL || undefined,
-            role: 'member',
-            membershipTier: 'member',
-            joinedAt: Date.now(),
-            status: 'active',
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-          };
-          await setDoc(userRef, newUser);
-          setUserData(newUser);
+        try {
+          // Fetch user data from Firestore with timeout
+          const userRef = doc(db, 'users', user.uid);
+          const userSnap = await getDoc(userRef);
+          
+          if (userSnap.exists()) {
+            setUserData(userSnap.data() as User);
+          } else {
+            // Create user document if it doesn't exist
+            const newUser: User = {
+              uid: user.uid,
+              email: user.email || '',
+              displayName: user.displayName || '',
+              photoURL: user.photoURL || undefined,
+              role: 'member',
+              membershipTier: 'member',
+              joinedAt: Date.now(),
+              status: 'active',
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            };
+            await setDoc(userRef, newUser);
+            setUserData(newUser);
+          }
+        } catch (error) {
+          console.error('[v0] Error fetching user data:', error);
+          // Continue even if Firestore fails
         }
       } else {
         setUserData(null);
       }
       
       setLoading(false);
+      clearTimeout(timeoutId);
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const signUp = async (email: string, password: string, displayName: string) => {
