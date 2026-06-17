@@ -305,6 +305,166 @@ export default function AdminSettingsEditor() {
           </div>
         </div>
 
+        {/* Hero Slider Configuration */}
+        <div className="p-6 bg-card rounded-xl border border-border">
+          <h2 className="font-heading font-bold text-lg mb-4">Hero Slider</h2>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">Manage hero slides displayed at the top of the homepage.</p>
+            {(settings.heroSlider || []).map((slide, index) => (
+              <div key={index} className="p-4 bg-background rounded-lg border border-border">
+                <div className="flex items-start justify-between mb-3">
+                  <span className="font-semibold">Slide {index + 1}</span>
+                  <button
+                    onClick={() => {
+                      const newSlides = settings.heroSlider?.filter((_, i) => i !== index) || [];
+                      updateSettings({ heroSlider: newSlides });
+                    }}
+                    className="text-sm text-destructive hover:text-destructive/80"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Image URL</label>
+                    <input
+                      type="text"
+                      value={slide.image || ''}
+                      onChange={(e) => {
+                        const newSlides = [...(settings.heroSlider || [])];
+                        newSlides[index] = { ...slide, image: e.target.value };
+                        updateSettings({ heroSlider: newSlides });
+                      }}
+                      className="w-full px-3 py-2 bg-input border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                      placeholder="https://..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Title</label>
+                    <input
+                      type="text"
+                      value={slide.title || ''}
+                      onChange={(e) => {
+                        const newSlides = [...(settings.heroSlider || [])];
+                        newSlides[index] = { ...slide, title: e.target.value };
+                        updateSettings({ heroSlider: newSlides });
+                      }}
+                      className="w-full px-3 py-2 bg-input border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                      placeholder="Slide title"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Subtitle</label>
+                    <input
+                      type="text"
+                      value={slide.subtitle || ''}
+                      onChange={(e) => {
+                        const newSlides = [...(settings.heroSlider || [])];
+                        newSlides[index] = { ...slide, subtitle: e.target.value };
+                        updateSettings({ heroSlider: newSlides });
+                      }}
+                      className="w-full px-3 py-2 bg-input border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                      placeholder="Subtitle (optional)"
+                    />
+                  </div>
+                  {slide.cta && (
+                    <div className="space-y-2">
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Button Text</label>
+                        <input
+                          type="text"
+                          value={slide.cta.text || ''}
+                          onChange={(e) => {
+                            const newSlides = [...(settings.heroSlider || [])];
+                            newSlides[index] = { ...slide, cta: { ...slide.cta, text: e.target.value } };
+                            updateSettings({ heroSlider: newSlides });
+                          }}
+                          className="w-full px-3 py-2 bg-input border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                          placeholder="Button text"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Button Link</label>
+                        <input
+                          type="text"
+                          value={slide.cta.link || ''}
+                          onChange={(e) => {
+                            const newSlides = [...(settings.heroSlider || [])];
+                            newSlides[index] = { ...slide, cta: { ...slide.cta, link: e.target.value } };
+                            updateSettings({ heroSlider: newSlides });
+                          }}
+                          className="w-full px-3 py-2 bg-input border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                          placeholder="/"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            <button
+              onClick={() => {
+                const newSlide = { image: '', title: '', subtitle: '', cta: { text: '', link: '' }, order: (settings.heroSlider?.length || 0) + 1 };
+                updateSettings({ heroSlider: [...(settings.heroSlider || []), newSlide] });
+              }}
+              className="w-full px-4 py-2 border border-accent text-accent rounded-lg hover:bg-accent/5 text-sm font-medium transition-colors"
+            >
+              Add Slide
+            </button>
+          </div>
+        </div>
+
+        {/* YouTube Widget Configuration */}
+        <div className="p-6 bg-card rounded-xl border border-border">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-heading font-bold text-lg">YouTube Widget</h2>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={settings.youtubeSection?.enabled || false}
+                onChange={(e) => updateSettings({ youtubeSection: { ...settings.youtubeSection, enabled: e.target.checked } })}
+                className="w-4 h-4 rounded border-border"
+              />
+              <span className="text-sm font-medium">Enable</span>
+            </label>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Section Title</label>
+              <input
+                type="text"
+                value={settings.youtubeSection?.title || 'Featured Videos'}
+                onChange={(e) => updateSettings({ youtubeSection: { ...settings.youtubeSection, title: e.target.value } })}
+                className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                placeholder="Featured Videos"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Section Description</label>
+              <textarea
+                value={settings.youtubeSection?.description || ''}
+                onChange={(e) => updateSettings({ youtubeSection: { ...settings.youtubeSection, description: e.target.value } })}
+                className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                rows={3}
+                placeholder="Description (optional)"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Videos Per Page</label>
+              <input
+                type="number"
+                min="1"
+                max="12"
+                value={settings.youtubeSection?.videosPerPage || 3}
+                onChange={(e) => updateSettings({ youtubeSection: { ...settings.youtubeSection, videosPerPage: parseInt(e.target.value) } })}
+                className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                placeholder="3"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">Configure YouTube API key and Channel ID in the YouTube Integration section above.</p>
+          </div>
+        </div>
+
         {/* Save Button */}
         <div className="flex gap-4">
           <button

@@ -114,11 +114,11 @@ export interface Settings {
     image: string;
     title: string;
     subtitle?: string;
-    cta?: { text: string; link: string };
+    cta?: { text?: string; link?: string };
     order?: number;
   }>;
   youtubeSection?: {
-    enabled: boolean;
+    enabled?: boolean;
     title?: string;
     description?: string;
     videosPerPage?: number;
