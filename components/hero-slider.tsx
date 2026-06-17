@@ -95,7 +95,7 @@ export const HeroSlider = ({ settings: initialSettings }: HeroSliderProps) => {
                 <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 max-w-2xl leading-tight">
                   {s.title}
                 </h1>
-                {s.cta && (
+                {s.cta && s.cta.text && s.cta.link && (
                   <Link
                     href={s.cta.link}
                     className="btn-gradient inline-flex items-center justify-center px-8 py-3 rounded-lg font-semibold mt-6"

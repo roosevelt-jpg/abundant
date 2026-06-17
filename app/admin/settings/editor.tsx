@@ -374,11 +374,15 @@ export default function AdminSettingsEditor() {
                         <input
                           type="text"
                           value={slide.cta.text || ''}
-                          onChange={(e) => {
-                            const newSlides = [...(settings.heroSlider || [])];
-                            newSlides[index] = { ...slide, cta: { ...slide.cta, text: e.target.value } };
-                            updateSettings({ heroSlider: newSlides });
-                          }}
+                      onChange={(e) => {
+                        const newSlides = [...(settings.heroSlider || [])];
+                        const updated = { ...slide };
+                        if (updated.cta) {
+                          updated.cta = { ...updated.cta, text: e.target.value };
+                        }
+                        newSlides[index] = updated;
+                        updateSettings({ heroSlider: newSlides });
+                      }}
                           className="w-full px-3 py-2 bg-input border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                           placeholder="Button text"
                         />
@@ -388,11 +392,15 @@ export default function AdminSettingsEditor() {
                         <input
                           type="text"
                           value={slide.cta.link || ''}
-                          onChange={(e) => {
-                            const newSlides = [...(settings.heroSlider || [])];
-                            newSlides[index] = { ...slide, cta: { ...slide.cta, link: e.target.value } };
-                            updateSettings({ heroSlider: newSlides });
-                          }}
+                      onChange={(e) => {
+                        const newSlides = [...(settings.heroSlider || [])];
+                        const updated = { ...slide };
+                        if (updated.cta) {
+                          updated.cta = { ...updated.cta, link: e.target.value };
+                        }
+                        newSlides[index] = updated;
+                        updateSettings({ heroSlider: newSlides });
+                      }}
                           className="w-full px-3 py-2 bg-input border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                           placeholder="/"
                         />
