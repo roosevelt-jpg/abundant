@@ -1,21 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateTestimonial, deleteTestimonial, publishTestimonial } from '@/lib/firestore-service';
-import { getAuth } from 'firebase-admin/auth';
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { updateTestimonial, deleteTestimonial } from '@/lib/firestore-service';
 
-if (!getApps().length) {
-  initializeApp({
-    credential: cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    } as any),
-  });
+export const dynamic = 'force-dynamic';
+
+async function initializeFirebase() {
+  if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL) {
+    return;
+  }
+  try {
+    const firebaseApp = await import('firebase-admin/app') as any;
+    const { initializeApp, cert, getApps } = firebaseApp;
+    if (!getApps().length) {
+      initializeApp({
+        credential: cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\n/g, '\n'),
+        } as any),
+      });
+    }
+  } catch (error) {
+    console.error('[v0] Firebase init error:', error);
+  }
 }
 
 async function verifyAdmin(authToken: string | null | undefined) {
   if (!authToken) return false;
   try {
+    const firebaseAuth = await import('firebase-admin/auth') as any;
+    const { getAuth } = firebaseAuth;
     const token = authToken.replace('Bearer ', '');
     const decodedToken = await getAuth().verifyIdToken(token);
     return decodedToken.email === 'admin@abundantglobalclub.com';
@@ -25,17 +38,12 @@ async function verifyAdmin(authToken: string | null | undefined) {
 }
 
 // PUT /api/testimonials/[id]
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    await initializeFirebase();
     const { id } = await params;
     const isAdmin = await verifyAdmin(request.headers.get('authorization'));
-    if (!isAdmin) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const data = await request.json();
     await updateTestimonial(id, data);
     return NextResponse.json({ success: true });
@@ -46,17 +54,12 @@ export async function PUT(
 }
 
 // DELETE /api/testimonials/[id]
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    await initializeFirebase();
     const { id } = await params;
     const isAdmin = await verifyAdmin(request.headers.get('authorization'));
-    if (!isAdmin) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     await deleteTestimonial(id);
     return NextResponse.json({ success: true });
   } catch (error) {

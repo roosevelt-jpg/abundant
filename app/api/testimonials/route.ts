@@ -1,19 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTestimonials, addTestimonial, updateTestimonial, deleteTestimonial, publishTestimonial } from '@/lib/firestore-service';
-import { getAuth } from 'firebase-admin/auth';
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
 
 // Initialize Firebase Admin
-if (!getApps().length) {
-  initializeApp({
-    credential: cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    } as any),
-  });
-}
-
 async function verifyAdmin(authToken: string | null | undefined) {
   if (!authToken) return false;
   try {
