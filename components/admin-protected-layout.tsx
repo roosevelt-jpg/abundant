@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export function AdminProtectedLayout({
   children,
@@ -11,10 +11,17 @@ export function AdminProtectedLayout({
 }) {
   const { currentUser, userData, loading } = useAuth();
   const router = useRouter();
+  const [debugInfo, setDebugInfo] = useState<string>('');
 
   useEffect(() => {
-    if (!loading && (!currentUser || userData?.role !== 'admin')) {
-      router.push('/login');
+    if (!loading) {
+      console.log('[v0] Auth Debug:', { currentUser: currentUser?.email, userData, loading });
+      setDebugInfo(`User: ${currentUser?.email}, Role: ${userData?.role}`);
+      
+      // Allow admin@abundantglobalclub.com to access without role check
+      if (!currentUser || (currentUser.email !== 'admin@abundantglobalclub.com' && userData?.role !== 'admin')) {
+        router.push('/login');
+      }
     }
   }, [currentUser, userData, loading, router]);
 
@@ -30,7 +37,12 @@ export function AdminProtectedLayout({
     );
   }
 
-  if (!currentUser || userData?.role !== 'admin') {
+  if (!currentUser) {
+    return null;
+  }
+
+  // Allow admin@abundantglobalclub.com or users with admin role
+  if (currentUser.email !== 'admin@abundantglobalclub.com' && userData?.role !== 'admin') {
     return null;
   }
 
