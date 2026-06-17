@@ -134,9 +134,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      console.error('Sign in error:', error);
+      console.log('[v0] AuthContext: Starting sign in for:', email);
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      console.log('[v0] AuthContext: Sign in successful for user:', result.user.uid);
+    } catch (error: any) {
+      console.error('[v0] AuthContext: Sign in error:', error.code, error.message);
       throw error;
     }
   };

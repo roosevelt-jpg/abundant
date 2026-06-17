@@ -23,10 +23,33 @@ export default function Login() {
     setLoading(true);
 
     try {
+      console.log('[v0] Attempting sign in with email:', email);
       await signIn(email, password);
+      console.log('[v0] Sign in successful, redirecting to dashboard');
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in');
+      console.error('[v0] Sign in error:', err);
+      
+      // Parse Firebase error codes to user-friendly messages
+      let errorMessage = 'Failed to sign in';
+      
+      if (err.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email address';
+      } else if (err.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password';
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address';
+      } else if (err.code === 'auth/user-disabled') {
+        errorMessage = 'This account has been disabled';
+      } else if (err.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed login attempts. Please try again later';
+      } else if (err.code === 'auth/invalid-credential') {
+        errorMessage = 'Email or password is incorrect';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
