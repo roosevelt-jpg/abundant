@@ -4,52 +4,39 @@ import { useAuth } from '@/context/AuthContext';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 
 export default function Dashboard() {
   const { currentUser, userData, loading } = useAuth();
   const router = useRouter();
-  const [authTimeout, setAuthTimeout] = useState(false);
-
-  // Set timeout for auth check - if no user after 5 seconds, redirect to login
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!currentUser && !loading) {
-        setAuthTimeout(true);
-        router.push('/login');
-      }
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, [currentUser, loading, router]);
 
   useEffect(() => {
+    // If auth has finished loading and no user, redirect to login
     if (!loading && !currentUser) {
+      console.log('[v0] No current user, redirecting to login');
       router.push('/login');
     }
   }, [currentUser, loading, router]);
 
-  if (loading || authTimeout) {
+  // Show loading state
+  if (loading) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading your dashboard...</p>
-          </div>
-        </main>
-        <Footer />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your dashboard...</p>
+        </div>
       </div>
     );
   }
 
+  // If still not logged in after loading completes, return nothing (redirect will happen)
   if (!currentUser) {
     return null;
   }
 
-  // If user is authenticated but userData isn't loaded yet, show placeholder with user email
+  // User is authenticated - show dashboard
   const displayName = userData?.displayName || currentUser.email || 'Member';
   const joinedDate = userData?.joinedAt ? new Date(userData.joinedAt).toLocaleDateString() : 'Recently';
   const status = userData?.status || 'active';
