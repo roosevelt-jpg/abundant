@@ -15,11 +15,15 @@ export default function HeroSliderPage() {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const response = await fetch('/api/settings');
+        const response = await fetch('/api/settings', {
+          cache: 'no-store',
+          method: 'GET'
+        });
         if (!response.ok) throw new Error('Failed to load settings');
         const data = await response.json();
         setSettings(data);
       } catch (err) {
+        console.error('[v0] Hero slider load error:', err);
         setError(err instanceof Error ? err.message : 'Failed to load settings');
       } finally {
         setIsLoading(false);
@@ -54,11 +58,23 @@ export default function HeroSliderPage() {
   };
 
   if (isLoading) {
-    return <div className="p-8 text-center">Loading...</div>;
+    return <div className="p-8 text-center">Loading hero slider settings...</div>;
   }
 
-  if (!settings) {
-    return <div className="p-8 text-center text-destructive">Failed to load settings</div>;
+  if (error || !settings) {
+    return (
+      <div className="p-8 space-y-4">
+        <div className="text-center text-destructive font-medium">
+          {error || 'Failed to load settings'}
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="mx-auto px-4 py-2 bg-destructive text-white rounded-lg hover:bg-destructive/90"
+        >
+          Retry
+        </button>
+      </div>
+    );
   }
 
   return (

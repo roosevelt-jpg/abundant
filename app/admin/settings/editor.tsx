@@ -11,6 +11,7 @@ export default function AdminSettingsEditor() {
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch settings on mount
   useEffect(() => {
@@ -20,13 +21,22 @@ export default function AdminSettingsEditor() {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/settings');
+      setError(null);
+      const response = await fetch('/api/settings', { 
+        cache: 'no-store',
+        method: 'GET'
+      });
       if (response.ok) {
         const data = await response.json();
         setSettings(data);
+      } else {
+        setError(`Failed to load settings: ${response.statusText}`);
+        setSettings({});
       }
     } catch (error) {
       console.error('[v0] Error fetching settings:', error);
+      setError('Failed to load settings. Please try again.');
+      setSettings({});
     } finally {
       setLoading(false);
     }
@@ -61,6 +71,22 @@ export default function AdminSettingsEditor() {
       setSaving(false);
     }
   };
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-destructive/10 border border-destructive rounded-lg p-4">
+          <p className="text-destructive font-medium">{error}</p>
+          <button
+            onClick={fetchSettings}
+            className="mt-3 px-4 py-2 bg-destructive text-white rounded-lg hover:bg-destructive/90 text-sm font-medium"
+          >
+            Retry Loading Settings
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading || !settings) {
     return (
