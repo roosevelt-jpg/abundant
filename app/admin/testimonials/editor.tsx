@@ -1,110 +1,86 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
-import { getAllTestimonials, createTestimonial, updateTestimonial, deleteTestimonial, publishTestimonial } from '@/lib/testimonials-service';
-import { Testimonial } from '@/lib/types';
+import { useState } from 'react';
+import { Plus, Trash2, Eye, EyeOff, X } from 'lucide-react';
+
+const DEFAULT_TESTIMONIALS = [
+  {
+    id: '1',
+    author: 'Sarah Johnson',
+    role: 'Entrepreneur',
+    content: 'Abundant Global Club transformed my business network and opened doors I never knew existed.',
+    status: 'published',
+    createdAt: Date.now()
+  },
+  {
+    id: '2',
+    author: 'Ahmed Al-Mansouri',
+    role: 'Business Owner',
+    content: 'The exclusive events and networking opportunities have been invaluable for my growth.',
+    status: 'pending',
+    createdAt: Date.now()
+  },
+  {
+    id: '3',
+    author: 'Maria Garcia',
+    role: 'Executive',
+    content: 'Being part of this elite community has accelerated my professional development significantly.',
+    status: 'published',
+    createdAt: Date.now()
+  }
+];
 
 export default function AdminTestimonialsEditor() {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingData, setEditingData] = useState<Partial<Testimonial>>({});
+  const [testimonials, setTestimonials] = useState(DEFAULT_TESTIMONIALS);
+  const [showModal, setShowModal] = useState(false);
+  const [newTestimonial, setNewTestimonial] = useState({
+    author: '',
+    role: '',
+    content: ''
+  });
 
-  useEffect(() => {
-    loadTestimonials();
-  }, []);
+  const handleAddTestimonial = () => {
+    if (!newTestimonial.author || !newTestimonial.content) {
+      alert('Please fill in author name and content');
+      return;
+    }
 
-  const loadTestimonials = async () => {
-    try {
-      setLoading(true);
-      const allTestimonials = await getAllTestimonials();
-      setTestimonials(allTestimonials);
-    } catch (error) {
-      console.error('Error loading testimonials:', error);
-    } finally {
-      setLoading(false);
+    const testimonial = {
+      id: String(testimonials.length + 1),
+      ...newTestimonial,
+      status: 'pending',
+      createdAt: Date.now()
+    };
+
+    setTestimonials([...testimonials, testimonial]);
+    setNewTestimonial({ author: '', role: '', content: '' });
+    setShowModal(false);
+  };
+
+  const handlePublish = (id: string) => {
+    setTestimonials(testimonials.map(t => 
+      t.id === id ? { ...t, status: t.status === 'published' ? 'pending' : 'published' } : t
+    ));
+  };
+
+  const handleDeleteTestimonial = (id: string) => {
+    if (confirm('Are you sure you want to delete this testimonial?')) {
+      setTestimonials(testimonials.filter(t => t.id !== id));
     }
   };
 
-  const handleEdit = (testimonial: Testimonial) => {
-    setEditingId(testimonial.id);
-    setEditingData(testimonial);
-  };
-
-  const handleSave = async () => {
-    if (!editingId) return;
-    try {
-      await updateTestimonial(editingId, editingData);
-      await loadTestimonials();
-      setEditingId(null);
-      setEditingData({});
-    } catch (error) {
-      console.error('Error saving testimonial:', error);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this testimonial?')) return;
-    try {
-      await deleteTestimonial(id);
-      await loadTestimonials();
-    } catch (error) {
-      console.error('Error deleting testimonial:', error);
-    }
-  };
-
-  const handleTogglePublish = async (id: string, isPublished: boolean) => {
-    try {
-      await publishTestimonial(id, !isPublished);
-      await loadTestimonials();
-    } catch (error) {
-      console.error('Error toggling publish:', error);
-    }
-  };
-
-  const handleCreate = async () => {
-    try {
-      await createTestimonial({
-        authorName: 'New Member',
-        content: 'Share your success story here...',
-        rating: 5,
-        isPublished: false
-      });
-      await loadTestimonials();
-    } catch (error) {
-      console.error('Error creating testimonial:', error);
-    }
-  };
-
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <span
-            key={i}
-            className={`text-lg ${i <= rating ? 'text-yellow-500' : 'text-gray-300'}`}
-          >
-            ★
-          </span>
-        ))}
-      </div>
-    );
-  };
-
-  if (loading) {
-    return <div className="text-center py-12">Loading testimonials...</div>;
-  }
+  const published = testimonials.filter(t => t.status === 'published').length;
+  const pending = testimonials.filter(t => t.status === 'pending').length;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-heading text-3xl font-bold mb-2">Member Testimonials</h1>
-          <p className="text-muted-foreground">Manage and showcase member success stories</p>
+          <h1 className="font-heading text-3xl font-bold mb-2">Testimonials</h1>
+          <p className="text-muted-foreground">Manage member testimonials and reviews</p>
         </div>
         <button
-          onClick={handleCreate}
+          onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg font-semibold hover:bg-accent/90 transition-colors"
         >
           <Plus className="w-5 h-5" />
@@ -112,146 +88,134 @@ export default function AdminTestimonialsEditor() {
         </button>
       </div>
 
-      <div className="space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="p-4 bg-card rounded-lg border border-border">
+          <p className="text-sm text-muted-foreground mb-1">Published</p>
+          <p className="text-3xl font-bold text-accent">{published}</p>
+        </div>
+        <div className="p-4 bg-card rounded-lg border border-border">
+          <p className="text-sm text-muted-foreground mb-1">Pending Approval</p>
+          <p className="text-3xl font-bold text-yellow-600">{pending}</p>
+        </div>
+      </div>
+
+      {/* Add Testimonial Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg border border-border max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-heading font-bold text-lg">Add Testimonial</h2>
+              <button onClick={() => setShowModal(false)} className="p-1 hover:bg-background rounded">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Author Name</label>
+                <input
+                  type="text"
+                  value={newTestimonial.author}
+                  onChange={(e) => setNewTestimonial({ ...newTestimonial, author: e.target.value })}
+                  placeholder="Author name"
+                  className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Role/Title</label>
+                <input
+                  type="text"
+                  value={newTestimonial.role}
+                  onChange={(e) => setNewTestimonial({ ...newTestimonial, role: e.target.value })}
+                  placeholder="e.g., Entrepreneur"
+                  className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Testimonial Content</label>
+                <textarea
+                  value={newTestimonial.content}
+                  onChange={(e) => setNewTestimonial({ ...newTestimonial, content: e.target.value })}
+                  placeholder="Write the testimonial content..."
+                  rows={4}
+                  className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-background transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddTestimonial}
+                  className="flex-1 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-semibold"
+                >
+                  Add Testimonial
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Testimonials List */}
+      <div className="space-y-4">
         {testimonials.map((testimonial) => (
-          <div key={testimonial.id} className="p-6 bg-card rounded-xl border border-border">
-            {editingId === testimonial.id ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Author Name</label>
-                    <input
-                      type="text"
-                      value={editingData.authorName || ''}
-                      onChange={(e) => setEditingData({ ...editingData, authorName: e.target.value })}
-                      className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Author Title</label>
-                    <input
-                      type="text"
-                      value={editingData.authorTitle || ''}
-                      onChange={(e) => setEditingData({ ...editingData, authorTitle: e.target.value })}
-                      className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Testimonial Content</label>
-                  <textarea
-                    value={editingData.content || ''}
-                    onChange={(e) => setEditingData({ ...editingData, content: e.target.value })}
-                    className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent resize-none"
-                    rows={5}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-3">Rating</label>
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <button
-                        key={i}
-                        onClick={() => setEditingData({ ...editingData, rating: i })}
-                        className={`text-2xl transition-colors ${
-                          i <= (editingData.rating || 0) ? 'text-yellow-500' : 'text-gray-300'
-                        }`}
-                      >
-                        ★
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={editingData.isPublished || false}
-                    onChange={(e) => setEditingData({ ...editingData, isPublished: e.target.checked })}
-                    className="w-4 h-4"
-                  />
-                  <label className="text-sm font-medium">Published</label>
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleSave}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-600 rounded-lg font-semibold hover:bg-green-500/20 transition-colors"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditingId(null);
-                      setEditingData({});
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive rounded-lg font-semibold hover:bg-destructive/20 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
+          <div
+            key={testimonial.id}
+            className={`p-6 bg-card rounded-lg border transition-colors ${
+              testimonial.status === 'published'
+                ? 'border-green-500/20 bg-green-500/5'
+                : 'border-yellow-500/20 bg-yellow-500/5'
+            }`}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="font-semibold text-lg">{testimonial.author}</h3>
+                <p className="text-sm text-muted-foreground">{testimonial.role}</p>
               </div>
-            ) : (
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="mb-3">
-                    {renderStars(testimonial.rating)}
-                  </div>
-                  
-                  <h3 className="font-heading font-bold text-lg mb-1">{testimonial.authorName}</h3>
-                  {testimonial.authorTitle && (
-                    <p className="text-sm text-muted-foreground mb-3">{testimonial.authorTitle}</p>
-                  )}
-                  
-                  <p className="text-sm leading-relaxed mb-3">{testimonial.content}</p>
-                  
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className={`inline-block px-2 py-1 rounded ${
-                      testimonial.isPublished
-                        ? 'bg-green-500/10 text-green-600'
-                        : 'bg-yellow-500/10 text-yellow-600'
-                    }`}>
-                      {testimonial.isPublished ? 'Published' : 'Draft'}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2 ml-4">
-                  <button
-                    onClick={() => handleTogglePublish(testimonial.id, testimonial.isPublished)}
-                    className="p-2 hover:bg-accent/10 rounded-lg transition-colors"
-                  >
-                    {testimonial.isPublished ? (
-                      <Eye className="w-5 h-5 text-accent" />
-                    ) : (
-                      <EyeOff className="w-5 h-5 text-muted-foreground" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => handleEdit(testimonial)}
-                    className="p-2 hover:bg-accent/10 rounded-lg transition-colors"
-                  >
-                    <Edit className="w-5 h-5 text-accent" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(testimonial.id)}
-                    className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-5 h-5 text-destructive" />
-                  </button>
-                </div>
-              </div>
-            )}
+              <span className={`px-2 py-1 text-xs font-semibold rounded ${
+                testimonial.status === 'published'
+                  ? 'bg-green-500/10 text-green-600'
+                  : 'bg-yellow-500/10 text-yellow-600'
+              }`}>
+                {testimonial.status === 'published' ? 'Published' : 'Pending'}
+              </span>
+            </div>
+
+            <p className="text-sm mb-4 italic text-muted-foreground">"{testimonial.content}"</p>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePublish(testimonial.id)}
+                className="flex-1 flex items-center justify-center gap-2 p-2 border border-border rounded-lg hover:bg-accent/10 transition-colors text-sm font-medium"
+              >
+                {testimonial.status === 'published' ? (
+                  <>
+                    <EyeOff className="w-4 h-4" />
+                    Unpublish
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-4 h-4" />
+                    Publish
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => handleDeleteTestimonial(testimonial.id)}
+                className="flex-1 flex items-center justify-center gap-2 p-2 border border-destructive/20 rounded-lg hover:bg-destructive/10 transition-colors text-sm font-medium text-destructive"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            </div>
           </div>
         ))}
-
-        {testimonials.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            No testimonials yet. Add one to get started.
-          </div>
-        )}
       </div>
     </div>
   );

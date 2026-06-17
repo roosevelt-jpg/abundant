@@ -1,12 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Plus, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, X } from 'lucide-react';
 
 export default function AdminMembers() {
   const [searchTerm, setSearchTerm] = useState('');
-
-  const members = [
+  const [members, setMembers] = useState([
     {
       id: '1',
       name: 'John Doe',
@@ -31,12 +30,40 @@ export default function AdminMembers() {
       status: 'Approved',
       joinDate: '2023-11-20'
     }
-  ];
+  ]);
+  const [showModal, setShowModal] = useState(false);
+  const [newMember, setNewMember] = useState({ name: '', email: '', tier: 'Member' });
 
   const filteredMembers = members.filter(m => 
     m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     m.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleAddMember = () => {
+    if (!newMember.name || !newMember.email) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    const member = {
+      id: String(members.length + 1),
+      name: newMember.name,
+      email: newMember.email,
+      tier: newMember.tier,
+      status: 'Pending',
+      joinDate: new Date().toISOString().split('T')[0]
+    };
+
+    setMembers([...members, member]);
+    setNewMember({ name: '', email: '', tier: 'Member' });
+    setShowModal(false);
+  };
+
+  const handleDeleteMember = (id: string) => {
+    if (confirm('Are you sure you want to delete this member?')) {
+      setMembers(members.filter(m => m.id !== id));
+    }
+  };
 
   return (
     <div>
@@ -45,11 +72,78 @@ export default function AdminMembers() {
           <h1 className="font-heading text-3xl font-bold mb-2">Members</h1>
           <p className="text-muted-foreground">Manage and review member accounts</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg font-semibold hover:bg-accent/90 transition-colors">
+        <button 
+          onClick={() => setShowModal(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg font-semibold hover:bg-accent/90 transition-colors"
+        >
           <Plus className="w-5 h-5" />
           Add Member
         </button>
       </div>
+
+      {/* Add Member Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg border border-border max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-heading font-bold text-lg">Add New Member</h2>
+              <button onClick={() => setShowModal(false)} className="p-1 hover:bg-background rounded">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Name</label>
+                <input
+                  type="text"
+                  value={newMember.name}
+                  onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
+                  placeholder="Member name"
+                  className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Email</label>
+                <input
+                  type="email"
+                  value={newMember.email}
+                  onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
+                  placeholder="member@example.com"
+                  className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Tier</label>
+                <select
+                  value={newMember.tier}
+                  onChange={(e) => setNewMember({ ...newMember, tier: e.target.value })}
+                  className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                >
+                  <option>Member</option>
+                  <option>Elite</option>
+                  <option>Inner Circle</option>
+                </select>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-background transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddMember}
+                  className="flex-1 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-semibold"
+                >
+                  Add Member
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search */}
       <div className="mb-6 relative">
@@ -101,7 +195,10 @@ export default function AdminMembers() {
                     <button className="p-2 hover:bg-accent/10 rounded-lg transition-colors">
                       <Edit className="w-4 h-4 text-accent" />
                     </button>
-                    <button className="p-2 hover:bg-destructive/10 rounded-lg transition-colors">
+                    <button 
+                      onClick={() => handleDeleteMember(member.id)}
+                      className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
+                    >
                       <Trash2 className="w-4 h-4 text-destructive" />
                     </button>
                   </div>
