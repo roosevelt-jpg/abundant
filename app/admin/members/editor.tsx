@@ -278,7 +278,7 @@ export default function AdminMembers() {
                   <td className="py-3 px-4 text-sm">{member.email}</td>
                   <td className="py-3 px-4">
                     <span className="px-2 py-1 text-xs font-semibold rounded bg-accent/10 text-accent">
-                      {member.membershipTier?.charAt(0).toUpperCase() + member.membershipTier?.slice(1)}
+                      {member.membershipTier ? member.membershipTier.charAt(0).toUpperCase() + member.membershipTier.slice(1) : 'Member'}
                     </span>
                   </td>
                   <td className="py-3 px-4">

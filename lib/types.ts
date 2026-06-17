@@ -4,12 +4,12 @@ export interface User {
   email: string;
   displayName?: string;
   photoURL?: string;
-  role: 'member' | 'admin';
-  membershipTier: 'member' | 'elite' | 'inner-circle';
-  joinedAt: number;
-  status: 'active' | 'inactive' | 'suspended';
-  createdAt: number;
-  updatedAt: number;
+  role?: 'member' | 'admin';
+  membershipTier?: 'member' | 'elite' | 'inner-circle' | 'founder';
+  joinedAt?: number;
+  status?: 'pending' | 'approved' | 'rejected' | 'active' | 'inactive' | 'suspended';
+  createdAt?: number;
+  updatedAt?: number;
   phone?: string;
   bio?: string;
   title?: string;
@@ -19,22 +19,21 @@ export interface User {
 export interface Event {
   id: string;
   title: string;
-  description: string;
-  date: number; // timestamp
-  endDate?: number;
-  location: string;
-  capacity?: number;
-  registered: number;
-  imageUrl?: string;
-  category: 'networking' | 'workshop' | 'webinar' | 'conference' | 'other';
-  status: 'draft' | 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
+  description?: string;
+  date: string; // ISO date string for form input
+  time?: string; // HH:mm format
+  location?: string;
+  expectedAttendees?: number;
+  price?: number;
+  stripeProductId?: string;
   isPublic: boolean;
-  createdBy: string;
-  createdAt: number;
-  updatedAt: number;
-  attendees?: string[]; // user IDs
-  agenda?: { time: string; title: string; speaker?: string }[];
-  speakers?: { name: string; title?: string; bio?: string; image?: string }[];
+  imageUrl?: string;
+  category?: 'networking' | 'workshop' | 'webinar' | 'conference' | 'other';
+  status?: 'draft' | 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
+  createdBy?: string;
+  createdAt?: number;
+  updatedAt?: number;
+  attendees?: string[];
 }
 
 export interface EventRegistration {
@@ -68,10 +67,12 @@ export interface Page {
   title: string;
   slug: string;
   content: string;
+  metaDescription?: string;
+  displayLocation?: 'custom' | 'footer' | 'navigation' | 'both';
   isPublished: boolean;
-  createdBy: string;
-  createdAt: number;
-  updatedAt: number;
+  createdBy?: string;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 // Settings type

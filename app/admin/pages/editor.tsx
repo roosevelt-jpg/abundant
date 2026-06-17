@@ -17,7 +17,7 @@ export default function AdminPagesEditor() {
     content: '',
     metaDescription: '',
     isPublished: false,
-    displayLocation: 'custom' as const
+    displayLocation: 'custom' as 'custom' | 'footer' | 'navigation' | 'both'
   });
 
   useEffect(() => {
@@ -160,7 +160,7 @@ export default function AdminPagesEditor() {
       content: '',
       metaDescription: '',
       isPublished: false,
-      displayLocation: 'custom'
+      displayLocation: 'custom' as 'custom' | 'footer' | 'navigation' | 'both'
     });
   };
 

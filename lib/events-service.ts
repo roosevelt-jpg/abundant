@@ -58,12 +58,11 @@ export async function getUpcomingEvents(count: number = 10): Promise<Event[]> {
   }
 }
 
-export async function createEvent(event: Omit<Event, 'id' | 'createdAt' | 'updatedAt' | 'registered'>): Promise<string> {
+export async function createEvent(event: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
   try {
     const newEvent: Event = {
       ...event,
       id: doc(eventsRef).id,
-      registered: 0,
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
@@ -105,15 +104,6 @@ export async function registerForEvent(registration: Omit<EventRegistration, 'id
       registeredAt: Date.now()
     };
     await setDoc(doc(registrationsRef, newReg.id), newReg);
-    
-    // Update event registration count
-    const event = await getEvent(registration.eventId);
-    if (event) {
-      await updateEvent(registration.eventId, {
-        registered: (event.registered || 0) + 1
-      });
-    }
-    
     return newReg.id;
   } catch (error) {
     console.error('Error registering for event:', error);
@@ -160,14 +150,6 @@ export async function cancelEventRegistration(registrationId: string, eventId: s
     await updateDoc(doc(registrationsRef, registrationId), {
       status: 'cancelled'
     });
-    
-    // Update event registration count
-    const event = await getEvent(eventId);
-    if (event) {
-      await updateEvent(eventId, {
-        registered: Math.max(0, (event.registered || 1) - 1)
-      });
-    }
   } catch (error) {
     console.error('Error cancelling registration:', error);
     throw error;

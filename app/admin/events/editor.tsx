@@ -330,7 +330,7 @@ export default function AdminEventsEditor() {
                   </div>
                 )}
                 <div>Expected: {event.expectedAttendees} attendees</div>
-                {event.price > 0 && <div>Price: ${event.price}</div>}
+                {event.price && event.price > 0 && <div>Price: ${event.price}</div>}
               </div>
 
               <div className="flex items-center gap-2">

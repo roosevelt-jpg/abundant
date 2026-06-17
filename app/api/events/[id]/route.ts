@@ -3,6 +3,8 @@ import { updateEvent, deleteEvent } from '@/lib/firestore-service';
 import { getAuth } from 'firebase-admin/auth';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 
+export const dynamic = 'force-dynamic';
+
 if (!getApps().length) {
   initializeApp({
     credential: cert({
