@@ -17,6 +17,7 @@ export default function AdminEventsEditor() {
     date: '',
     time: '',
     location: '',
+    imageBanner: '',
     expectedAttendees: 0,
     isPublic: false,
     stripeProductId: '',
@@ -118,6 +119,7 @@ export default function AdminEventsEditor() {
       date: event.date,
       time: event.time || '',
       location: event.location || '',
+      imageBanner: (event as any).imageBanner || '',
       expectedAttendees: event.expectedAttendees || 0,
       isPublic: event.isPublic,
       stripeProductId: event.stripeProductId || '',
@@ -138,6 +140,7 @@ export default function AdminEventsEditor() {
       date: '',
       time: '',
       location: '',
+      imageBanner: '',
       expectedAttendees: 0,
       isPublic: false,
       stripeProductId: '',
@@ -235,6 +238,23 @@ export default function AdminEventsEditor() {
                   rows={3}
                   className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Event Image Banner</label>
+                <input
+                  type="url"
+                  value={newEvent.imageBanner}
+                  onChange={(e) => setNewEvent({ ...newEvent, imageBanner: e.target.value })}
+                  placeholder="https://example.com/image.jpg"
+                  className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Enter image URL for the event banner</p>
+                {newEvent.imageBanner && (
+                  <div className="mt-3 rounded-lg overflow-hidden border border-border h-32">
+                    <img src={newEvent.imageBanner} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">

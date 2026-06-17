@@ -1,29 +1,11 @@
 'use client';
 
-import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
-import { LogOut, Settings, Users, FileText, Calendar, MessageSquare, Home } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Settings, Users, FileText, Calendar, MessageSquare, Home } from 'lucide-react';
 import { useState } from 'react';
-import { ThemeToggle } from './theme-toggle';
-import { LanguageSwitcher } from './language-switcher';
 
 export const AdminSidebar = () => {
-  const { logout } = useAuth();
-  const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-      await logout();
-      router.push('/login');
-    } catch (error) {
-      console.error('[v0] Logout failed:', error);
-      setIsLoggingOut(false);
-    }
-  };
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', href: '/admin/dashboard' },
@@ -61,19 +43,8 @@ export const AdminSidebar = () => {
         })}
       </nav>
 
-      <div className="border-t border-border p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <LanguageSwitcher />
-        </div>
-        <button
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors text-sm font-medium disabled:opacity-50"
-        >
-          <LogOut className="w-5 h-5" />
-          {!isCollapsed && (isLoggingOut ? 'Logging out...' : 'Logout')}
-        </button>
+      <div className="border-t border-border p-4">
+        {/* Controls moved to header - removed duplicates */}
       </div>
 
       <button
