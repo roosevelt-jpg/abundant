@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
@@ -25,6 +25,11 @@ function initializeFirebase() {
     auth = getAuth(app);
     db = getFirestore(app);
     storage = getStorage(app);
+    
+    // Enable persistence for auth state
+    setPersistence(auth, browserLocalPersistence).catch(error => {
+      console.warn('[Firebase] Persistence setup failed:', error);
+    });
   } catch (error) {
     if (typeof window !== 'undefined') {
       console.warn('[Firebase] Client-side initialization:', error);
