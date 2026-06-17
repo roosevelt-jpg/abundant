@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export function AdminProtectedLayout({
   children,
@@ -11,15 +11,33 @@ export function AdminProtectedLayout({
 }) {
   const { currentUser, userData, loading } = useAuth();
   const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    if (!loading && !currentUser) {
-      // Only redirect if auth is done loading and there's no user
-      router.push('/login');
+    if (loading) {
+      return; // Wait for auth to load
     }
-  }, [currentUser, loading, router]);
 
-  // If loading, show loading state
+    // Auth loading is complete, check if user is authenticated and authorized
+    if (!currentUser) {
+      router.push('/login');
+      return;
+    }
+
+    // Check if user is admin
+    const isAdmin = 
+      currentUser.email === 'admin@abundantglobalclub.com' || 
+      userData?.role === 'admin';
+
+    if (!isAdmin) {
+      router.push('/');
+      return;
+    }
+
+    setIsAuthorized(true);
+  }, [currentUser, userData, loading, router]);
+
+  // Show loading state while authentication is being checked
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -31,25 +49,9 @@ export function AdminProtectedLayout({
     );
   }
 
-  // If no user, don't render
-  if (!currentUser) {
+  // If not authorized, don't render dashboard
+  if (!isAuthorized) {
     return null;
-  }
-
-  // Check if user is admin by email or role
-  const isAdmin = 
-    currentUser.email === 'admin@abundantglobalclub.com' || 
-    userData?.role === 'admin';
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <p className="text-muted-foreground mb-4">Access denied</p>
-          <p className="text-sm text-gray-500">You don't have permission to access the admin dashboard.</p>
-        </div>
-      </div>
-    );
   }
 
   return <>{children}</>;

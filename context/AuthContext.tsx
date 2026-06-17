@@ -25,22 +25,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set a timeout to prevent infinite loading
-    const timeoutId = setTimeout(() => {
-      if (loading) {
-        console.log('[v0] Auth timeout - setting loading to false');
-        setLoading(false);
-      }
-    }, 5000); // 5 second timeout
-
+    let isMounted = true;
+    
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!isMounted) return;
+      
       setCurrentUser(user);
       
       if (user) {
         try {
-          // Fetch user data from Firestore with timeout
+          // Fetch user data from Firestore
           const userRef = doc(db, 'users', user.uid);
           const userSnap = await getDoc(userRef);
+          
+          if (!isMounted) return;
           
           if (userSnap.exists()) {
             setUserData(userSnap.data() as User);
@@ -59,7 +57,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               updatedAt: Date.now(),
             };
             await setDoc(userRef, newUser);
-            setUserData(newUser);
+            if (isMounted) {
+              setUserData(newUser);
+            }
           }
         } catch (error) {
           console.error('[v0] Error fetching user data:', error);
@@ -69,13 +69,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserData(null);
       }
       
-      setLoading(false);
-      clearTimeout(timeoutId);
+      if (isMounted) {
+        setLoading(false);
+      }
     });
 
     return () => {
+      isMounted = false;
       unsubscribe();
-      clearTimeout(timeoutId);
     };
   }, []);
 
