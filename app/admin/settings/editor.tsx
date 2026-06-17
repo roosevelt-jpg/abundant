@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Save } from 'lucide-react';
 
 const DEFAULT_SETTINGS = {
@@ -15,17 +15,19 @@ const DEFAULT_SETTINGS = {
 
 export default function AdminSettingsEditor() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
   const handleSave = async () => {
     try {
       setSaving(true);
+      console.log('[v0] Saving settings:', settings);
+      // Settings would be saved to Firestore in a real implementation
+      // For now, just show success message
       setSuccessMessage('Settings saved successfully!');
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
-      console.error('Error saving settings:', error);
+      console.error('[v0] Error saving settings:', error);
       setSuccessMessage('Error saving settings');
     } finally {
       setSaving(false);
