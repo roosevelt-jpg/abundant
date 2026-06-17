@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase-admin-server';
-import { verifyToken } from '@/lib/firebase-admin-server';
+import { getDb, verifyToken } from '@/lib/firebase-admin-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,11 +24,14 @@ export async function POST(
 
     const { userId, userName, userEmail } = await request.json();
 
+    // Get Firestore database
+    const db = await getDb();
+
     // Get event
     const eventRef = db.collection('events').doc(id);
     const eventSnap = await eventRef.get();
     
-    if (!eventSnap.exists()) {
+    if (!eventSnap.exists) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
@@ -88,11 +90,14 @@ export async function DELETE(
 
     const userId = decodedToken.uid;
 
+    // Get Firestore database
+    const db = await getDb();
+
     // Get event
     const eventRef = db.collection('events').doc(id);
     const eventSnap = await eventRef.get();
     
-    if (!eventSnap.exists()) {
+    if (!eventSnap.exists) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 

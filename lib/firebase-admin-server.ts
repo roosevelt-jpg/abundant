@@ -1,5 +1,6 @@
 import { getApps, initializeApp, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 
 let adminApp: any = null;
 
@@ -75,4 +76,12 @@ export async function verifyToken(token?: string | null) {
     console.error('[Firebase Admin] Token verification failed:', error);
     return null;
   }
+}
+
+export async function getDb() {
+  const app = await getAdminApp();
+  if (!app) {
+    throw new Error('Firebase Admin App not initialized');
+  }
+  return getFirestore(app);
 }
