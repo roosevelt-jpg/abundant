@@ -5,6 +5,7 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { HeroSlider } from '@/components/hero-slider';
 import { YouTubeWidget } from '@/components/youtube-widget';
+import { UpcomingEventsWidget } from '@/components/upcoming-events-widget';
 import Link from 'next/link';
 import { ArrowRight, Users, Calendar, Zap, Globe, Eye, EyeOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -83,6 +84,9 @@ export default function Home() {
 
         {/* YouTube Widget - Load independently */}
         <YouTubeWidget settings={null} />
+
+        {/* Upcoming Events Section */}
+        <UpcomingEventsWidget />
 
         {/* Features Section */}
         <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-card/50">
