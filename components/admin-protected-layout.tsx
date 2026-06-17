@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 export function AdminProtectedLayout({
   children,
@@ -11,15 +11,13 @@ export function AdminProtectedLayout({
 }) {
   const { currentUser, userData, loading } = useAuth();
   const router = useRouter();
-  const [debugInfo, setDebugInfo] = useState<string>('');
 
   useEffect(() => {
     if (!loading) {
-      console.log('[v0] Auth Debug:', { currentUser: currentUser?.email, userData, loading });
-      setDebugInfo(`User: ${currentUser?.email}, Role: ${userData?.role}`);
+      // Allow admin@abundantglobalclub.com or users with admin role
+      const isAdmin = currentUser?.email === 'admin@abundantglobalclub.com' || userData?.role === 'admin';
       
-      // Allow admin@abundantglobalclub.com to access without role check
-      if (!currentUser || (currentUser.email !== 'admin@abundantglobalclub.com' && userData?.role !== 'admin')) {
+      if (!currentUser || !isAdmin) {
         router.push('/login');
       }
     }
@@ -27,11 +25,10 @@ export function AdminProtectedLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="inline-block px-4 py-2 bg-card rounded-lg">
-            <p className="text-muted-foreground">Loading...</p>
-          </div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Authenticating...</p>
         </div>
       </div>
     );

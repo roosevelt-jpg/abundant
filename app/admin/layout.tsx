@@ -12,17 +12,17 @@ export default function AdminLayout({
   children: ReactNode;
 }) {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <AdminProtectedLayout>
-        <div className="flex h-screen bg-background">
-          <AdminSidebar />
-          <main className="flex-1 overflow-auto ml-64">
-            <div className="p-8">
+    <AdminProtectedLayout>
+      <div className="flex h-screen bg-background">
+        <AdminSidebar />
+        <main className="flex-1 overflow-auto ml-64">
+          <div className="p-8">
+            <Suspense fallback={<div className="text-muted-foreground">Loading dashboard...</div>}>
               {children}
-            </div>
-          </main>
-        </div>
-      </AdminProtectedLayout>
-    </Suspense>
+            </Suspense>
+          </div>
+        </main>
+      </div>
+    </AdminProtectedLayout>
   );
 }
