@@ -18,9 +18,13 @@ export default function AdminEventsEditor() {
     time: '',
     location: '',
     expectedAttendees: 0,
-    isPublic: true,
+    isPublic: false,
     stripeProductId: '',
-    price: 0
+    price: 0,
+    eventType: 'hybrid' as 'in-person' | 'online' | 'hybrid',
+    registrationType: 'free' as 'free' | 'paid' | 'rsvp',
+    genderRestriction: 'mixed' as 'mixed' | 'men-only' | 'women-only',
+    category: 'networking' as 'networking' | 'workshop' | 'webinar' | 'conference' | 'other'
   });
 
   useEffect(() => {
@@ -117,7 +121,11 @@ export default function AdminEventsEditor() {
       expectedAttendees: event.expectedAttendees || 0,
       isPublic: event.isPublic,
       stripeProductId: event.stripeProductId || '',
-      price: event.price || 0
+      price: event.price || 0,
+      eventType: event.eventType || 'hybrid',
+      registrationType: event.registrationType || 'free',
+      genderRestriction: event.genderRestriction || 'mixed',
+      category: event.category || 'networking'
     });
     setShowModal(true);
   };
@@ -131,9 +139,13 @@ export default function AdminEventsEditor() {
       time: '',
       location: '',
       expectedAttendees: 0,
-      isPublic: true,
+      isPublic: false,
       stripeProductId: '',
-      price: 0
+      price: 0,
+      eventType: 'hybrid',
+      registrationType: 'free',
+      genderRestriction: 'mixed',
+      category: 'networking'
     });
   };
 
@@ -248,6 +260,62 @@ export default function AdminEventsEditor() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Event Type</label>
+                  <select
+                    value={newEvent.eventType}
+                    onChange={(e) => setNewEvent({ ...newEvent, eventType: e.target.value as 'in-person' | 'online' | 'hybrid' })}
+                    className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                  >
+                    <option value="in-person">In-Person</option>
+                    <option value="online">Online</option>
+                    <option value="hybrid">Hybrid</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Registration Type</label>
+                  <select
+                    value={newEvent.registrationType}
+                    onChange={(e) => setNewEvent({ ...newEvent, registrationType: e.target.value as 'free' | 'paid' | 'rsvp' })}
+                    className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                  >
+                    <option value="free">Free</option>
+                    <option value="paid">Paid</option>
+                    <option value="rsvp">RSVP</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Gender Restriction</label>
+                  <select
+                    value={newEvent.genderRestriction}
+                    onChange={(e) => setNewEvent({ ...newEvent, genderRestriction: e.target.value as 'mixed' | 'men-only' | 'women-only' })}
+                    className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                  >
+                    <option value="mixed">Mixed</option>
+                    <option value="men-only">Men Only</option>
+                    <option value="women-only">Women Only</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Category</label>
+                  <select
+                    value={newEvent.category}
+                    onChange={(e) => setNewEvent({ ...newEvent, category: e.target.value as 'networking' | 'workshop' | 'webinar' | 'conference' | 'other' })}
+                    className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                  >
+                    <option value="networking">Networking</option>
+                    <option value="workshop">Workshop</option>
+                    <option value="webinar">Webinar</option>
+                    <option value="conference">Conference</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -255,7 +323,7 @@ export default function AdminEventsEditor() {
                   onChange={(e) => setNewEvent({ ...newEvent, isPublic: e.target.checked })}
                   className="rounded"
                 />
-                <span className="text-sm">Publish event publicly</span>
+                <span className="text-sm">{newEvent.isPublic ? '✓ Published' : '• Draft Mode'} - {newEvent.isPublic ? 'Event is visible to public' : 'Event is saved as draft'}</span>
               </label>
 
               <div className="flex gap-3 pt-4">
@@ -309,28 +377,40 @@ export default function AdminEventsEditor() {
                   <h3 className="font-semibold text-lg">{event.title}</h3>
                   <p className="text-sm text-muted-foreground">{event.description}</p>
                 </div>
-                <span className={`px-2 py-1 text-xs font-semibold rounded ${
-                  event.isPublic
-                    ? 'bg-green-500/10 text-green-600'
-                    : 'bg-gray-500/10 text-gray-600'
-                }`}>
-                  {event.isPublic ? 'Public' : 'Private'}
-                </span>
+                <div className="flex gap-2">
+                  <span className={`px-2 py-1 text-xs font-semibold rounded ${
+                    event.isPublic
+                      ? 'bg-green-500/10 text-green-600'
+                      : 'bg-gray-500/10 text-gray-600'
+                  }`}>
+                    {event.isPublic ? '✓ Published' : '• Draft'}
+                  </span>
+                  <span className="px-2 py-1 text-xs font-semibold rounded bg-blue-500/10 text-blue-600">
+                    {event.eventType || 'Hybrid'}
+                  </span>
+                </div>
               </div>
 
-              <div className="space-y-2 mb-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
+              <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
                   <Calendar className="w-4 h-4" />
                   {new Date(event.date).toLocaleDateString()} {event.time && `at ${event.time}`}
                 </div>
                 {event.location && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <MapPin className="w-4 h-4" />
                     {event.location}
                   </div>
                 )}
-                <div>Expected: {event.expectedAttendees} attendees</div>
-                {event.price && event.price > 0 && <div>Price: ${event.price}</div>}
+                <div className="text-muted-foreground">
+                  {event.registrationType === 'paid' && event.price ? `$${event.price}` : event.registrationType === 'free' ? 'Free' : 'RSVP'}
+                </div>
+                <div className="text-muted-foreground">
+                  {event.genderRestriction === 'mixed' ? 'Mixed' : event.genderRestriction === 'men-only' ? 'Men Only' : 'Women Only'}
+                </div>
+                <div className="text-muted-foreground col-span-2">
+                  Expected: {event.expectedAttendees} attendees
+                </div>
               </div>
 
               <div className="flex items-center gap-2">

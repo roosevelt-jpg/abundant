@@ -53,3 +53,26 @@ export async function verifyAdminToken(token?: string | null) {
     return false;
   }
 }
+
+export async function verifyToken(token?: string | null) {
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const app = await getAdminApp();
+    if (!app) {
+      return null;
+    }
+
+    const auth = getAuth(app);
+    const cleanToken = token.replace('Bearer ', '');
+    const decodedToken = await auth.verifyIdToken(cleanToken);
+    
+    // Return decoded token for any authenticated user
+    return decodedToken;
+  } catch (error) {
+    console.error('[Firebase Admin] Token verification failed:', error);
+    return null;
+  }
+}

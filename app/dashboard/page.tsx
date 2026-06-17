@@ -3,6 +3,7 @@
 import { useAuth } from '@/context/AuthContext';
 import { Calendar, AlertCircle, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
+import MemberUpcomingEvents from '@/components/member-upcoming-events';
 
 export default function DashboardHome() {
   const { userData } = useAuth();
@@ -54,9 +55,9 @@ export default function DashboardHome() {
             <h3 className="font-heading font-semibold text-sm">Upcoming</h3>
             <Calendar className="w-4 h-4 text-muted-foreground" />
           </div>
-          <p className="text-2xl font-bold mb-2">0</p>
+          <p className="text-2xl font-bold mb-2">Check Below</p>
           <p className="text-xs text-muted-foreground">
-            Registered events
+            Your registered events
           </p>
         </div>
       </div>
@@ -67,29 +68,34 @@ export default function DashboardHome() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Link 
             href="/dashboard/profile"
-            className="p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-sm font-medium"
+            className="p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-sm font-medium text-center"
           >
             Edit Profile
           </Link>
           <Link 
             href="/dashboard/credentials"
-            className="p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-sm font-medium"
+            className="p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-sm font-medium text-center"
           >
             View Credentials
           </Link>
           <Link 
             href="/events"
-            className="p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-sm font-medium"
+            className="p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-sm font-medium text-center"
           >
             Browse Events
           </Link>
           <Link 
             href="/dashboard/settings"
-            className="p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-sm font-medium"
+            className="p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-sm font-medium text-center"
           >
             Account Settings
           </Link>
         </div>
+      </div>
+
+      {/* Upcoming Events Section */}
+      <div className="p-6 bg-card rounded-lg border border-border">
+        <MemberUpcomingEvents />
       </div>
 
       {/* Info Box */}

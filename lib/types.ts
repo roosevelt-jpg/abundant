@@ -29,11 +29,15 @@ export interface Event {
   isPublic: boolean;
   imageUrl?: string;
   category?: 'networking' | 'workshop' | 'webinar' | 'conference' | 'other';
+  eventType?: 'in-person' | 'online' | 'hybrid';
+  registrationType?: 'free' | 'paid' | 'rsvp';
+  genderRestriction?: 'mixed' | 'men-only' | 'women-only';
   status?: 'draft' | 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
   createdBy?: string;
   createdAt?: number;
   updatedAt?: number;
   attendees?: string[];
+  registrations?: number;
 }
 
 export interface EventRegistration {
