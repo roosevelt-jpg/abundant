@@ -16,7 +16,6 @@ export default function DashboardLayout({
   const { currentUser, userData, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [showTimeout, setShowTimeout] = useState(false);
 
   useEffect(() => {
     if (!loading && !currentUser) {
@@ -29,49 +28,10 @@ export default function DashboardLayout({
       // Only redirect to admin if BOTH email AND role indicate admin
       const isAdmin = currentUser.email === 'admin@abundantglobalclub.com' && userData.role === 'admin';
       if (isAdmin) {
-        console.log('[v0] Admin user in user dashboard - redirecting to admin dashboard');
         router.push('/admin/dashboard');
       }
     }
   }, [currentUser, userData, loading, router]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (loading) {
-        setShowTimeout(true);
-      }
-    }, 8000);
-    return () => clearTimeout(timer);
-  }, [loading]);
-
-  // Only show loading on main dashboard page, not on sub-pages
-  const isMainDashboard = pathname === '/dashboard';
-  
-  if (loading && isMainDashboard) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto"></div>
-          <p className="text-muted-foreground">Loading your dashboard...</p>
-          {showTimeout && (
-            <div className="text-sm text-orange-600 mt-4">
-              <p>Taking longer than expected.</p>
-              <button 
-                onClick={() => window.location.reload()}
-                className="text-accent hover:underline mt-2"
-              >
-                Try refreshing the page
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (!currentUser && loading) {
-    return null;
-  }
 
   const isProfilePage = pathname === '/dashboard/profile';
   const isCredentialsPage = pathname === '/dashboard/credentials';
