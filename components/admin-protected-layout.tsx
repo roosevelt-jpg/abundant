@@ -12,14 +12,33 @@ export function AdminProtectedLayout({
   const { currentUser, userData, loading } = useAuth();
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [checkTimeout, setCheckTimeout] = useState(false);
+
+  // Set a 5-second timeout for auth check
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      console.log('[v0] Auth check timeout - forcing redirect to login');
+      setCheckTimeout(true);
+    }, 5000);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   useEffect(() => {
+    // If timeout occurred, redirect to login
+    if (checkTimeout) {
+      router.push('/login');
+      return;
+    }
+
+    // Still loading auth
     if (loading) {
-      return; // Wait for auth to load
+      return;
     }
 
     // Auth loading is complete, check if user is authenticated and authorized
     if (!currentUser) {
+      console.log('[v0] No current user - redirecting to login');
       router.push('/login');
       return;
     }
@@ -30,15 +49,17 @@ export function AdminProtectedLayout({
       userData?.role === 'admin';
 
     if (!isAdmin) {
+      console.log('[v0] User is not admin - redirecting home');
       router.push('/');
       return;
     }
 
+    console.log('[v0] Admin user authorized');
     setIsAuthorized(true);
-  }, [currentUser, userData, loading, router]);
+  }, [currentUser, userData, loading, router, checkTimeout]);
 
   // Show loading state while authentication is being checked
-  if (loading) {
+  if (loading && !checkTimeout) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
