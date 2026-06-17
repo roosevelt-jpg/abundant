@@ -26,7 +26,7 @@ export const AdminSidebar = () => {
   };
 
   const menuItems = [
-    { icon: Home, label: 'Dashboard', href: '/admin' },
+    { icon: Home, label: 'Dashboard', href: '/admin/dashboard' },
     { icon: Users, label: 'Members', href: '/admin/members' },
     { icon: Calendar, label: 'Events', href: '/admin/events' },
     { icon: MessageSquare, label: 'Testimonials', href: '/admin/testimonials' },

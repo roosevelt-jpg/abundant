@@ -23,8 +23,8 @@ export default function Dashboard() {
   // If admin, redirect to admin dashboard
   useEffect(() => {
     if (!loading && currentUser && userData?.role === 'admin') {
-      console.log('[v0] Admin user detected, redirecting to /admin');
-      router.push('/admin');
+      console.log('[v0] Admin user detected, redirecting to /admin/dashboard');
+      router.push('/admin/dashboard');
     }
   }, [currentUser, userData, loading, router]);
 
