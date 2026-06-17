@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { User } from '@/lib/types';
 
 interface AuthContextType {
@@ -46,10 +46,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // If this is the admin email and role isn't set to admin, update it
             const isAdmin = user.email === 'admin@abundantglobalclub.com';
             if (isAdmin && userData.role !== 'admin') {
-              await getDoc(userRef).then(doc => {
-                doc.ref.update({ role: 'admin', updatedAt: Date.now() }).catch(err => {
-                  console.error('[v0] Failed to update admin role:', err);
-                });
+              updateDoc(userRef, { role: 'admin', updatedAt: Date.now() }).catch(err => {
+                console.error('[v0] Failed to update admin role:', err);
               });
               userData.role = 'admin';
             }
