@@ -5,29 +5,38 @@ import { getFirestore } from 'firebase-admin/firestore';
 let adminApp: any = null;
 
 export async function getAdminApp() {
-  // Skip initialization if credentials are not available (e.g., during build)
-  if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
-    console.warn('[Firebase Admin] Credentials not available, skipping initialization');
-    return null;
-  }
-
   try {
     const apps = getApps();
     if (apps.length > 0) {
       return apps[0];
     }
 
+    // Check for Firebase Admin credentials in environment
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+    if (!projectId || !clientEmail || !privateKey) {
+      console.warn('[Firebase Admin] Credentials missing:', {
+        projectId: !!projectId,
+        clientEmail: !!clientEmail,
+        privateKey: !!privateKey,
+      });
+      return null;
+    }
+
     adminApp = initializeApp({
       credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        projectId,
+        clientEmail,
+        privateKey: privateKey.replace(/\\n/g, '\n'),
       }),
     });
 
+    console.log('[Firebase Admin] Initialized successfully');
     return adminApp;
   } catch (error) {
-    console.error('[Firebase Admin] Failed to initialize:', error);
+    console.error('[Firebase Admin] Failed to initialize:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }
