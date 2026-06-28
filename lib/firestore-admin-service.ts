@@ -1,20 +1,28 @@
 import { getDb } from './firebase-admin-server';
+import { getDefaultSettings } from './default-settings';
 import type { Settings } from './types';
 
 const DEFAULT_SETTINGS_ID = 'main';
 
 export async function getSettings(): Promise<Settings | null> {
   try {
+    console.log('[v0] Attempting to fetch settings from Firestore...');
     const db = await getDb();
     const docSnap = await db.collection('settings').doc(DEFAULT_SETTINGS_ID).get();
     
     if (docSnap.exists) {
-      return docSnap.data() as Settings;
+      console.log('[v0] Settings found in Firestore');
+      const data = docSnap.data();
+      return data as Settings;
     }
-    return null;
+    
+    console.log('[v0] Settings document not found, returning defaults');
+    return getDefaultSettings();
   } catch (error) {
     console.error('[v0] Error getting settings from Admin SDK:', error);
-    throw error;
+    // Return defaults on error instead of throwing
+    console.warn('[v0] Returning default settings due to error');
+    return getDefaultSettings();
   }
 }
 
