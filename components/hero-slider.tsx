@@ -22,11 +22,14 @@ export const HeroSlider = ({ settings: initialSettings }: HeroSliderProps) => {
 
     const loadSettings = async () => {
       try {
-        const { getSettings } = await import('@/lib/firestore-service');
-        const data = await getSettings();
-        setSettings(data);
+        const response = await fetch('/api/hero-slider');
+        if (response.ok) {
+          const data = await response.json();
+          setSettings(data);
+        }
       } catch (error) {
-        console.error('[v0] Error loading settings:', error);
+        console.error('[v0] HeroSlider: Error loading settings:', error);
+        // Silently fail - hero slider is optional
       }
     };
     loadSettings();

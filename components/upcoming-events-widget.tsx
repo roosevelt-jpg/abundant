@@ -16,21 +16,35 @@ export function UpcomingEventsWidget() {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/events');
+      const response = await fetch('/api/events?public=true');
       if (response.ok) {
-        const data: Event[] = await response.json();
+        const data = await response.json();
+        const eventArray = Array.isArray(data) ? data : [];
         
-        // Filter published and upcoming events
+        // Filter and sort upcoming events
         const now = new Date();
-        const upcomingEvents = data
-          .filter(e => e.isPublic && new Date(e.date) >= now)
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        const upcomingEvents = eventArray
+          .filter((e: any) => {
+            try {
+              return e?.isPublic && new Date(e?.date) >= now;
+            } catch {
+              return false;
+            }
+          })
+          .sort((a: any, b: any) => {
+            try {
+              return new Date(a?.date).getTime() - new Date(b?.date).getTime();
+            } catch {
+              return 0;
+            }
+          })
           .slice(0, 4);
         
         setEvents(upcomingEvents);
       }
     } catch (error) {
       console.error('[v0] Error fetching events:', error);
+      setEvents([]);
     } finally {
       setLoading(false);
     }
