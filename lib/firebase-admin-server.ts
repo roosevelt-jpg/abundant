@@ -41,12 +41,17 @@ export async function getAdminApp() {
   }
 }
 
-export async function getDb() {
-  const app = await getAdminApp();
-  if (!app) {
-    throw new Error('Firebase Admin app not initialized');
+export async function getDb(): Promise<any | null> {
+  try {
+    const app = await getAdminApp();
+    if (!app) {
+      return null;
+    }
+    return getFirestore(app);
+  } catch (error) {
+    console.error('[Firebase Admin] getDb error:', error);
+    return null;
   }
-  return getFirestore(app);
 }
 
 export async function verifyAdminToken(token?: string | null) {

@@ -15,7 +15,7 @@ export async function GET() {
       .get();
 
     const plans: MembershipPlan[] = [];
-    snapshot.forEach((doc) => {
+    snapshot.forEach((doc: any) => {
       plans.push(doc.data() as MembershipPlan);
     });
 

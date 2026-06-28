@@ -7,36 +7,39 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
     const publicOnly = searchParams.get('public') === 'true';
 
     const db = await getDb();
     if (!db) {
-      console.warn('[v0] Database not initialized');
       return NextResponse.json([]);
     }
 
-    let query: any = db.collection('events');
+    try {
+      let query: any = db.collection('events');
 
-    if (status) {
-      query = query.where('status', '==', status);
+      if (publicOnly) {
+        query = query.where('isPublic', '==', true);
+      }
+
+      const snapshot = await query.orderBy('date', 'desc').limit(10).get();
+      const events: Event[] = [];
+      snapshot.forEach((doc: any) => {
+        try {
+          events.push(doc.data() as Event);
+        } catch (e) {
+          console.warn('[v0] Error parsing event document:', e);
+        }
+      });
+
+      return NextResponse.json(events, {
+        headers: { 'Cache-Control': 'no-store, max-age=0' }
+      });
+    } catch (dbError) {
+      console.warn('[v0] Database query error (non-critical):', dbError instanceof Error ? dbError.message : String(dbError));
+      return NextResponse.json([]);
     }
-
-    if (publicOnly) {
-      query = query.where('isPublic', '==', true);
-    }
-
-    const snapshot = await query.orderBy('date', 'desc').get();
-    const events: Event[] = [];
-    snapshot.forEach((doc: any) => {
-      events.push(doc.data() as Event);
-    });
-
-    return NextResponse.json(events, {
-      headers: { 'Cache-Control': 'no-store, max-age=0' }
-    });
   } catch (error) {
-    console.error('[v0] Error fetching events:', error);
+    console.error('[v0] Error in GET /api/events:', error);
     return NextResponse.json([]);
   }
 }

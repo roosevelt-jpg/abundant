@@ -22,7 +22,7 @@ export async function GET() {
       .get();
 
     const videos: any[] = [];
-    snapshot.forEach((doc) => {
+    snapshot.forEach((doc: any) => {
       videos.push({
         id: doc.id,
         ...doc.data()
