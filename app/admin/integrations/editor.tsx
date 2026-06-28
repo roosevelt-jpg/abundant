@@ -24,19 +24,30 @@ export function AdminIntegrationsEditor() {
     try {
       setLoading(true);
       setError(null);
+      console.log('[v0] Fetching integrations from API...');
+      const startTime = Date.now();
+      
       const response = await fetch('/api/settings', {
         cache: 'no-store',
         method: 'GET'
       });
+      
+      const duration = Date.now() - startTime;
+      console.log(`[v0] Settings fetched in ${duration}ms, status: ${response.status}`);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('[v0] Settings data loaded successfully');
         setSettings(data);
+        setError(null);
       } else {
-        setError('Failed to load integrations');
+        const errorText = await response.text();
+        console.error(`[v0] Settings API error ${response.status}:`, errorText);
+        setError(`Failed to load integrations (${response.status})`);
       }
     } catch (err) {
       console.error('[v0] Error fetching settings:', err);
-      setError('Failed to load integrations');
+      setError(`Failed to load integrations: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }

@@ -1,22 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSettings, updateSettings } from '@/lib/firestore-service';
+import { getSettings, updateSettings } from '@/lib/firestore-admin-service';
 import { verifyAdminToken } from '@/lib/firebase-admin-server';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 // GET /api/settings
 export async function GET() {
   try {
+    console.log('[v0] Fetching settings from Admin SDK...');
+    const startTime = Date.now();
+    
     const settings = await getSettings();
-    return NextResponse.json(settings || {});
+    
+    const duration = Date.now() - startTime;
+    console.log(`[v0] Settings fetched in ${duration}ms`);
+    
+    return NextResponse.json(settings || {}, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0'
+      }
+    });
   } catch (error) {
     console.error('[v0] Error in GET /api/settings:', error);
     return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
   }
 }
 
-// PUT /api/settings
-export async function PUT(request: NextRequest) {
+// POST /api/settings
+export async function POST(request: NextRequest) {
   try {
     const authToken = request.headers.get('authorization');
     const isAdmin = await verifyAdminToken(authToken);
@@ -26,12 +38,10 @@ export async function PUT(request: NextRequest) {
     }
 
     const data = await request.json();
-    // Note: updateSettings uses the client SDK, which doesn't require direct user ID
-    // It will use the authenticated user's ID from the JWT token
-    await updateSettings(data, 'admin');
+    await updateSettings(data);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('[v0] Error in PUT /api/settings:', error);
+    console.error('[v0] Error in POST /api/settings:', error);
     return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
   }
 }
