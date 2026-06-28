@@ -95,6 +95,52 @@ export interface Testimonial {
   updatedAt: number;
 }
 
+// Hero Slider types
+export interface HeroSlide {
+  id: string;
+  type: 'image' | 'video';
+  url: string; // Firebase Storage URL for image or video
+  title?: string;
+  subtitle?: string;
+  cta?: { text?: string; link?: string };
+  order: number;
+  isActive: boolean;
+}
+
+export interface HeroSliderConfig {
+  id: string;
+  enabled: boolean;
+  speed: number; // milliseconds
+  transition: 'fade' | 'slide';
+  autoPlay: boolean;
+  borderRadius?: number; // pixels
+  slides: HeroSlide[];
+  updatedAt: number;
+}
+
+// YouTube Configuration
+export interface YouTubeConfig {
+  id: string;
+  configured: boolean;
+  channelId: string;
+  apiKey?: string; // Encrypted on server
+  autoFetchEnabled: boolean;
+  fetchInterval: number; // minutes
+  lastFetch?: number;
+  videosToDisplay: number; // How many videos to show
+  updatedAt: number;
+}
+
+export interface YouTubeVideo {
+  id: string;
+  videoId: string;
+  title: string;
+  description: string;
+  thumbnail: string; // Firebase Storage URL or YouTube thumbnail URL
+  publishedAt: number;
+  url: string;
+}
+
 // CMS Page type
 export interface Page {
   id: string;
