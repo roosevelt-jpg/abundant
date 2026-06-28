@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Plus, Eye, EyeOff } from 'lucide-react';
+import { X, Plus, Eye, EyeOff, Upload } from 'lucide-react';
 import { Settings } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
+import { uploadImageToStorage } from '@/lib/firebase-storage';
 
 interface HeroSliderEditorProps {
   settings: Settings;
@@ -30,6 +31,8 @@ export const HeroSliderEditor = ({ settings, onSave, isSaving }: HeroSliderEdito
   });
 
   const [previewSlideIndex, setPreviewSlideIndex] = useState<number | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string>('');
 
   const addSlide = () => {
     if (!newSlide.url) {
@@ -60,6 +63,47 @@ export const HeroSliderEditor = ({ settings, onSave, isSaving }: HeroSliderEdito
   const removeSlide = (index: number) => {
     const newSlides = sliderConfig.slides.filter((_, i) => i !== index);
     setSliderConfig({ ...sliderConfig, slides: newSlides });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      setUploadProgress('Uploading...');
+      
+      const fileType = newSlide.type === 'image' ? 'image' : 'video';
+      if (fileType === 'image') {
+        const url = await uploadImageToStorage(file, 'hero-slider');
+        setNewSlide({ ...newSlide, url });
+        setUploadProgress('');
+      } else {
+        const url = await uploadVideoToStorage(file, 'hero-slider-videos');
+        setNewSlide({ ...newSlide, url });
+        setUploadProgress('');
+      }
+    } catch (error) {
+      console.error('[v0] Upload error:', error);
+      setUploadProgress(`Error: ${error instanceof Error ? error.message : 'Upload failed'}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const uploadVideoToStorage = async (file: File, folder: string): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) throw new Error('Upload failed');
+    const data = await response.json();
+    return data.url;
   };
 
   const moveSlide = (index: number, direction: 'up' | 'down') => {
@@ -162,14 +206,40 @@ export const HeroSliderEditor = ({ settings, onSave, isSaving }: HeroSliderEdito
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Media URL (Firestore Storage)</label>
-            <input
-              type="url"
-              value={newSlide.url}
-              onChange={(e) => setNewSlide({ ...newSlide, url: e.target.value })}
-              placeholder="https://firestore-storage-url.com/image.jpg"
-              className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-            />
+            <label className="block text-sm font-medium mb-2">Media Upload or URL</label>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <label className="flex-1">
+                  <div className="flex items-center justify-center gap-2 px-4 py-3 bg-accent/10 border-2 border-dashed border-accent rounded-lg cursor-pointer hover:bg-accent/20 transition-colors">
+                    <Upload className="w-4 h-4" />
+                    <span className="text-sm font-medium">
+                      {uploading ? 'Uploading...' : `Choose ${newSlide.type}`}
+                    </span>
+                  </div>
+                  <input
+                    type="file"
+                    accept={newSlide.type === 'image' ? 'image/*' : 'video/*'}
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+              {uploadProgress && (
+                <p className="text-sm text-accent">{uploadProgress}</p>
+              )}
+              {newSlide.url && (
+                <p className="text-xs text-muted-foreground break-all">✓ URL: {newSlide.url.substring(0, 60)}...</p>
+              )}
+              <p className="text-xs text-muted-foreground">Or paste URL below:</p>
+              <input
+                type="url"
+                value={newSlide.url}
+                onChange={(e) => setNewSlide({ ...newSlide, url: e.target.value })}
+                placeholder="https://storage-url.com/image.jpg"
+                className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+              />
+            </div>
           </div>
 
           <div>

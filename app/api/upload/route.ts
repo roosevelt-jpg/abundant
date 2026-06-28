@@ -1,56 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/lib/firebase';
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
+    const folder = (formData.get('folder') as string) || 'uploads';
 
     if (!file) {
-      return NextResponse.json(
-        { error: 'No file provided' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Dynamically import Firebase modules at runtime
-    const { initializeApp } = await import('firebase/app');
-    const { getStorage, ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+    console.log('[v0] Upload API: Processing', file.name, file.size, 'bytes', 'to folder:', folder);
 
-    const firebaseConfig = {
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const storage = getStorage(app);
-
-    // Create a unique filename
+    // Create unique filename
     const timestamp = Date.now();
-    const filename = `events/${timestamp}-${file.name}`;
-    const storageRef = ref(storage, filename);
+    const random = Math.random().toString(36).substring(7);
+    const ext = file.name.split('.').pop() || 'bin';
+    const filename = `${folder}/${timestamp}-${random}.${ext}`;
 
     // Convert file to buffer
     const buffer = await file.arrayBuffer();
 
-    // Upload file
-    await uploadBytes(storageRef, buffer, {
+    // Create reference and upload
+    const storageRef = ref(storage, filename);
+    const snapshot = await uploadBytes(storageRef, buffer, {
       contentType: file.type,
     });
 
     // Get download URL
-    const downloadURL = await getDownloadURL(storageRef);
+    const downloadURL = await getDownloadURL(snapshot.ref);
 
+    console.log('[v0] Upload API: Success', downloadURL);
     return NextResponse.json({
       success: true,
       url: downloadURL,
-      filename,
+      filename: file.name,
     });
   } catch (error: any) {
-    console.error('[v0] Upload error:', error);
+    console.error('[v0] Upload API error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to upload file' },
       { status: 500 }
