@@ -145,10 +145,15 @@ export async function initializeSettings(): Promise<Settings> {
         accent: '#D4AF87'
       },
       integrations: {
-        stripe: { publishableKey: '', configured: false },
-        sendgrid: { configured: false },
-        googlePlaces: { configured: false },
-        whatsapp: { phoneNumber: '', configured: false }
+        firebase: { adminSdkConfigured: true, clientSdkConfigured: true, projectId: '', storageBucket: '' },
+        gmailSmtp: { configured: false, email: '', senderName: 'Abundant Global Club' },
+        stripe: { configured: false, publishableKey: '', webhookSecret: '' },
+        paypal: { configured: false, mode: 'sandbox' },
+        googleCalendar: { configured: false, calendarId: '' },
+        microsoftCalendar: { configured: false, tenantId: '' },
+        appleCalendar: { configured: false, calendarUrl: '' },
+        youtubeDataApi: { configured: false, channelId: '', autoFetchEnabled: false, fetchInterval: 60 },
+        googlePlaces: { configured: false, restrictCountries: ['ae', 'sa', 'kw', 'ae', 'om', 'qa', 'bh'] }
       },
       languages: ['en', 'ar'],
       defaultLanguage: 'en',

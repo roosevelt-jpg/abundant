@@ -48,8 +48,9 @@ export const YouTubeWidget = ({ settings: initialSettings }: YouTubeWidgetProps)
         setLoading(true);
         setError(null);
 
-        const apiKey = settings?.integrations?.youtube?.apiKey;
-        const channelId = settings?.integrations?.youtube?.channelId;
+        const youtubeConfig = (settings?.integrations as any)?.youtubeDataApi;
+        const apiKey = youtubeConfig?.apiKey;
+        const channelId = youtubeConfig?.channelId;
 
         if (!apiKey || !channelId) {
           setError('YouTube configuration not set');
@@ -89,7 +90,7 @@ export const YouTubeWidget = ({ settings: initialSettings }: YouTubeWidgetProps)
     if (settings?.youtubeSection?.enabled) {
       fetchYouTubeVideos();
     }
-  }, [settings?.integrations?.youtube, settings?.youtubeSection?.enabled]);
+  }, [(settings?.integrations as any)?.youtubeDataApi, settings?.youtubeSection?.enabled]);
 
   if (!settings?.youtubeSection?.enabled) {
     return (

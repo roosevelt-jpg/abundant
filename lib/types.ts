@@ -177,11 +177,66 @@ export interface Settings {
     accent: string;
   };
   integrations: {
-    stripe?: { publishableKey?: string; configured: boolean };
-    sendgrid?: { configured: boolean };
-    googlePlaces?: { apiKey?: string; configured: boolean };
-    whatsapp?: { phoneNumber?: string; configured: boolean };
-    youtube?: { apiKey?: string; channelId?: string; configured: boolean };
+    // Firebase Configuration
+    firebase?: {
+      adminSdkConfigured: boolean;
+      clientSdkConfigured: boolean;
+      projectId?: string;
+      storageBucket?: string;
+    };
+    
+    // Email Integration
+    gmailSmtp?: {
+      configured: boolean;
+      email?: string;
+      senderName?: string;
+      // appPasswordEncrypted stored securely on server only
+    };
+    
+    // Payment Integrations
+    stripe?: {
+      configured: boolean;
+      publishableKey?: string;
+      // secretKeyEncrypted stored securely on server only
+      webhookSecret?: string;
+    };
+    paypal?: {
+      configured: boolean;
+      // clientIdEncrypted, secretEncrypted stored securely on server only
+      mode?: 'sandbox' | 'live';
+    };
+    
+    // Calendar Integrations
+    googleCalendar?: {
+      configured: boolean;
+      // apiKeyEncrypted stored securely on server only
+      calendarId?: string;
+    };
+    microsoftCalendar?: {
+      configured: boolean;
+      // clientIdEncrypted, secretEncrypted stored securely on server only
+      tenantId?: string;
+    };
+    appleCalendar?: {
+      configured: boolean;
+      calendarUrl?: string;
+    };
+    
+    // Video Integration
+    youtubeDataApi?: {
+      configured: boolean;
+      // apiKeyEncrypted stored securely on server only
+      channelId?: string;
+      autoFetchEnabled?: boolean;
+      fetchInterval?: number; // minutes
+    };
+    
+    // Location Services
+    googlePlaces?: {
+      configured: boolean;
+      // apiKeyEncrypted stored securely on server only
+      restrictCountries?: string[]; // e.g., ['ae', 'sa', 'kw']
+    };
   };
   languages: string[];
   defaultLanguage: string;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { Save } from 'lucide-react';
 import type { Settings } from '@/lib/types';
@@ -116,10 +117,11 @@ export default function AdminSettingsEditor() {
   };
 
   const updateIntegrations = (service: string, data: any) => {
+    const integrations = (settings?.integrations as any) || {};
     setSettings({
       ...settings,
       integrations: {
-        ...settings.integrations,
+        ...integrations,
         [service]: data,
       },
     });
@@ -224,122 +226,18 @@ export default function AdminSettingsEditor() {
           </div>
         </div>
 
-        {/* YouTube Integration */}
-        <div className="p-6 bg-card rounded-xl border border-border">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-heading font-bold text-lg">YouTube Integration</h2>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={settings.integrations?.youtube?.configured || false}
-                onChange={(e) => updateIntegrations('youtube', { ...settings.integrations?.youtube, configured: e.target.checked })}
-                className="w-4 h-4 rounded border-border"
-              />
-              <span className="text-sm font-medium">Enable</span>
-            </label>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">YouTube API Key</label>
-              <input
-                type="password"
-                value={settings.integrations?.youtube?.apiKey || ''}
-                onChange={(e) => updateIntegrations('youtube', { ...settings.integrations?.youtube, apiKey: e.target.value })}
-                className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                placeholder="Your YouTube API key"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Channel ID</label>
-              <input
-                type="text"
-                value={settings.integrations?.youtube?.channelId || ''}
-                onChange={(e) => updateIntegrations('youtube', { ...settings.integrations?.youtube, channelId: e.target.value })}
-                className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                placeholder="Your YouTube channel ID"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Stripe Integration */}
-        <div className="p-6 bg-card rounded-xl border border-border">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-heading font-bold text-lg">Stripe Integration</h2>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={settings.integrations?.stripe?.configured || false}
-                onChange={(e) => updateIntegrations('stripe', { ...settings.integrations?.stripe, configured: e.target.checked })}
-                className="w-4 h-4 rounded border-border"
-              />
-              <span className="text-sm font-medium">Enable</span>
-            </label>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Publishable Key</label>
-            <input
-              type="password"
-              value={settings.integrations?.stripe?.publishableKey || ''}
-              onChange={(e) => updateIntegrations('stripe', { ...settings.integrations?.stripe, publishableKey: e.target.value })}
-              className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-              placeholder="pk_live_..."
-            />
-          </div>
-        </div>
-
-        {/* Google Places Integration */}
-        <div className="p-6 bg-card rounded-xl border border-border">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-heading font-bold text-lg">Google Places Integration</h2>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={settings.integrations?.googlePlaces?.configured || false}
-                onChange={(e) => updateIntegrations('googlePlaces', { ...settings.integrations?.googlePlaces, configured: e.target.checked })}
-                className="w-4 h-4 rounded border-border"
-              />
-              <span className="text-sm font-medium">Enable</span>
-            </label>
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">For event location autocomplete with Google Places predictions</p>
-          <div>
-            <label className="block text-sm font-medium mb-2">API Key</label>
-            <input
-              type="password"
-              value={settings.integrations?.googlePlaces?.apiKey || ''}
-              onChange={(e) => updateIntegrations('googlePlaces', { ...settings.integrations?.googlePlaces, apiKey: e.target.value })}
-              className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-              placeholder="AIza..."
-            />
-            <p className="text-xs text-muted-foreground mt-2">Get your API key from Google Cloud Console with Places API enabled</p>
-          </div>
-        </div>
-
-        {/* WhatsApp Chat Integration */}
-        <div className="p-6 bg-card rounded-xl border border-border">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-heading font-bold text-lg">WhatsApp Chat</h2>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={settings.integrations?.whatsapp?.configured || false}
-                onChange={(e) => updateIntegrations('whatsapp', { ...settings.integrations?.whatsapp, configured: e.target.checked })}
-                className="w-4 h-4 rounded border-border"
-              />
-              <span className="text-sm font-medium">Enable</span>
-            </label>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Phone Number</label>
-            <input
-              type="tel"
-              value={settings.integrations?.whatsapp?.phoneNumber || ''}
-              onChange={(e) => updateIntegrations('whatsapp', { ...settings.integrations?.whatsapp, phoneNumber: e.target.value })}
-              className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-              placeholder="+1234567890"
-            />
-          </div>
+        {/* Integrations Management */}
+        <div className="p-6 bg-card rounded-xl border border-accent">
+          <h2 className="font-heading font-bold text-lg mb-2">Integrations Management</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            All integrations including Firebase, Gmail SMTP, Stripe, PayPal, Google/Microsoft/Apple Calendar, YouTube Data API, and Google Places have been moved to a dedicated management page.
+          </p>
+          <Link
+            href="/admin/integrations"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 font-medium text-sm"
+          >
+            Manage Integrations →
+          </Link>
         </div>
 
         {/* Hero Slider Configuration */}
