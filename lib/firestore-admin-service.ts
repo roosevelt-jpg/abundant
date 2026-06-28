@@ -8,6 +8,13 @@ export async function getSettings(): Promise<Settings> {
   try {
     console.log('[v0] Attempting to fetch settings from Firestore...');
     const db = await getDb();
+    
+    // If database not initialized, return defaults
+    if (!db) {
+      console.warn('[v0] Database not initialized, returning default settings');
+      return getDefaultSettings();
+    }
+    
     const docSnap = await db.collection('settings').doc(DEFAULT_SETTINGS_ID).get();
     
     if (docSnap.exists) {
@@ -29,6 +36,12 @@ export async function getSettings(): Promise<Settings> {
 export async function updateSettings(updates: Partial<Settings>): Promise<void> {
   try {
     const db = await getDb();
+    
+    // If database not initialized, throw error so caller knows update failed
+    if (!db) {
+      throw new Error('Database not initialized - cannot update settings');
+    }
+    
     const settingsRef = db.collection('settings').doc(DEFAULT_SETTINGS_ID);
     
     const existing = await settingsRef.get();

@@ -138,12 +138,15 @@ export function AdminIntegrationsEditor() {
   if (error) {
     return (
       <div className="p-6 bg-destructive/10 border border-destructive rounded-lg">
-        <p className="text-destructive font-medium">{error}</p>
+        <p className="text-destructive font-medium mb-2">{error}</p>
+        <p className="text-sm text-muted-foreground mb-3">
+          Make sure Firebase Admin SDK is properly configured in environment variables (FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL).
+        </p>
         <button
           onClick={fetchSettings}
-          className="mt-3 px-4 py-2 bg-destructive text-white rounded-lg hover:bg-destructive/90 text-sm"
+          className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 text-sm"
         >
-          Retry
+          Try Again
         </button>
       </div>
     );
