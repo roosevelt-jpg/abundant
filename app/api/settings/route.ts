@@ -16,13 +16,14 @@ export async function GET() {
     const duration = Date.now() - startTime;
     console.log(`[v0] Settings fetched in ${duration}ms`);
     
-    return NextResponse.json(settings || {}, {
+    return NextResponse.json(settings, {
       headers: {
         'Cache-Control': 'no-store, max-age=0'
       }
     });
   } catch (error) {
     console.error('[v0] Error in GET /api/settings:', error);
+    // Should never reach here because getSettings() never throws, but as fallback
     return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
   }
 }

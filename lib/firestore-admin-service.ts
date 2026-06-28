@@ -4,7 +4,7 @@ import type { Settings } from './types';
 
 const DEFAULT_SETTINGS_ID = 'main';
 
-export async function getSettings(): Promise<Settings | null> {
+export async function getSettings(): Promise<Settings> {
   try {
     console.log('[v0] Attempting to fetch settings from Firestore...');
     const db = await getDb();
@@ -20,8 +20,8 @@ export async function getSettings(): Promise<Settings | null> {
     return getDefaultSettings();
   } catch (error) {
     console.error('[v0] Error getting settings from Admin SDK:', error);
-    // Return defaults on error instead of throwing
-    console.warn('[v0] Returning default settings due to error');
+    // Always return defaults on any error - never throw
+    console.warn('[v0] Returning default settings due to error:', error instanceof Error ? error.message : String(error));
     return getDefaultSettings();
   }
 }

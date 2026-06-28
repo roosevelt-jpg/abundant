@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { Settings } from '@/lib/types';
 import { Check, X, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 interface IntegrationTest {
   [key: string]: 'idle' | 'testing' | 'success' | 'error';
 }
 
 export function AdminIntegrationsEditor() {
+  const { currentUser } = useAuth();
   const [settings, setSettings] = useState<Partial<Settings> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +58,14 @@ export function AdminIntegrationsEditor() {
   const updateIntegration = async (integrationKey: string, config: any) => {
     try {
       setSaving(true);
+      
+      // Get auth token from current user
+      const token = currentUser ? await currentUser.getIdToken() : null;
+      if (!token) {
+        setError('Not authenticated');
+        return;
+      }
+      
       const integrations = settings?.integrations || {};
       const updatedIntegrations = {
         ...integrations,
@@ -68,13 +78,19 @@ export function AdminIntegrationsEditor() {
       
       const response = await fetch('/api/settings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(updatedSettings)
       });
 
       if (response.ok) {
+        console.log('[v0] Integration saved successfully');
         setSettings(updatedSettings);
       } else {
+        const errorData = await response.text();
+        console.error('[v0] Save error:', errorData);
         setError('Failed to save integration');
       }
     } catch (err) {
