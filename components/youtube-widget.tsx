@@ -31,7 +31,7 @@ export const YouTubeWidget = ({ settings: initialSettings }: YouTubeWidgetProps)
     // Load settings on client side if not provided
     const loadSettings = async () => {
       try {
-        const { getSettings } = await import('@/lib/db-service');
+        const { getSettings } = await import('@/lib/firestore-service');
         const data = await getSettings();
         setSettings(data);
       } catch (error) {
