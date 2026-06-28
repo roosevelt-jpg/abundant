@@ -57,9 +57,15 @@ export const Header = () => {
           <Link href="/events" className="text-sm hover:text-accent transition-colors">
             Events
           </Link>
-          <Link href="/membership" className="text-sm hover:text-accent transition-colors">
-            Membership
-          </Link>
+          {currentUser ? (
+            <Link href="/member/dashboard" className="text-sm hover:text-accent transition-colors">
+              Membership
+            </Link>
+          ) : (
+            <Link href="/login" className="text-sm hover:text-accent transition-colors">
+              Membership
+            </Link>
+          )}
           <Link href="/contact" className="text-sm hover:text-accent transition-colors">
             Contact
           </Link>
@@ -71,8 +77,8 @@ export const Header = () => {
           
           {currentUser ? (
             <div className="flex items-center gap-3">
-              <Link href="/dashboard" className="text-sm font-medium text-accent hover:text-accent/80 transition-colors">
-                Dashboard
+              <Link href="/member/dashboard" className="text-sm font-medium text-accent hover:text-accent/80 transition-colors">
+                My Dashboard
               </Link>
               <button
                 onClick={handleLogout}
