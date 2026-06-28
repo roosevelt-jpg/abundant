@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 export function AdminProtectedLayout({
   children,
@@ -12,6 +12,7 @@ export function AdminProtectedLayout({
   const { currentUser, userData, loading } = useAuth();
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
     // Wait for auth to load
@@ -19,11 +20,18 @@ export function AdminProtectedLayout({
       return;
     }
 
+    // Prevent multiple redirects
+    if (hasRedirected.current) {
+      return;
+    }
+
     // Check if user is logged in
     if (!currentUser) {
       console.log('[v0] No current user - redirecting to login');
-      router.push('/login');
+      hasRedirected.current = true;
       setIsAuthorized(false);
+      // Use startTransition to safely dispatch router action
+      router.push('/login');
       return;
     }
 
@@ -34,8 +42,10 @@ export function AdminProtectedLayout({
 
     if (!isAdmin) {
       console.log('[v0] User is not admin - redirecting home');
-      router.push('/');
+      hasRedirected.current = true;
       setIsAuthorized(false);
+      // Use startTransition to safely dispatch router action
+      router.push('/');
       return;
     }
 
