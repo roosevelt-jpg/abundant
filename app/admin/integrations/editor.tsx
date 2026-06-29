@@ -1,443 +1,390 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings } from '@/lib/types';
-import { Check, X, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { Check, X, Eye, EyeOff, Save } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
-interface IntegrationTest {
-  [key: string]: 'idle' | 'testing' | 'success' | 'error';
+interface IntegrationConfig {
+  [key: string]: any;
+}
+
+interface IntegrationField {
+  key: string;
+  label: string;
+  type: 'text' | 'email' | 'password' | 'checkbox';
+  placeholder?: string;
+  sensitive?: boolean;
+}
+
+interface Integration {
+  name: string;
+  description: string;
+  fields: IntegrationField[];
+  config: IntegrationConfig;
+  status: 'connected' | 'partial' | 'error' | 'not-configured';
 }
 
 export function AdminIntegrationsEditor() {
   const { currentUser } = useAuth();
-  const [settings, setSettings] = useState<Partial<Settings> | null>(null);
+  const [integrations, setIntegrations] = useState<{ [key: string]: Integration }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [testResults, setTestResults] = useState<IntegrationTest>({});
   const [showSecrets, setShowSecrets] = useState<{ [key: string]: boolean }>({});
   const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
+  // Initialize integrations structure
   useEffect(() => {
-    fetchSettings();
+    const integs: { [key: string]: Integration } = {
+      firebase_admin: {
+        name: 'Firebase Admin SDK',
+        description: 'Server-side access to Firestore, Auth, Storage, and Cloud Messaging',
+        status: 'not-configured',
+        config: {},
+        fields: [
+          { key: 'projectId', label: 'Project ID', type: 'text', placeholder: 'your-project-id' },
+          { key: 'privateKey', label: 'Private Key', type: 'password', placeholder: '-----BEGIN PRIVATE KEY-----...', sensitive: true },
+          { key: 'clientEmail', label: 'Client Email', type: 'email', placeholder: 'firebase-adminsdk-xxx@project.iam.gserviceaccount.com', sensitive: true },
+        ]
+      },
+      firebase_client: {
+        name: 'Firebase Client SDK',
+        description: 'Browser-side SDK for authentication, database, and storage',
+        status: 'not-configured',
+        config: {},
+        fields: [
+          { key: 'apiKey', label: 'API Key', type: 'password', placeholder: 'AIza...', sensitive: true },
+          { key: 'authDomain', label: 'Auth Domain', type: 'text', placeholder: 'your-project.firebaseapp.com' },
+          { key: 'projectId', label: 'Project ID', type: 'text', placeholder: 'your-project-id' },
+          { key: 'storageBucket', label: 'Storage Bucket', type: 'text', placeholder: 'your-project.appspot.com' },
+          { key: 'messagingSenderId', label: 'Messaging Sender ID', type: 'text', placeholder: '123456789' },
+          { key: 'appId', label: 'App ID', type: 'text', placeholder: '1:123456789:web:abc123' },
+        ]
+      },
+      gmail_smtp: {
+        name: 'Gmail SMTP',
+        description: 'Send emails through Gmail account',
+        status: 'not-configured',
+        config: {},
+        fields: [
+          { key: 'email', label: 'Email Address', type: 'email', placeholder: 'your-email@gmail.com' },
+          { key: 'appPassword', label: 'App Password', type: 'password', placeholder: 'xxxx xxxx xxxx xxxx', sensitive: true },
+          { key: 'senderName', label: 'Sender Name', type: 'text', placeholder: 'Abundant Global Club' },
+        ]
+      },
+      stripe: {
+        name: 'Stripe',
+        description: 'Payment processing',
+        status: 'not-configured',
+        config: {},
+        fields: [
+          { key: 'publishableKey', label: 'Publishable Key', type: 'text', placeholder: 'pk_live_...' },
+          { key: 'secretKey', label: 'Secret Key', type: 'password', placeholder: 'sk_live_...', sensitive: true },
+          { key: 'webhookSecret', label: 'Webhook Secret', type: 'password', placeholder: 'whsec_...', sensitive: true },
+        ]
+      },
+      paypal: {
+        name: 'PayPal',
+        description: 'PayPal payment integration',
+        status: 'not-configured',
+        config: {},
+        fields: [
+          { key: 'clientId', label: 'Client ID', type: 'password', placeholder: 'AQd...', sensitive: true },
+          { key: 'secret', label: 'Secret', type: 'password', placeholder: 'EL3...', sensitive: true },
+          { key: 'mode', label: 'Mode', type: 'text', placeholder: 'sandbox or live' },
+        ]
+      },
+      google_calendar: {
+        name: 'Google Calendar',
+        description: 'Sync events with Google Calendar',
+        status: 'not-configured',
+        config: {},
+        fields: [
+          { key: 'apiKey', label: 'API Key', type: 'password', placeholder: 'AIza...', sensitive: true },
+          { key: 'calendarId', label: 'Calendar ID', type: 'text', placeholder: 'primary or email@gmail.com' },
+        ]
+      },
+      microsoft_calendar: {
+        name: 'Microsoft Calendar',
+        description: 'Sync events with Microsoft Outlook',
+        status: 'not-configured',
+        config: {},
+        fields: [
+          { key: 'clientId', label: 'Client ID', type: 'text', placeholder: '...' },
+          { key: 'secret', label: 'Secret', type: 'password', placeholder: '...', sensitive: true },
+          { key: 'tenantId', label: 'Tenant ID', type: 'text', placeholder: 'common' },
+        ]
+      },
+      youtube: {
+        name: 'YouTube Data API',
+        description: 'Fetch videos from YouTube channel',
+        status: 'not-configured',
+        config: {},
+        fields: [
+          { key: 'apiKey', label: 'API Key', type: 'password', placeholder: 'AIza...', sensitive: true },
+          { key: 'channelId', label: 'Channel ID', type: 'text', placeholder: 'UCxxxxx' },
+        ]
+      },
+      google_places: {
+        name: 'Google Places API',
+        description: 'Location autocomplete and place details',
+        status: 'not-configured',
+        config: {},
+        fields: [
+          { key: 'apiKey', label: 'API Key', type: 'password', placeholder: 'AIza...', sensitive: true },
+        ]
+      },
+    };
+
+    setIntegrations(integs);
+    setLoading(false);
   }, []);
 
-  const fetchSettings = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      console.log('[v0] Fetching integrations from API...');
-      const startTime = Date.now();
-      
-      const response = await fetch('/api/settings', {
-        cache: 'no-store',
-        method: 'GET'
-      });
-      
-      const duration = Date.now() - startTime;
-      console.log(`[v0] Settings fetched in ${duration}ms, status: ${response.status}`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('[v0] Settings data loaded successfully');
-        setSettings(data);
-        setError(null);
-      } else {
-        const errorText = await response.text();
-        console.error(`[v0] Settings API error ${response.status}:`, errorText);
-        setError(`Failed to load integrations (${response.status})`);
+  const handleFieldChange = (integrationKey: string, fieldKey: string, value: any) => {
+    setIntegrations(prev => ({
+      ...prev,
+      [integrationKey]: {
+        ...prev[integrationKey],
+        config: {
+          ...prev[integrationKey].config,
+          [fieldKey]: value
+        }
       }
-    } catch (err) {
-      console.error('[v0] Error fetching settings:', err);
-      setError(`Failed to load integrations: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    } finally {
-      setLoading(false);
-    }
+    }));
   };
 
-  const updateIntegration = async (integrationKey: string, config: any) => {
+  const saveIntegrations = async () => {
     try {
       setSaving(true);
-      
-      // Get auth token from current user
+      setSaveSuccess(false);
+
       const token = currentUser ? await currentUser.getIdToken() : null;
       if (!token) {
         setError('Not authenticated');
         return;
       }
-      
-      const integrations = settings?.integrations || {};
-      const updatedIntegrations = {
-        ...integrations,
-        [integrationKey]: config
-      };
-      const updatedSettings: Partial<Settings> = {
-        ...settings,
-        integrations: updatedIntegrations
-      };
-      
-      const response = await fetch('/api/settings', {
+
+      // Prepare integrations data for storage
+      const integrationsData: { [key: string]: any } = {};
+      Object.entries(integrations).forEach(([key, integration]) => {
+        integrationsData[key] = integration.config;
+      });
+
+      console.log('[v0] Saving integrations...', integrationsData);
+
+      const response = await fetch('/api/integrations/save', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(updatedSettings)
+        body: JSON.stringify({
+          integrations: integrationsData
+        })
       });
 
       if (response.ok) {
-        console.log('[v0] Integration saved successfully');
-        setSettings(updatedSettings);
+        setSaveSuccess(true);
+        setError(null);
+        setTimeout(() => setSaveSuccess(false), 3000);
       } else {
-        const errorData = await response.text();
-        console.error('[v0] Save error:', errorData);
-        setError('Failed to save integration');
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.message || `Failed to save integrations (${response.status})`);
       }
     } catch (err) {
-      console.error('[v0] Error updating integration:', err);
-      setError('Failed to save integration');
+      console.error('[v0] Error saving integrations:', err);
+      setError(`Error saving integrations: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setSaving(false);
     }
   };
 
-  const testIntegration = async (integrationKey: string) => {
-    setTestResults({ ...testResults, [integrationKey]: 'testing' });
-    try {
-      const integrations = settings?.integrations as any;
-      const response = await fetch(`/api/integrations/test/${integrationKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(integrations?.[integrationKey] || {})
-      });
-
-      if (response.ok) {
-        setTestResults({ ...testResults, [integrationKey]: 'success' });
-        setTimeout(() => {
-          setTestResults({ ...testResults, [integrationKey]: 'idle' });
-        }, 3000);
-      } else {
-        setTestResults({ ...testResults, [integrationKey]: 'error' });
-        setTimeout(() => {
-          setTestResults({ ...testResults, [integrationKey]: 'idle' });
-        }, 3000);
-      }
-    } catch (err) {
-      console.error('[v0] Test error:', err);
-      setTestResults({ ...testResults, [integrationKey]: 'error' });
-      setTimeout(() => {
-        setTestResults({ ...testResults, [integrationKey]: 'idle' });
-      }, 3000);
-    }
-  };
-
   if (loading) {
-    return <div className="p-8 text-center">Loading integrations...</div>;
-  }
-
-  if (error) {
     return (
-      <div className="p-6 bg-destructive/10 border border-destructive rounded-lg">
-        <p className="text-destructive font-medium mb-2">{error}</p>
-        <p className="text-sm text-muted-foreground mb-3">
-          Make sure Firebase Admin SDK is properly configured in environment variables (FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL).
-        </p>
-        <button
-          onClick={fetchSettings}
-          className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 text-sm"
-        >
-          Try Again
-        </button>
+      <div className="p-8 text-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+        <p className="mt-4 text-muted-foreground">Loading integrations...</p>
       </div>
     );
   }
 
-  const integrations = settings?.integrations || {};
-
   return (
-    <div className="space-y-8">
-      {/* Firebase Configuration */}
-      <IntegrationCard
-        title="Firebase"
-        description="Configure Firebase Admin SDK and Client SDK for database, storage, and authentication"
-        integrationKey="firebase"
-        config={integrations.firebase}
-        onUpdate={(config) => updateIntegration('firebase', config)}
-        onTest={() => testIntegration('firebase')}
-        testResult={testResults.firebase}
-        fields={[
-          // Admin SDK Fields
-          { key: 'adminProjectId', label: 'Admin SDK - Project ID', type: 'text', placeholder: 'your-project-id' },
-          { key: 'adminPrivateKey', label: 'Admin SDK - Private Key', type: 'password', placeholder: '-----BEGIN PRIVATE KEY-----...', sensitive: true },
-          { key: 'adminClientEmail', label: 'Admin SDK - Client Email', type: 'email', placeholder: 'firebase-adminsdk-xxx@your-project-id.iam.gserviceaccount.com', sensitive: true },
-          { key: 'adminConfigured', label: 'Admin SDK Enabled', type: 'checkbox' },
-          
-          // Client SDK Fields
-          { key: 'clientApiKey', label: 'Client SDK - API Key', type: 'password', placeholder: 'AIza...', sensitive: true },
-          { key: 'clientAuthDomain', label: 'Client SDK - Auth Domain', type: 'text', placeholder: 'your-project.firebaseapp.com' },
-          { key: 'clientProjectId', label: 'Client SDK - Project ID', type: 'text', placeholder: 'your-project-id' },
-          { key: 'clientStorageBucket', label: 'Client SDK - Storage Bucket', type: 'text', placeholder: 'your-project.appspot.com' },
-          { key: 'clientMessagingSenderId', label: 'Client SDK - Messaging Sender ID', type: 'text', placeholder: 'xxx' },
-          { key: 'clientAppId', label: 'Client SDK - App ID', type: 'text', placeholder: 'xxx' },
-          { key: 'clientConfigured', label: 'Client SDK Enabled', type: 'checkbox' },
-        ]}
+    <div className="space-y-6">
+      {error && (
+        <div className="p-4 bg-destructive/10 border border-destructive rounded-lg">
+          <p className="text-destructive font-medium">{error}</p>
+        </div>
+      )}
+
+      {saveSuccess && (
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-green-800 font-medium">Integrations saved successfully!</p>
+        </div>
+      )}
+
+      {/* Firebase Admin SDK */}
+      <IntegrationSection
+        integration={integrations.firebase_admin}
+        integrationKey="firebase_admin"
+        onFieldChange={handleFieldChange}
+        showSecrets={showSecrets}
+        setShowSecrets={setShowSecrets}
+      />
+
+      {/* Firebase Client SDK */}
+      <IntegrationSection
+        integration={integrations.firebase_client}
+        integrationKey="firebase_client"
+        onFieldChange={handleFieldChange}
+        showSecrets={showSecrets}
+        setShowSecrets={setShowSecrets}
       />
 
       {/* Gmail SMTP */}
-      <IntegrationCard
-        title="Gmail SMTP"
-        description="Send transactional emails via Gmail for event confirmations, notifications, etc."
-        integrationKey="gmailSmtp"
-        config={integrations.gmailSmtp}
-        onUpdate={(config) => updateIntegration('gmailSmtp', config)}
-        onTest={() => testIntegration('gmailSmtp')}
-        testResult={testResults.gmailSmtp}
-        fields={[
-          { key: 'email', label: 'Gmail Email Address', type: 'email', placeholder: 'your-email@gmail.com' },
-          { key: 'senderName', label: 'Sender Name', type: 'text', placeholder: 'Abundant Global Club' },
-          { key: 'appPassword', label: 'App Password', type: 'password', placeholder: 'Generated from Gmail', sensitive: true },
-          { key: 'configured', label: 'Enabled', type: 'checkbox' },
-        ]}
+      <IntegrationSection
+        integration={integrations.gmail_smtp}
+        integrationKey="gmail_smtp"
+        onFieldChange={handleFieldChange}
+        showSecrets={showSecrets}
+        setShowSecrets={setShowSecrets}
       />
 
-      {/* Stripe Payments */}
-      <IntegrationCard
-        title="Stripe"
-        description="Process payments for membership subscriptions and event registrations"
+      {/* Stripe */}
+      <IntegrationSection
+        integration={integrations.stripe}
         integrationKey="stripe"
-        config={integrations.stripe}
-        onUpdate={(config) => updateIntegration('stripe', config)}
-        onTest={() => testIntegration('stripe')}
-        testResult={testResults.stripe}
-        fields={[
-          { key: 'publishableKey', label: 'Publishable Key', type: 'text', placeholder: 'pk_live_...' },
-          { key: 'secretKey', label: 'Secret Key', type: 'password', placeholder: 'sk_live_...', sensitive: true },
-          { key: 'webhookSecret', label: 'Webhook Secret', type: 'password', placeholder: 'whsec_...', sensitive: true },
-          { key: 'configured', label: 'Enabled', type: 'checkbox' },
-        ]}
+        onFieldChange={handleFieldChange}
+        showSecrets={showSecrets}
+        setShowSecrets={setShowSecrets}
       />
 
-      {/* PayPal Payments */}
-      <IntegrationCard
-        title="PayPal"
-        description="Alternative payment processor for memberships and event fees"
+      {/* PayPal */}
+      <IntegrationSection
+        integration={integrations.paypal}
         integrationKey="paypal"
-        config={integrations.paypal}
-        onUpdate={(config) => updateIntegration('paypal', config)}
-        onTest={() => testIntegration('paypal')}
-        testResult={testResults.paypal}
-        fields={[
-          { key: 'clientId', label: 'Client ID', type: 'text', placeholder: 'Your Client ID', sensitive: true },
-          { key: 'secret', label: 'Secret', type: 'password', placeholder: 'Your Secret', sensitive: true },
-          { 
-            key: 'mode', 
-            label: 'Mode', 
-            type: 'select', 
-            options: ['sandbox', 'live'],
-            defaultValue: 'sandbox'
-          },
-          { key: 'configured', label: 'Enabled', type: 'checkbox' },
-        ]}
+        onFieldChange={handleFieldChange}
+        showSecrets={showSecrets}
+        setShowSecrets={setShowSecrets}
       />
 
       {/* Google Calendar */}
-      <IntegrationCard
-        title="Google Calendar"
-        description="Automatically sync events to Google Calendar when created"
-        integrationKey="googleCalendar"
-        config={integrations.googleCalendar}
-        onUpdate={(config) => updateIntegration('googleCalendar', config)}
-        onTest={() => testIntegration('googleCalendar')}
-        testResult={testResults.googleCalendar}
-        fields={[
-          { key: 'apiKey', label: 'API Key', type: 'password', placeholder: 'AIza...', sensitive: true },
-          { key: 'calendarId', label: 'Calendar ID', type: 'text', placeholder: 'calendar-id@group.calendar.google.com' },
-          { key: 'configured', label: 'Enabled', type: 'checkbox' },
-        ]}
+      <IntegrationSection
+        integration={integrations.google_calendar}
+        integrationKey="google_calendar"
+        onFieldChange={handleFieldChange}
+        showSecrets={showSecrets}
+        setShowSecrets={setShowSecrets}
       />
 
       {/* Microsoft Calendar */}
-      <IntegrationCard
-        title="Microsoft Calendar"
-        description="Sync events with Microsoft Outlook calendar"
-        integrationKey="microsoftCalendar"
-        config={integrations.microsoftCalendar}
-        onUpdate={(config) => updateIntegration('microsoftCalendar', config)}
-        onTest={() => testIntegration('microsoftCalendar')}
-        testResult={testResults.microsoftCalendar}
-        fields={[
-          { key: 'clientId', label: 'Client ID', type: 'text', placeholder: 'Your Client ID', sensitive: true },
-          { key: 'secret', label: 'Client Secret', type: 'password', placeholder: 'Your Secret', sensitive: true },
-          { key: 'tenantId', label: 'Tenant ID', type: 'text', placeholder: 'Your Tenant ID' },
-          { key: 'configured', label: 'Enabled', type: 'checkbox' },
-        ]}
+      <IntegrationSection
+        integration={integrations.microsoft_calendar}
+        integrationKey="microsoft_calendar"
+        onFieldChange={handleFieldChange}
+        showSecrets={showSecrets}
+        setShowSecrets={setShowSecrets}
       />
 
-      {/* Apple Calendar */}
-      <IntegrationCard
-        title="Apple Calendar"
-        description="Share calendar subscription for Apple Calendar, iOS Calendar"
-        integrationKey="appleCalendar"
-        config={integrations.appleCalendar}
-        onUpdate={(config) => updateIntegration('appleCalendar', config)}
-        onTest={() => testIntegration('appleCalendar')}
-        testResult={testResults.appleCalendar}
-        fields={[
-          { key: 'calendarUrl', label: 'Calendar URL (.ics)', type: 'url', placeholder: 'https://...' },
-          { key: 'configured', label: 'Enabled', type: 'checkbox' },
-        ]}
+      {/* YouTube */}
+      <IntegrationSection
+        integration={integrations.youtube}
+        integrationKey="youtube"
+        onFieldChange={handleFieldChange}
+        showSecrets={showSecrets}
+        setShowSecrets={setShowSecrets}
       />
 
-      {/* YouTube Data API */}
-      <IntegrationCard
-        title="YouTube Data API"
-        description="Automatically fetch videos from your channel to display in Featured Videos section"
-        integrationKey="youtubeDataApi"
-        config={integrations.youtubeDataApi}
-        onUpdate={(config) => updateIntegration('youtubeDataApi', config)}
-        onTest={() => testIntegration('youtubeDataApi')}
-        testResult={testResults.youtubeDataApi}
-        fields={[
-          { key: 'apiKey', label: 'API Key', type: 'password', placeholder: 'AIza...', sensitive: true },
-          { key: 'channelId', label: 'YouTube Channel ID', type: 'text', placeholder: 'UCxxxxxx' },
-          { key: 'autoFetchEnabled', label: 'Auto-fetch Videos', type: 'checkbox' },
-          { key: 'fetchInterval', label: 'Fetch Interval (minutes)', type: 'number', defaultValue: 60 },
-          { key: 'configured', label: 'Enabled', type: 'checkbox' },
-        ]}
+      {/* Google Places */}
+      <IntegrationSection
+        integration={integrations.google_places}
+        integrationKey="google_places"
+        onFieldChange={handleFieldChange}
+        showSecrets={showSecrets}
+        setShowSecrets={setShowSecrets}
       />
 
-      {/* Google Places API */}
-      <IntegrationCard
-        title="Google Places API"
-        description="Autocomplete addresses for member signup and event creation with precise location coordinates"
-        integrationKey="googlePlaces"
-        config={integrations.googlePlaces}
-        onUpdate={(config) => updateIntegration('googlePlaces', config)}
-        onTest={() => testIntegration('googlePlaces')}
-        testResult={testResults.googlePlaces}
-        fields={[
-          { key: 'apiKey', label: 'API Key', type: 'password', placeholder: 'AIza...', sensitive: true },
-          { key: 'restrictCountries', label: 'Restrict to Countries (comma-separated)', type: 'text', placeholder: 'ae,sa,kw' },
-          { key: 'configured', label: 'Enabled', type: 'checkbox' },
-        ]}
-      />
+      {/* Save Button */}
+      <div className="flex justify-end pt-6 border-t border-border">
+        <button
+          onClick={saveIntegrations}
+          disabled={saving}
+          className="flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 font-medium transition-colors"
+        >
+          <Save className="w-4 h-4" />
+          {saving ? 'Saving...' : 'Save All Integrations'}
+        </button>
+      </div>
     </div>
   );
 }
 
-interface IntegrationCardProps {
-  title: string;
-  description: string;
+interface IntegrationSectionProps {
+  integration?: Integration;
   integrationKey: string;
-  config: any;
-  onUpdate: (config: any) => void;
-  onTest: () => void;
-  testResult?: string;
-  fields: FieldConfig[];
+  onFieldChange: (integrationKey: string, fieldKey: string, value: any) => void;
+  showSecrets: { [key: string]: boolean };
+  setShowSecrets: (show: { [key: string]: boolean }) => void;
 }
 
-interface FieldConfig {
-  key: string;
-  label: string;
-  type: 'text' | 'email' | 'password' | 'checkbox' | 'number' | 'url' | 'select';
-  placeholder?: string;
-  options?: string[];
-  defaultValue?: any;
-  sensitive?: boolean;
-}
-
-function IntegrationCard({
-  title,
-  description,
+function IntegrationSection({
+  integration,
   integrationKey,
-  config,
-  onUpdate,
-  onTest,
-  testResult,
-  fields
-}: IntegrationCardProps) {
-  const [showSecrets, setShowSecrets] = useState<{ [key: string]: boolean }>({});
-
-  const handleFieldChange = (key: string, value: any) => {
-    const newConfig = { ...config };
-    newConfig[key] = value;
-    onUpdate(newConfig);
-  };
+  onFieldChange,
+  showSecrets,
+  setShowSecrets
+}: IntegrationSectionProps) {
+  if (!integration) return null;
 
   return (
-    <div className="p-6 bg-card border border-border rounded-xl space-y-4">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <h3 className="text-lg font-bold">{title}</h3>
-          <p className="text-sm text-muted-foreground mt-1">{description}</p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={onTest}
-            disabled={testResult === 'testing'}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-              testResult === 'testing' ? 'opacity-50 cursor-not-allowed' :
-              testResult === 'success' ? 'bg-green-500/20 text-green-600' :
-              testResult === 'error' ? 'bg-red-500/20 text-red-600' :
-              'bg-accent/10 text-accent hover:bg-accent/20'
-            }`}
-          >
-            {testResult === 'testing' && <RefreshCw className="w-4 h-4 animate-spin" />}
-            {testResult === 'success' && <Check className="w-4 h-4" />}
-            {testResult === 'error' && <X className="w-4 h-4" />}
-            {!testResult || testResult === 'idle' ? 'Test Connection' : 
-             testResult === 'success' ? 'Connected' :
-             testResult === 'error' ? 'Connection Failed' : 'Testing...'}
-          </button>
-        </div>
+    <div className="border border-border rounded-lg p-6 bg-card">
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold">{integration.name}</h3>
+        <p className="text-sm text-muted-foreground mt-1">{integration.description}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {fields.map((field) => (
-          <div key={field.key} className={field.type === 'checkbox' ? 'md:col-span-2' : ''}>
+        {integration.fields.map(field => (
+          <div key={field.key}>
+            <label className="block text-sm font-medium mb-2">
+              {field.label}
+            </label>
             {field.type === 'checkbox' ? (
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={config?.[field.key] || false}
-                  onChange={(e) => handleFieldChange(field.key, e.target.checked)}
-                  className="w-4 h-4 rounded border-border"
-                />
-                <span className="text-sm font-medium">{field.label}</span>
-              </label>
-            ) : field.type === 'select' ? (
-              <div>
-                <label className="block text-xs font-medium mb-2">{field.label}</label>
-                <select
-                  value={config?.[field.key] || field.defaultValue || ''}
-                  onChange={(e) => handleFieldChange(field.key, e.target.value)}
-                  className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-                >
-                  {field.options?.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
-                </select>
-              </div>
+              <input
+                type="checkbox"
+                checked={integration.config[field.key] || false}
+                onChange={e => onFieldChange(integrationKey, field.key, e.target.checked)}
+                className="w-4 h-4 rounded border-border"
+              />
             ) : (
-              <div>
-                <label className="block text-xs font-medium mb-2 flex items-center justify-between">
-                  {field.label}
-                  {field.sensitive && (
-                    <button
-                      onClick={() => setShowSecrets({ ...showSecrets, [field.key]: !showSecrets[field.key] })}
-                      className="p-1 hover:bg-accent/10 rounded"
-                    >
-                      {showSecrets[field.key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  )}
-                </label>
+              <div className="relative">
                 <input
-                  type={field.sensitive && !showSecrets[field.key] ? 'password' : field.type}
-                  value={config?.[field.key] || ''}
-                  onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                  type={
+                    field.type === 'password' && !showSecrets[`${integrationKey}-${field.key}`]
+                      ? 'password'
+                      : 'text'
+                  }
                   placeholder={field.placeholder}
-                  className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                  value={integration.config[field.key] || ''}
+                  onChange={e => onFieldChange(integrationKey, field.key, e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent"
                 />
+                {field.type === 'password' && (
+                  <button
+                    onClick={() =>
+                      setShowSecrets({
+                        ...showSecrets,
+                        [`${integrationKey}-${field.key}`]: !showSecrets[`${integrationKey}-${field.key}`]
+                      })
+                    }
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showSecrets[`${integrationKey}-${field.key}`] ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                )}
               </div>
             )}
           </div>
