@@ -166,10 +166,20 @@ export function AdminIntegrationsEditor() {
         onTest={() => testIntegration('firebase')}
         testResult={testResults.firebase}
         fields={[
-          { key: 'projectId', label: 'Project ID', type: 'text', placeholder: 'your-project-id' },
-          { key: 'storageBucket', label: 'Storage Bucket', type: 'text', placeholder: 'your-project.appspot.com' },
-          { key: 'adminSdkConfigured', label: 'Admin SDK Configured', type: 'checkbox' },
-          { key: 'clientSdkConfigured', label: 'Client SDK Configured', type: 'checkbox' },
+          // Admin SDK Fields
+          { key: 'adminProjectId', label: 'Admin SDK - Project ID', type: 'text', placeholder: 'your-project-id' },
+          { key: 'adminPrivateKey', label: 'Admin SDK - Private Key', type: 'password', placeholder: '-----BEGIN PRIVATE KEY-----...', sensitive: true },
+          { key: 'adminClientEmail', label: 'Admin SDK - Client Email', type: 'email', placeholder: 'firebase-adminsdk-xxx@your-project-id.iam.gserviceaccount.com', sensitive: true },
+          { key: 'adminConfigured', label: 'Admin SDK Enabled', type: 'checkbox' },
+          
+          // Client SDK Fields
+          { key: 'clientApiKey', label: 'Client SDK - API Key', type: 'password', placeholder: 'AIza...', sensitive: true },
+          { key: 'clientAuthDomain', label: 'Client SDK - Auth Domain', type: 'text', placeholder: 'your-project.firebaseapp.com' },
+          { key: 'clientProjectId', label: 'Client SDK - Project ID', type: 'text', placeholder: 'your-project-id' },
+          { key: 'clientStorageBucket', label: 'Client SDK - Storage Bucket', type: 'text', placeholder: 'your-project.appspot.com' },
+          { key: 'clientMessagingSenderId', label: 'Client SDK - Messaging Sender ID', type: 'text', placeholder: 'xxx' },
+          { key: 'clientAppId', label: 'Client SDK - App ID', type: 'text', placeholder: 'xxx' },
+          { key: 'clientConfigured', label: 'Client SDK Enabled', type: 'checkbox' },
         ]}
       />
 
