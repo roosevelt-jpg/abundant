@@ -1,394 +1,531 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Check, X, Eye, EyeOff, Save } from 'lucide-react';
+import { useState } from 'react';
+import { Check, X, Eye, EyeOff, Save, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 interface IntegrationConfig {
   [key: string]: any;
 }
 
-interface IntegrationField {
-  key: string;
-  label: string;
-  type: 'text' | 'email' | 'password' | 'checkbox';
-  placeholder?: string;
-  sensitive?: boolean;
-}
-
 interface Integration {
   name: string;
   description: string;
-  fields: IntegrationField[];
+  jsonPaste?: boolean;
   config: IntegrationConfig;
   status: 'connected' | 'partial' | 'error' | 'not-configured';
 }
 
 export function AdminIntegrationsEditor() {
   const { currentUser } = useAuth();
-  const [integrations, setIntegrations] = useState<{ [key: string]: Integration }>({});
-  const [loading, setLoading] = useState(true);
+  const [integrations, setIntegrations] = useState<{ [key: string]: Integration }>({
+    firebase_admin: {
+      name: 'Firebase Admin SDK',
+      description: 'Paste your Firebase Admin SDK JSON file here',
+      jsonPaste: true,
+      status: 'not-configured',
+      config: {}
+    },
+    firebase_client: {
+      name: 'Firebase Client SDK',
+      description: 'Paste your Firebase Client SDK configuration JSON here',
+      jsonPaste: true,
+      status: 'not-configured',
+      config: {}
+    },
+    gmail_smtp: {
+      name: 'Gmail SMTP',
+      description: 'Email configuration for sending messages',
+      status: 'not-configured',
+      config: {}
+    },
+    stripe: {
+      name: 'Stripe',
+      description: 'Payment processing keys',
+      status: 'not-configured',
+      config: {}
+    },
+    paypal: {
+      name: 'PayPal',
+      description: 'PayPal API credentials',
+      status: 'not-configured',
+      config: {}
+    },
+    google_calendar: {
+      name: 'Google Calendar',
+      description: 'Google Calendar integration',
+      status: 'not-configured',
+      config: {}
+    },
+    microsoft_calendar: {
+      name: 'Microsoft Calendar',
+      description: 'Microsoft Calendar integration',
+      status: 'not-configured',
+      config: {}
+    },
+    youtube: {
+      name: 'YouTube Data API',
+      description: 'YouTube channel integration',
+      status: 'not-configured',
+      config: {}
+    },
+    google_places: {
+      name: 'Google Places API',
+      description: 'Location search and autocomplete',
+      status: 'not-configured',
+      config: {}
+    }
+  });
+
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showSecrets, setShowSecrets] = useState<{ [key: string]: boolean }>({});
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [firebaseAdminJson, setFirebaseAdminJson] = useState('');
+  const [firebaseClientJson, setFirebaseClientJson] = useState('');
 
-  // Initialize integrations structure
-  useEffect(() => {
-    const integs: { [key: string]: Integration } = {
-      firebase_admin: {
-        name: 'Firebase Admin SDK',
-        description: 'Server-side access to Firestore, Auth, Storage, and Cloud Messaging',
-        status: 'not-configured',
-        config: {},
-        fields: [
-          { key: 'projectId', label: 'Project ID', type: 'text', placeholder: 'your-project-id' },
-          { key: 'privateKey', label: 'Private Key', type: 'password', placeholder: '-----BEGIN PRIVATE KEY-----...', sensitive: true },
-          { key: 'clientEmail', label: 'Client Email', type: 'email', placeholder: 'firebase-adminsdk-xxx@project.iam.gserviceaccount.com', sensitive: true },
-        ]
-      },
-      firebase_client: {
-        name: 'Firebase Client SDK',
-        description: 'Browser-side SDK for authentication, database, and storage',
-        status: 'not-configured',
-        config: {},
-        fields: [
-          { key: 'apiKey', label: 'API Key', type: 'password', placeholder: 'AIza...', sensitive: true },
-          { key: 'authDomain', label: 'Auth Domain', type: 'text', placeholder: 'your-project.firebaseapp.com' },
-          { key: 'projectId', label: 'Project ID', type: 'text', placeholder: 'your-project-id' },
-          { key: 'storageBucket', label: 'Storage Bucket', type: 'text', placeholder: 'your-project.appspot.com' },
-          { key: 'messagingSenderId', label: 'Messaging Sender ID', type: 'text', placeholder: '123456789' },
-          { key: 'appId', label: 'App ID', type: 'text', placeholder: '1:123456789:web:abc123' },
-        ]
-      },
-      gmail_smtp: {
-        name: 'Gmail SMTP',
-        description: 'Send emails through Gmail account',
-        status: 'not-configured',
-        config: {},
-        fields: [
-          { key: 'email', label: 'Email Address', type: 'email', placeholder: 'your-email@gmail.com' },
-          { key: 'appPassword', label: 'App Password', type: 'password', placeholder: 'xxxx xxxx xxxx xxxx', sensitive: true },
-          { key: 'senderName', label: 'Sender Name', type: 'text', placeholder: 'Abundant Global Club' },
-        ]
-      },
-      stripe: {
-        name: 'Stripe',
-        description: 'Payment processing',
-        status: 'not-configured',
-        config: {},
-        fields: [
-          { key: 'publishableKey', label: 'Publishable Key', type: 'text', placeholder: 'pk_live_...' },
-          { key: 'secretKey', label: 'Secret Key', type: 'password', placeholder: 'sk_live_...', sensitive: true },
-          { key: 'webhookSecret', label: 'Webhook Secret', type: 'password', placeholder: 'whsec_...', sensitive: true },
-        ]
-      },
-      paypal: {
-        name: 'PayPal',
-        description: 'PayPal payment integration',
-        status: 'not-configured',
-        config: {},
-        fields: [
-          { key: 'clientId', label: 'Client ID', type: 'password', placeholder: 'AQd...', sensitive: true },
-          { key: 'secret', label: 'Secret', type: 'password', placeholder: 'EL3...', sensitive: true },
-          { key: 'mode', label: 'Mode', type: 'text', placeholder: 'sandbox or live' },
-        ]
-      },
-      google_calendar: {
-        name: 'Google Calendar',
-        description: 'Sync events with Google Calendar',
-        status: 'not-configured',
-        config: {},
-        fields: [
-          { key: 'apiKey', label: 'API Key', type: 'password', placeholder: 'AIza...', sensitive: true },
-          { key: 'calendarId', label: 'Calendar ID', type: 'text', placeholder: 'primary or email@gmail.com' },
-        ]
-      },
-      microsoft_calendar: {
-        name: 'Microsoft Calendar',
-        description: 'Sync events with Microsoft Outlook',
-        status: 'not-configured',
-        config: {},
-        fields: [
-          { key: 'clientId', label: 'Client ID', type: 'text', placeholder: '...' },
-          { key: 'secret', label: 'Secret', type: 'password', placeholder: '...', sensitive: true },
-          { key: 'tenantId', label: 'Tenant ID', type: 'text', placeholder: 'common' },
-        ]
-      },
-      youtube: {
-        name: 'YouTube Data API',
-        description: 'Fetch videos from YouTube channel',
-        status: 'not-configured',
-        config: {},
-        fields: [
-          { key: 'apiKey', label: 'API Key', type: 'password', placeholder: 'AIza...', sensitive: true },
-          { key: 'channelId', label: 'Channel ID', type: 'text', placeholder: 'UCxxxxx' },
-        ]
-      },
-      google_places: {
-        name: 'Google Places API',
-        description: 'Location autocomplete and place details',
-        status: 'not-configured',
-        config: {},
-        fields: [
-          { key: 'apiKey', label: 'API Key', type: 'password', placeholder: 'AIza...', sensitive: true },
-        ]
-      },
-    };
+  // Parse Firebase Admin SDK JSON
+  const parseFirebaseAdminJson = (jsonStr: string) => {
+    try {
+      setError(null);
+      const json = JSON.parse(jsonStr);
+      
+      // Extract expected fields from service account JSON
+      const extracted: IntegrationConfig = {
+        projectId: json.project_id || '',
+        privateKey: json.private_key || '',
+        clientEmail: json.client_email || '',
+        type: json.type || 'service_account'
+      };
 
-    setIntegrations(integs);
-    setLoading(false);
-  }, []);
+      // Update integrations with extracted data
+      setIntegrations(prev => ({
+        ...prev,
+        firebase_admin: {
+          ...prev.firebase_admin,
+          config: extracted,
+          status: extracted.projectId && extracted.privateKey ? 'connected' : 'partial'
+        }
+      }));
 
-  const handleFieldChange = (integrationKey: string, fieldKey: string, value: any) => {
+      setFirebaseAdminJson(jsonStr);
+      return true;
+    } catch (e) {
+      setError(`Invalid Firebase Admin JSON: ${e instanceof Error ? e.message : 'Unknown error'}`);
+      return false;
+    }
+  };
+
+  // Parse Firebase Client SDK JSON
+  const parseFirebaseClientJson = (jsonStr: string) => {
+    try {
+      setError(null);
+      const json = JSON.parse(jsonStr);
+      
+      // Extract expected fields from Firebase config
+      const extracted: IntegrationConfig = {
+        apiKey: json.apiKey || '',
+        authDomain: json.authDomain || '',
+        projectId: json.projectId || '',
+        storageBucket: json.storageBucket || '',
+        messagingSenderId: json.messagingSenderId || '',
+        appId: json.appId || '',
+        measurementId: json.measurementId || ''
+      };
+
+      // Update integrations with extracted data
+      setIntegrations(prev => ({
+        ...prev,
+        firebase_client: {
+          ...prev.firebase_client,
+          config: extracted,
+          status: extracted.apiKey && extracted.projectId ? 'connected' : 'partial'
+        }
+      }));
+
+      setFirebaseClientJson(jsonStr);
+      return true;
+    } catch (e) {
+      setError(`Invalid Firebase Client JSON: ${e instanceof Error ? e.message : 'Unknown error'}`);
+      return false;
+    }
+  };
+
+  // Update integration config value
+  const updateConfig = (integrationKey: string, field: string, value: string) => {
     setIntegrations(prev => ({
       ...prev,
       [integrationKey]: {
         ...prev[integrationKey],
         config: {
           ...prev[integrationKey].config,
-          [fieldKey]: value
+          [field]: value
         }
       }
     }));
   };
 
+  // Save all integrations
   const saveIntegrations = async () => {
+    if (!currentUser) {
+      setError('Not authenticated');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
     try {
-      setSaving(true);
-      setSaveSuccess(false);
-
-      const token = currentUser ? await currentUser.getIdToken() : null;
-      if (!token) {
-        setError('Not authenticated');
-        return;
-      }
-
-      // Prepare integrations data for storage
-      const integrationsData: { [key: string]: any } = {};
-      Object.entries(integrations).forEach(([key, integration]) => {
-        integrationsData[key] = integration.config;
-      });
-
-      console.log('[v0] Saving integrations...', integrationsData);
-
+      const token = await currentUser.getIdToken();
       const response = await fetch('/api/integrations/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          integrations: integrationsData
-        })
+        body: JSON.stringify({ integrations })
       });
 
-      if (response.ok) {
-        setSaveSuccess(true);
-        setError(null);
-        setTimeout(() => setSaveSuccess(false), 3000);
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        setError(errorData.message || `Failed to save integrations (${response.status})`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to save integrations');
       }
+
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 5000);
     } catch (err) {
-      console.error('[v0] Error saving integrations:', err);
-      setError(`Error saving integrations: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setError(`Save error: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="p-8 text-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
-        <p className="mt-4 text-muted-foreground">Loading integrations...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 p-8">
+      {/* Error Alert */}
       {error && (
-        <div className="p-4 bg-destructive/10 border border-destructive rounded-lg">
-          <p className="text-destructive font-medium">{error}</p>
+        <div className="p-4 bg-destructive/10 border border-destructive rounded-lg flex gap-3">
+          <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-destructive font-medium">Error</p>
+            <p className="text-sm text-destructive/80">{error}</p>
+          </div>
         </div>
       )}
 
+      {/* Success Alert */}
       {saveSuccess && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 font-medium">Integrations saved successfully!</p>
+        <div className="p-4 bg-green-100 border border-green-300 rounded-lg flex gap-3">
+          <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-green-800 font-medium">Success</p>
+            <p className="text-sm text-green-700">All integrations saved successfully</p>
+          </div>
         </div>
       )}
 
       {/* Firebase Admin SDK */}
-      <IntegrationSection
-        integration={integrations.firebase_admin}
-        integrationKey="firebase_admin"
-        onFieldChange={handleFieldChange}
-        showSecrets={showSecrets}
-        setShowSecrets={setShowSecrets}
-      />
+      <div className="bg-white border rounded-lg p-6">
+        <div className="mb-4">
+          <h3 className="text-xl font-semibold mb-2 flex items-center gap-2">
+            <span className="text-2xl">🔑</span>
+            {integrations.firebase_admin.name}
+          </h3>
+          <p className="text-muted-foreground">{integrations.firebase_admin.description}</p>
+        </div>
+
+        <div className="space-y-3">
+          <label className="block">
+            <span className="text-sm font-medium mb-2 block">Firebase Service Account JSON</span>
+            <textarea
+              value={firebaseAdminJson}
+              onChange={(e) => parseFirebaseAdminJson(e.target.value)}
+              placeholder='Paste your Firebase service account JSON file here (from Firebase Console → Project Settings → Service Accounts → Generate Key)'
+              className="w-full h-40 p-3 border rounded-lg font-mono text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              The JSON file will be automatically parsed. All fields will be extracted.
+            </p>
+          </label>
+
+          {/* Extracted fields display */}
+          {integrations.firebase_admin.config.projectId && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+              <div>
+                <label className="text-sm font-medium">Project ID</label>
+                <input
+                  type="text"
+                  value={integrations.firebase_admin.config.projectId}
+                  onChange={(e) => updateConfig('firebase_admin', 'projectId', e.target.value)}
+                  className="w-full mt-1 p-2 border rounded-lg bg-slate-50"
+                  readOnly
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Client Email</label>
+                <input
+                  type="text"
+                  value={integrations.firebase_admin.config.clientEmail}
+                  onChange={(e) => updateConfig('firebase_admin', 'clientEmail', e.target.value)}
+                  className="w-full mt-1 p-2 border rounded-lg bg-slate-50"
+                  readOnly
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium">Private Key (encrypted)</label>
+                <div className="text-xs text-green-600 mt-1 p-2 bg-green-50 rounded">
+                  ✓ Private key loaded and will be encrypted before storage
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Firebase Client SDK */}
-      <IntegrationSection
-        integration={integrations.firebase_client}
-        integrationKey="firebase_client"
-        onFieldChange={handleFieldChange}
-        showSecrets={showSecrets}
-        setShowSecrets={setShowSecrets}
-      />
+      <div className="bg-white border rounded-lg p-6">
+        <div className="mb-4">
+          <h3 className="text-xl font-semibold mb-2 flex items-center gap-2">
+            <span className="text-2xl">🌐</span>
+            {integrations.firebase_client.name}
+          </h3>
+          <p className="text-muted-foreground">{integrations.firebase_client.description}</p>
+        </div>
 
-      {/* Gmail SMTP */}
-      <IntegrationSection
-        integration={integrations.gmail_smtp}
-        integrationKey="gmail_smtp"
-        onFieldChange={handleFieldChange}
-        showSecrets={showSecrets}
-        setShowSecrets={setShowSecrets}
-      />
+        <div className="space-y-3">
+          <label className="block">
+            <span className="text-sm font-medium mb-2 block">Firebase Config JSON</span>
+            <textarea
+              value={firebaseClientJson}
+              onChange={(e) => parseFirebaseClientJson(e.target.value)}
+              placeholder='Paste your Firebase configuration JSON here (from Firebase Console → Project Settings → Your apps → Config)'
+              className="w-full h-40 p-3 border rounded-lg font-mono text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              The JSON will be automatically parsed to extract all required credentials.
+            </p>
+          </label>
 
-      {/* Stripe */}
-      <IntegrationSection
-        integration={integrations.stripe}
-        integrationKey="stripe"
-        onFieldChange={handleFieldChange}
-        showSecrets={showSecrets}
-        setShowSecrets={setShowSecrets}
-      />
+          {/* Extracted fields display */}
+          {integrations.firebase_client.config.projectId && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+              <div>
+                <label className="text-sm font-medium">Project ID</label>
+                <input
+                  type="text"
+                  value={integrations.firebase_client.config.projectId}
+                  className="w-full mt-1 p-2 border rounded-lg bg-slate-50"
+                  readOnly
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Auth Domain</label>
+                <input
+                  type="text"
+                  value={integrations.firebase_client.config.authDomain}
+                  className="w-full mt-1 p-2 border rounded-lg bg-slate-50"
+                  readOnly
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Storage Bucket</label>
+                <input
+                  type="text"
+                  value={integrations.firebase_client.config.storageBucket}
+                  className="w-full mt-1 p-2 border rounded-lg bg-slate-50"
+                  readOnly
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Messaging Sender ID</label>
+                <input
+                  type="text"
+                  value={integrations.firebase_client.config.messagingSenderId}
+                  className="w-full mt-1 p-2 border rounded-lg bg-slate-50"
+                  readOnly
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium">API Key (encrypted)</label>
+                <div className="text-xs text-green-600 mt-1 p-2 bg-green-50 rounded">
+                  ✓ API key loaded and will be encrypted before storage
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
-      {/* PayPal */}
-      <IntegrationSection
-        integration={integrations.paypal}
-        integrationKey="paypal"
-        onFieldChange={handleFieldChange}
-        showSecrets={showSecrets}
-        setShowSecrets={setShowSecrets}
-      />
+      {/* Other Integrations Quick Fields */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Gmail SMTP */}
+        <div className="bg-white border rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <span>📧</span> Gmail SMTP
+          </h3>
+          <div className="space-y-3">
+            <input
+              type="email"
+              placeholder="Email"
+              value={integrations.gmail_smtp.config.email || ''}
+              onChange={(e) => updateConfig('gmail_smtp', 'email', e.target.value)}
+              className="w-full p-2 border rounded-lg text-sm"
+            />
+            <input
+              type="password"
+              placeholder="App Password"
+              value={integrations.gmail_smtp.config.appPassword || ''}
+              onChange={(e) => updateConfig('gmail_smtp', 'appPassword', e.target.value)}
+              className="w-full p-2 border rounded-lg text-sm"
+            />
+            <input
+              type="text"
+              placeholder="Sender Name"
+              value={integrations.gmail_smtp.config.senderName || ''}
+              onChange={(e) => updateConfig('gmail_smtp', 'senderName', e.target.value)}
+              className="w-full p-2 border rounded-lg text-sm"
+            />
+          </div>
+        </div>
 
-      {/* Google Calendar */}
-      <IntegrationSection
-        integration={integrations.google_calendar}
-        integrationKey="google_calendar"
-        onFieldChange={handleFieldChange}
-        showSecrets={showSecrets}
-        setShowSecrets={setShowSecrets}
-      />
+        {/* Stripe */}
+        <div className="bg-white border rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <span>💳</span> Stripe
+          </h3>
+          <div className="space-y-3">
+            <input
+              type="text"
+              placeholder="Publishable Key"
+              value={integrations.stripe.config.publishableKey || ''}
+              onChange={(e) => updateConfig('stripe', 'publishableKey', e.target.value)}
+              className="w-full p-2 border rounded-lg text-sm"
+            />
+            <input
+              type="password"
+              placeholder="Secret Key"
+              value={integrations.stripe.config.secretKey || ''}
+              onChange={(e) => updateConfig('stripe', 'secretKey', e.target.value)}
+              className="w-full p-2 border rounded-lg text-sm"
+            />
+            <input
+              type="password"
+              placeholder="Webhook Secret"
+              value={integrations.stripe.config.webhookSecret || ''}
+              onChange={(e) => updateConfig('stripe', 'webhookSecret', e.target.value)}
+              className="w-full p-2 border rounded-lg text-sm"
+            />
+          </div>
+        </div>
 
-      {/* Microsoft Calendar */}
-      <IntegrationSection
-        integration={integrations.microsoft_calendar}
-        integrationKey="microsoft_calendar"
-        onFieldChange={handleFieldChange}
-        showSecrets={showSecrets}
-        setShowSecrets={setShowSecrets}
-      />
+        {/* PayPal */}
+        <div className="bg-white border rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <span>🅿️</span> PayPal
+          </h3>
+          <div className="space-y-3">
+            <input
+              type="password"
+              placeholder="Client ID"
+              value={integrations.paypal.config.clientId || ''}
+              onChange={(e) => updateConfig('paypal', 'clientId', e.target.value)}
+              className="w-full p-2 border rounded-lg text-sm"
+            />
+            <input
+              type="password"
+              placeholder="Secret"
+              value={integrations.paypal.config.secret || ''}
+              onChange={(e) => updateConfig('paypal', 'secret', e.target.value)}
+              className="w-full p-2 border rounded-lg text-sm"
+            />
+            <select
+              value={integrations.paypal.config.mode || 'sandbox'}
+              onChange={(e) => updateConfig('paypal', 'mode', e.target.value)}
+              className="w-full p-2 border rounded-lg text-sm"
+            >
+              <option value="sandbox">Sandbox</option>
+              <option value="live">Live</option>
+            </select>
+          </div>
+        </div>
 
-      {/* YouTube */}
-      <IntegrationSection
-        integration={integrations.youtube}
-        integrationKey="youtube"
-        onFieldChange={handleFieldChange}
-        showSecrets={showSecrets}
-        setShowSecrets={setShowSecrets}
-      />
+        {/* Google Calendar */}
+        <div className="bg-white border rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <span>📅</span> Google Calendar
+          </h3>
+          <div className="space-y-3">
+            <input
+              type="password"
+              placeholder="API Key"
+              value={integrations.google_calendar.config.apiKey || ''}
+              onChange={(e) => updateConfig('google_calendar', 'apiKey', e.target.value)}
+              className="w-full p-2 border rounded-lg text-sm"
+            />
+            <input
+              type="text"
+              placeholder="Calendar ID"
+              value={integrations.google_calendar.config.calendarId || ''}
+              onChange={(e) => updateConfig('google_calendar', 'calendarId', e.target.value)}
+              className="w-full p-2 border rounded-lg text-sm"
+            />
+          </div>
+        </div>
 
-      {/* Google Places */}
-      <IntegrationSection
-        integration={integrations.google_places}
-        integrationKey="google_places"
-        onFieldChange={handleFieldChange}
-        showSecrets={showSecrets}
-        setShowSecrets={setShowSecrets}
-      />
+        {/* YouTube */}
+        <div className="bg-white border rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <span>🎬</span> YouTube Data API
+          </h3>
+          <div className="space-y-3">
+            <input
+              type="password"
+              placeholder="API Key"
+              value={integrations.youtube.config.apiKey || ''}
+              onChange={(e) => updateConfig('youtube', 'apiKey', e.target.value)}
+              className="w-full p-2 border rounded-lg text-sm"
+            />
+            <input
+              type="text"
+              placeholder="Channel ID"
+              value={integrations.youtube.config.channelId || ''}
+              onChange={(e) => updateConfig('youtube', 'channelId', e.target.value)}
+              className="w-full p-2 border rounded-lg text-sm"
+            />
+          </div>
+        </div>
+
+        {/* Google Places */}
+        <div className="bg-white border rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <span>📍</span> Google Places API
+          </h3>
+          <div className="space-y-3">
+            <input
+              type="password"
+              placeholder="API Key"
+              value={integrations.google_places.config.apiKey || ''}
+              onChange={(e) => updateConfig('google_places', 'apiKey', e.target.value)}
+              className="w-full p-2 border rounded-lg text-sm"
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Save Button */}
-      <div className="flex justify-end pt-6 border-t border-border">
+      <div className="sticky bottom-0 bg-white border-t p-4 flex justify-between items-center rounded-lg">
+        <div className="text-sm text-muted-foreground">
+          {Object.values(integrations).filter(i => Object.keys(i.config).length > 0).length} integrations configured
+        </div>
         <button
           onClick={saveIntegrations}
-          disabled={saving}
-          className="flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 font-medium transition-colors"
+          disabled={saving || !currentUser}
+          className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <Save className="w-4 h-4" />
           {saving ? 'Saving...' : 'Save All Integrations'}
         </button>
-      </div>
-    </div>
-  );
-}
-
-interface IntegrationSectionProps {
-  integration?: Integration;
-  integrationKey: string;
-  onFieldChange: (integrationKey: string, fieldKey: string, value: any) => void;
-  showSecrets: { [key: string]: boolean };
-  setShowSecrets: (show: { [key: string]: boolean }) => void;
-}
-
-function IntegrationSection({
-  integration,
-  integrationKey,
-  onFieldChange,
-  showSecrets,
-  setShowSecrets
-}: IntegrationSectionProps) {
-  if (!integration) return null;
-
-  return (
-    <div className="border border-border rounded-lg p-6 bg-card">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold">{integration.name}</h3>
-        <p className="text-sm text-muted-foreground mt-1">{integration.description}</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {integration.fields.map(field => (
-          <div key={field.key}>
-            <label className="block text-sm font-medium mb-2">
-              {field.label}
-            </label>
-            {field.type === 'checkbox' ? (
-              <input
-                type="checkbox"
-                checked={integration.config[field.key] || false}
-                onChange={e => onFieldChange(integrationKey, field.key, e.target.checked)}
-                className="w-4 h-4 rounded border-border"
-              />
-            ) : (
-              <div className="relative">
-                <input
-                  type={
-                    field.type === 'password' && !showSecrets[`${integrationKey}-${field.key}`]
-                      ? 'password'
-                      : 'text'
-                  }
-                  placeholder={field.placeholder}
-                  value={integration.config[field.key] || ''}
-                  onChange={e => onFieldChange(integrationKey, field.key, e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent"
-                />
-                {field.type === 'password' && (
-                  <button
-                    onClick={() =>
-                      setShowSecrets({
-                        ...showSecrets,
-                        [`${integrationKey}-${field.key}`]: !showSecrets[`${integrationKey}-${field.key}`]
-                      })
-                    }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showSecrets[`${integrationKey}-${field.key}`] ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
       </div>
     </div>
   );
