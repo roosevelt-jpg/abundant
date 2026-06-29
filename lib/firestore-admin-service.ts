@@ -98,62 +98,72 @@ export async function updateSettings(updates: Partial<Settings>): Promise<void> 
  * Encrypts sensitive fields in integrations object before storage
  */
 function encryptSensitiveFields(data: any): any {
-  if (!data || !data.integrations) return data;
+  try {
+    if (!data || !data.integrations) return data;
 
-  const encrypted = JSON.parse(JSON.stringify(data)); // Deep copy
-  
-  Object.keys(encrypted.integrations || {}).forEach((integrationKey) => {
-    const integration = encrypted.integrations[integrationKey];
-    if (!integration) return;
+    const encrypted = JSON.parse(JSON.stringify(data)); // Deep copy
+    
+    Object.keys(encrypted.integrations || {}).forEach((integrationKey) => {
+      const integration = encrypted.integrations[integrationKey];
+      if (!integration) return;
 
-    Object.keys(integration).forEach((fieldKey) => {
-      const value = integration[fieldKey];
-      
-      // Check if field name suggests it's sensitive (contains common sensitive keywords)
-      const isSensitive = [
-        'key', 'secret', 'password', 'token', 'email', 'privatekey', 'clientid'
-      ].some(keyword => fieldKey.toLowerCase().includes(keyword));
+      Object.keys(integration).forEach((fieldKey) => {
+        const value = integration[fieldKey];
+        
+        // Check if field name suggests it's sensitive (contains common sensitive keywords)
+        const isSensitive = [
+          'key', 'secret', 'password', 'token', 'email', 'privatekey', 'clientid'
+        ].some(keyword => fieldKey.toLowerCase().includes(keyword));
 
-      if (isSensitive && value && typeof value === 'string' && value.length > 0) {
-        try {
-          encrypted.integrations[integrationKey][fieldKey] = encryptSensitiveData(value);
-        } catch (error) {
-          console.error(`[v0] Failed to encrypt ${integrationKey}.${fieldKey}:`, error);
-          // Keep original value if encryption fails
+        if (isSensitive && value && typeof value === 'string' && value.length > 0) {
+          try {
+            encrypted.integrations[integrationKey][fieldKey] = encryptSensitiveData(value);
+          } catch (error) {
+            console.warn(`[v0] Encryption skipped for ${integrationKey}.${fieldKey}`);
+            // Keep original value if encryption fails
+          }
         }
-      }
+      });
     });
-  });
 
-  return encrypted;
+    return encrypted;
+  } catch (error) {
+    console.warn('[v0] Error during encryption, returning unencrypted data:', error);
+    return data; // Return unencrypted if whole process fails
+  }
 }
 
 /**
  * Decrypts sensitive fields in integrations object after retrieval
  */
 export function decryptSensitiveFields(data: any): any {
-  if (!data || !data.integrations) return data;
+  try {
+    if (!data || !data.integrations) return data;
 
-  const decrypted = JSON.parse(JSON.stringify(data)); // Deep copy
-  
-  Object.keys(decrypted.integrations || {}).forEach((integrationKey) => {
-    const integration = decrypted.integrations[integrationKey];
-    if (!integration) return;
+    const decrypted = JSON.parse(JSON.stringify(data)); // Deep copy
+    
+    Object.keys(decrypted.integrations || {}).forEach((integrationKey) => {
+      const integration = decrypted.integrations[integrationKey];
+      if (!integration) return;
 
-    Object.keys(integration).forEach((fieldKey) => {
-      const value = integration[fieldKey];
-      
-      // Check if field is encrypted
-      if (isValidEncryptedData(value)) {
-        try {
-          decrypted.integrations[integrationKey][fieldKey] = decryptSensitiveData(value);
-        } catch (error) {
-          console.error(`[v0] Failed to decrypt ${integrationKey}.${fieldKey}:`, error);
-          decrypted.integrations[integrationKey][fieldKey] = ''; // Clear failed decryption
+      Object.keys(integration).forEach((fieldKey) => {
+        const value = integration[fieldKey];
+        
+        // Check if field is encrypted
+        if (isValidEncryptedData(value)) {
+          try {
+            decrypted.integrations[integrationKey][fieldKey] = decryptSensitiveData(value);
+          } catch (error) {
+            console.warn(`[v0] Failed to decrypt ${integrationKey}.${fieldKey}, using empty string`);
+            decrypted.integrations[integrationKey][fieldKey] = ''; // Clear failed decryption
+          }
         }
-      }
+      });
     });
-  });
 
-  return decrypted;
+    return decrypted;
+  } catch (error) {
+    console.warn('[v0] Error during decryption, returning data as-is:', error);
+    return data; // Return as-is if whole process fails
+  }
 }
