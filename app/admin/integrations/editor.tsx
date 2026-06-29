@@ -186,16 +186,26 @@ export function AdminIntegrationsEditor() {
         body: JSON.stringify({ integrations })
       });
 
+      // Check content type to ensure we got JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('[v0] Non-JSON response:', text.substring(0, 200));
+        throw new Error('Server returned non-JSON response');
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to save integrations');
+        throw new Error(data.message || `HTTP ${response.status}: Failed to save integrations`);
       }
 
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 5000);
     } catch (err) {
-      setError(`Save error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.error('[v0] Save error:', errorMsg);
+      setError(`Save error: ${errorMsg}`);
     } finally {
       setSaving(false);
     }
@@ -294,13 +304,14 @@ export function AdminIntegrationsEditor() {
         </div>
 
         <div className="space-y-3">
-          <label className="block">
+          <label className="block" key="firebase-client-label">
             <span className="text-sm font-medium mb-2 block">Firebase Config JSON</span>
             <textarea
+              key="firebase-client-textarea"
               value={firebaseClientJson}
               onChange={(e) => parseFirebaseClientJson(e.target.value)}
               placeholder='Paste your Firebase configuration JSON here (from Firebase Console → Project Settings → Your apps → Config)'
-              className="w-full h-40 p-3 border rounded-lg font-mono text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full h-40 p-3 border rounded-lg font-mono text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary resize-vertical"
             />
             <p className="text-xs text-muted-foreground mt-2">
               The JSON will be automatically parsed to extract all required credentials.

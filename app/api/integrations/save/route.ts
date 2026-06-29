@@ -4,7 +4,17 @@ import { verifyAdminToken } from '@/lib/admin-utils';
 
 export async function POST(request: NextRequest) {
   try {
-    const { integrations } = await request.json();
+    let integrations;
+    try {
+      const body = await request.json();
+      integrations = body.integrations || {};
+    } catch (parseError) {
+      console.error('[v0] JSON parse error:', parseError);
+      return NextResponse.json(
+        { message: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
     
     // Verify token exists (optional check for security, but don't block if Firebase not configured yet)
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
@@ -22,7 +32,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const db = await getDb();
+    let db;
+    try {
+      db = await getDb();
+    } catch (dbInitError) {
+      console.error('[v0] Error initializing database:', dbInitError);
+      return NextResponse.json(
+        { message: 'Database initialization error' },
+        { status: 503 }
+      );
+    }
     
     if (!db) {
       console.warn('[v0] Database not initialized, integrations data received but cannot persist');
