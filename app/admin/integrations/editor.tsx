@@ -44,13 +44,13 @@ export function AdminIntegrationsEditor() {
   useEffect(() => {
     if (firebaseAdminJson.trim()) {
       try {
-        const parsed = JSON.parse(firebaseAdminJson);
+        const parsed = extractJsonFromJs(firebaseAdminJson);
         setConfigs(prev => ({
           ...prev,
           firebaseAdmin: {
             projectId: parsed.project_id || '',
-            privateKey: parsed.private_key || '',
-            clientEmail: parsed.client_email || ''
+            clientEmail: parsed.client_email || '',
+            privateKey: parsed.private_key || ''
           }
         }));
         setError(null);
@@ -65,11 +65,32 @@ export function AdminIntegrationsEditor() {
     }
   }, [firebaseAdminJson]);
 
+  // Helper to extract JSON from JavaScript code
+  const extractJsonFromJs = (text: string): any => {
+    try {
+      // Try direct JSON parse first
+      return JSON.parse(text);
+    } catch (e) {
+      // Try to extract JSON object from JavaScript code
+      // Handle: const config = { ... }; or just { ... }
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) {
+        // Remove comments and clean up
+        let json = match[0]
+          .replace(/\/\/.*$/gm, '') // Remove single-line comments
+          .replace(/\/\*[\s\S]*?\*\//g, '') // Remove multi-line comments
+          .replace(/,\s*([}\]])/g, '$1'); // Remove trailing commas
+        return JSON.parse(json);
+      }
+      throw e;
+    }
+  };
+
   // Parse Firebase Client SDK JSON
   useEffect(() => {
     if (firebaseClientJson.trim()) {
       try {
-        const parsed = JSON.parse(firebaseClientJson);
+        const parsed = extractJsonFromJs(firebaseClientJson);
         setConfigs(prev => ({
           ...prev,
           firebaseClient: {
