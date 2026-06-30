@@ -175,7 +175,13 @@ export function AdminIntegrationsEditor() {
     }
   };
 
-  const hasConfigs = Object.values(configs).some(c => Object.keys(c).length > 0);
+  // Count integrations that have at least one non-empty field
+  const countConfigurations = Object.values(configs).filter(config => {
+    // Check if config has any non-empty values
+    return Object.values(config).some(value => value && value.toString().trim().length > 0);
+  }).length;
+  
+  const hasConfigs = countConfigurations > 0;
 
   return (
     <div className="space-y-6 p-8 max-w-6xl mx-auto">
@@ -459,7 +465,7 @@ export function AdminIntegrationsEditor() {
       </div>
 
       <div className="text-sm text-gray-600">
-        {hasConfigs ? `${Object.values(configs).filter(c => Object.keys(c).length > 0).length} integration(s) configured` : 'No integrations configured yet'}
+          {hasConfigs ? `${countConfigurations} integration(s) configured` : 'No integrations configured yet'}
       </div>
     </div>
   );

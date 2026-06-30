@@ -26,25 +26,44 @@ export async function POST(request: NextRequest) {
     // If Firebase credentials provided, use them to initialize and save
     if (projectId && clientEmail && privateKey) {
       try {
+        // Properly handle private key - it might have literal \n or actual newlines
+        let formattedPrivateKey = privateKey;
+        
+        // If it contains literal \n, convert to actual newlines
+        if (formattedPrivateKey.includes('\\n')) {
+          formattedPrivateKey = formattedPrivateKey.replace(/\\n/g, '\n');
+        }
+        
+        // Ensure key has proper PEM format
+        if (!formattedPrivateKey.includes('BEGIN PRIVATE KEY')) {
+          throw new Error('Invalid private key format - must contain BEGIN PRIVATE KEY');
+        }
+
+        console.log('[v0] Initializing Firebase Admin SDK with projectId:', projectId);
+        
         // Initialize Firebase Admin with provided credentials
         let app;
         const existingApps = getApps();
         
         if (existingApps.length > 0) {
           app = existingApps[0];
+          console.log('[v0] Using existing Firebase app');
         } else {
           app = initializeApp({
             credential: cert({
               projectId,
               clientEmail,
-              privateKey: privateKey.replace(/\\n/g, '\n'),
+              privateKey: formattedPrivateKey,
             }),
           });
+          console.log('[v0] Initialized new Firebase app');
         }
 
         const db = getFirestore(app);
         const settingsRef = db.collection('settings').doc('main');
 
+        console.log('[v0] Saving integrations to Firestore...');
+        
         // Save all integrations to Firestore
         const docSnap = await settingsRef.get();
 
@@ -54,6 +73,7 @@ export async function POST(request: NextRequest) {
             updatedAt: new Date(),
             updatedBy: 'admin'
           });
+          console.log('[v0] Updated existing settings document');
         } else {
           await settingsRef.set({
             id: 'main',
@@ -62,6 +82,7 @@ export async function POST(request: NextRequest) {
             updatedAt: new Date(),
             updatedBy: 'admin'
           });
+          console.log('[v0] Created new settings document');
         }
 
         return NextResponse.json(
@@ -73,7 +94,7 @@ export async function POST(request: NextRequest) {
         );
       } catch (firebaseError) {
         const errorMsg = firebaseError instanceof Error ? firebaseError.message : String(firebaseError);
-        console.error('[v0] Firebase error:', errorMsg);
+        console.error('[v0] Firebase error:', errorMsg, firebaseError);
         return NextResponse.json(
           {
             message: `Firebase error: ${errorMsg}`
