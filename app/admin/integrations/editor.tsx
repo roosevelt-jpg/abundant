@@ -71,18 +71,49 @@ export function AdminIntegrationsEditor() {
       // Try direct JSON parse first
       return JSON.parse(text);
     } catch (e) {
-      // Try to extract JSON object from JavaScript code
-      // Handle: const config = { ... }; or just { ... }
-      const match = text.match(/\{[\s\S]*\}/);
-      if (match) {
-        // Remove comments and clean up
-        let json = match[0]
-          .replace(/\/\/.*$/gm, '') // Remove single-line comments
-          .replace(/\/\*[\s\S]*?\*\//g, '') // Remove multi-line comments
-          .replace(/,\s*([}\]])/g, '$1'); // Remove trailing commas
-        return JSON.parse(json);
+      // Step 1: Remove // comments (but not in strings)
+      let lines = text.split('\n');
+      let cleaned = lines.map(line => {
+        let inString = false;
+        let escape = false;
+        for (let i = 0; i < line.length - 1; i++) {
+          if (escape) {
+            escape = false;
+            continue;
+          }
+          if (line[i] === '\\') {
+            escape = true;
+            continue;
+          }
+          if (line[i] === '"') {
+            inString = !inString;
+            continue;
+          }
+          if (!inString && line[i] === '/' && line[i + 1] === '/') {
+            return line.substring(0, i);
+          }
+        }
+        return line;
+      }).join('\n');
+
+      // Step 2: Remove /* */ comments
+      cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, '');
+
+      // Step 3: Extract just the { } object - find first { and last }
+      const firstBrace = cleaned.indexOf('{');
+      const lastBrace = cleaned.lastIndexOf('}');
+      
+      if (firstBrace === -1 || lastBrace === -1 || firstBrace >= lastBrace) {
+        throw new Error('No JSON object found');
       }
-      throw e;
+
+      let jsonStr = cleaned.substring(firstBrace, lastBrace + 1);
+      
+      // Step 4: Remove trailing commas before } or ]
+      jsonStr = jsonStr.replace(/,(\s*[}\]])/g, '$1');
+      
+      // Step 5: Parse
+      return JSON.parse(jsonStr);
     }
   };
 
