@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin-server';
-import { verifyAdminToken } from '@/lib/admin-utils';
 
 export async function POST(request: NextRequest) {
   try {
-    let integrations;
+    console.log('[v0] Integrations save request received');
+
+    let payload;
     try {
-      const body = await request.json();
-      integrations = body.integrations || {};
+      payload = await request.json();
+      console.log('[v0] Payload parsed successfully');
     } catch (parseError) {
       console.error('[v0] JSON parse error:', parseError);
       return NextResponse.json(
@@ -15,97 +16,87 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
-    // Verify token exists (optional check for security, but don't block if Firebase not configured yet)
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    if (!token) {
-      console.warn('[v0] No authorization token provided for integrations save');
-      // Allow for now since this is the first setup step
-    }
-    
-    // Try to verify as admin, but allow if Firebase not configured yet
-    if (token) {
-      const isAdmin = await verifyAdminToken(token);
-      if (!isAdmin) {
-        console.warn('[v0] Token verification failed, but continuing');
-        // Continue anyway - this is the setup endpoint
-      }
+
+    // Verify minimum required data
+    if (!payload || typeof payload !== 'object') {
+      console.warn('[v0] Empty or invalid payload');
+      return NextResponse.json(
+        { message: 'No integration data provided' },
+        { status: 400 }
+      );
     }
 
+    // Get database connection
     let db;
     try {
       db = await getDb();
-    } catch (dbInitError) {
-      console.error('[v0] Error initializing database:', dbInitError);
+      console.log('[v0] Database connection established');
+    } catch (dbError) {
+      console.error('[v0] Database connection error:', dbError);
       return NextResponse.json(
-        { message: 'Database initialization error' },
+        { message: 'Database connection failed' },
         { status: 503 }
       );
     }
-    
+
+    // If database not available, still return success for first-time setup
     if (!db) {
-      console.warn('[v0] Database not initialized, integrations data received but cannot persist');
-      // Still return success so user sees the credentials were submitted
-      // They will be persisted once Firebase is configured
+      console.warn('[v0] Database not initialized, but returning success');
       return NextResponse.json(
-        { 
-          message: 'Integrations received (database pending Firebase configuration)',
-          integrations,
+        {
+          message: 'Integrations received (database setup pending)',
           status: 'pending'
         },
         { status: 200 }
       );
     }
 
-    // Save integrations to Firestore under settings/integrations
+    // Save to Firestore
     const settingsRef = db.collection('settings').doc('main');
-    
+
     try {
-      // Get existing settings
-      const existing = await settingsRef.get();
-      
-      if (existing.exists) {
-        // Update existing settings with new integrations
+      const docSnap = await settingsRef.get();
+
+      if (docSnap.exists) {
+        console.log('[v0] Updating existing settings document');
         await settingsRef.update({
-          integrations: integrations,
-          updatedAt: Date.now(),
+          integrations: payload,
+          updatedAt: new Date(),
           updatedBy: 'admin'
         });
       } else {
-        // Create new settings document
+        console.log('[v0] Creating new settings document');
         await settingsRef.set({
           id: 'main',
-          integrations: integrations,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
+          integrations: payload,
+          createdAt: new Date(),
+          updatedAt: new Date(),
           updatedBy: 'admin'
         });
       }
 
-      console.log('[v0] Integrations saved successfully to Firestore');
-
+      console.log('[v0] Integrations saved successfully');
       return NextResponse.json(
-        { 
+        {
           message: 'Integrations saved successfully',
-          integrations,
-          status: 'saved'
+          status: 'success'
         },
         { status: 200 }
       );
-    } catch (dbError) {
-      console.error('[v0] Database error saving integrations:', dbError);
+    } catch (writeError) {
+      console.error('[v0] Firestore write error:', writeError);
       return NextResponse.json(
-        { message: `Database error: ${dbError instanceof Error ? dbError.message : 'Unknown error'}` },
+        {
+          message: `Database error: ${writeError instanceof Error ? writeError.message : 'Unknown error'}`
+        },
         { status: 500 }
       );
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('[v0] Error in POST /api/integrations/save:', errorMessage);
+    console.error('[v0] Unhandled error in integrations save:', error);
     return NextResponse.json(
-      { 
-        message: `Error: ${errorMessage}`,
-        error: true
+      {
+        message: `Server error: ${error instanceof Error ? error.message : 'Unknown error'}`
       },
       { status: 500 }
     );

@@ -4,175 +4,106 @@ import { useState, useEffect } from 'react';
 import { Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
-interface IntegrationConfig {
+interface ConfigType {
   [key: string]: any;
 }
 
-interface Integration {
-  name: string;
-  description: string;
-  config: IntegrationConfig;
+interface ConfigsState {
+  firebaseAdmin: ConfigType;
+  firebaseClient: ConfigType;
+  gmailSmtp: ConfigType;
+  stripe: ConfigType;
+  paypal: ConfigType;
+  googleCalendar: ConfigType;
+  microsoftCalendar: ConfigType;
+  youtube: ConfigType;
+  googlePlaces: ConfigType;
 }
 
 export function AdminIntegrationsEditor() {
   const { currentUser } = useAuth();
-  const [integrations, setIntegrations] = useState<{ [key: string]: Integration }>({
-    firebase_admin: {
-      name: 'Firebase Admin SDK',
-      description: 'Paste your Firebase Admin SDK JSON file here',
-      config: {}
-    },
-    firebase_client: {
-      name: 'Firebase Client SDK',
-      description: 'Paste your Firebase Client SDK configuration JSON here',
-      config: {}
-    },
-    gmail_smtp: {
-      name: 'Gmail SMTP',
-      description: 'Email configuration for sending messages',
-      config: {}
-    },
-    stripe: {
-      name: 'Stripe',
-      description: 'Payment processing keys',
-      config: {}
-    },
-    paypal: {
-      name: 'PayPal',
-      description: 'PayPal API credentials',
-      config: {}
-    },
-    google_calendar: {
-      name: 'Google Calendar',
-      description: 'Google Calendar integration',
-      config: {}
-    },
-    microsoft_calendar: {
-      name: 'Microsoft Calendar',
-      description: 'Microsoft Calendar integration',
-      config: {}
-    },
-    youtube: {
-      name: 'YouTube Data API',
-      description: 'YouTube channel integration',
-      config: {}
-    },
-    google_places: {
-      name: 'Google Places API',
-      description: 'Location search and autocomplete',
-      config: {}
-    }
+  const [configs, setConfigs] = useState<ConfigsState>({
+    firebaseAdmin: {},
+    firebaseClient: {},
+    gmailSmtp: {},
+    stripe: {},
+    paypal: {},
+    googleCalendar: {},
+    microsoftCalendar: {},
+    youtube: {},
+    googlePlaces: {}
   });
 
+  const [firebaseAdminJson, setFirebaseAdminJson] = useState('');
+  const [firebaseClientJson, setFirebaseClientJson] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [firebaseAdminJson, setFirebaseAdminJson] = useState('');
-  const [firebaseClientJson, setFirebaseClientJson] = useState('');
 
-  // Parse Firebase Admin SDK JSON - only when user stops typing
-  const handleAdminJsonChange = (jsonStr: string) => {
-    setFirebaseAdminJson(jsonStr);
-    setError(null);
-    
-    if (!jsonStr.trim()) {
-      // Clear if empty
-      setIntegrations(prev => ({
+  // Parse Firebase Admin SDK JSON
+  useEffect(() => {
+    if (firebaseAdminJson.trim()) {
+      try {
+        const parsed = JSON.parse(firebaseAdminJson);
+        setConfigs(prev => ({
+          ...prev,
+          firebaseAdmin: {
+            projectId: parsed.project_id || '',
+            privateKey: parsed.private_key || '',
+            clientEmail: parsed.client_email || ''
+          }
+        }));
+        setError(null);
+      } catch (e) {
+        // Silent parse failure - user is still typing
+      }
+    } else {
+      setConfigs(prev => ({
         ...prev,
-        firebase_admin: {
-          ...prev.firebase_admin,
-          config: {}
-        }
+        firebaseAdmin: {}
       }));
-      return;
     }
-
-    try {
-      const json = JSON.parse(jsonStr);
-      
-      // Extract expected fields from service account JSON
-      const extracted: IntegrationConfig = {
-        projectId: json.project_id || '',
-        privateKey: json.private_key || '',
-        clientEmail: json.client_email || '',
-        type: json.type || 'service_account'
-      };
-
-      // Update integrations with extracted data
-      setIntegrations(prev => ({
-        ...prev,
-        firebase_admin: {
-          ...prev.firebase_admin,
-          config: extracted
-        }
-      }));
-    } catch (e) {
-      // Silently ignore parse errors - user is still typing
-      console.log('[v0] Parsing admin JSON...', e instanceof Error ? e.message : 'error');
-    }
-  };
+  }, [firebaseAdminJson]);
 
   // Parse Firebase Client SDK JSON
-  const handleClientJsonChange = (jsonStr: string) => {
-    setFirebaseClientJson(jsonStr);
-    setError(null);
-    
-    if (!jsonStr.trim()) {
-      // Clear if empty
-      setIntegrations(prev => ({
+  useEffect(() => {
+    if (firebaseClientJson.trim()) {
+      try {
+        const parsed = JSON.parse(firebaseClientJson);
+        setConfigs(prev => ({
+          ...prev,
+          firebaseClient: {
+            apiKey: parsed.apiKey || '',
+            authDomain: parsed.authDomain || '',
+            projectId: parsed.projectId || '',
+            storageBucket: parsed.storageBucket || '',
+            messagingSenderId: parsed.messagingSenderId || '',
+            appId: parsed.appId || ''
+          }
+        }));
+        setError(null);
+      } catch (e) {
+        // Silent parse failure - user is still typing
+      }
+    } else {
+      setConfigs(prev => ({
         ...prev,
-        firebase_client: {
-          ...prev.firebase_client,
-          config: {}
-        }
+        firebaseClient: {}
       }));
-      return;
     }
+  }, [firebaseClientJson]);
 
-    try {
-      const json = JSON.parse(jsonStr);
-      
-      // Extract expected fields from Firebase config
-      const extracted: IntegrationConfig = {
-        apiKey: json.apiKey || '',
-        authDomain: json.authDomain || '',
-        projectId: json.projectId || '',
-        storageBucket: json.storageBucket || '',
-        messagingSenderId: json.messagingSenderId || '',
-        appId: json.appId || '',
-        measurementId: json.measurementId || ''
-      };
-
-      // Update integrations with extracted data
-      setIntegrations(prev => ({
-        ...prev,
-        firebase_client: {
-          ...prev.firebase_client,
-          config: extracted
-        }
-      }));
-    } catch (e) {
-      // Silently ignore parse errors - user is still typing
-      console.log('[v0] Parsing client JSON...', e instanceof Error ? e.message : 'error');
-    }
-  };
-
-  // Update integration config value
-  const updateConfig = (integrationKey: string, field: string, value: string) => {
-    setIntegrations(prev => ({
+  const updateConfig = (key: string, field: string, value: string) => {
+    setConfigs(prev => ({
       ...prev,
-      [integrationKey]: {
-        ...prev[integrationKey],
-        config: {
-          ...prev[integrationKey].config,
-          [field]: value
-        }
+      [key]: {
+        ...prev[key as keyof typeof configs],
+        [field]: value
       }
     }));
   };
 
-  // Save all integrations
-  const saveIntegrations = async () => {
+  const handleSave = async () => {
     if (!currentUser) {
       setError('Not authenticated');
       return;
@@ -184,40 +115,55 @@ export function AdminIntegrationsEditor() {
     try {
       const token = await currentUser.getIdToken();
       
+      const payload = {
+        firebaseAdmin: configs.firebaseAdmin,
+        firebaseClient: configs.firebaseClient,
+        gmailSmtp: configs.gmailSmtp,
+        stripe: configs.stripe,
+        paypal: configs.paypal,
+        googleCalendar: configs.googleCalendar,
+        microsoftCalendar: configs.microsoftCalendar,
+        youtube: configs.youtube,
+        googlePlaces: configs.googlePlaces
+      };
+
       const response = await fetch('/api/integrations/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ integrations })
+        body: JSON.stringify(payload)
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || `Failed to save integrations (HTTP ${response.status})`);
+        const errorText = await response.text();
+        console.error('[v0] API error response:', errorText);
+        throw new Error(`HTTP ${response.status}: Failed to save`);
       }
 
+      const data = await response.json();
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 5000);
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      console.error('[v0] Save error:', errorMsg);
-      setError(errorMsg);
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg);
+      console.error('[v0] Save failed:', msg);
     } finally {
       setSaving(false);
     }
   };
 
+  const hasConfigs = Object.values(configs).some(c => Object.keys(c).length > 0);
+
   return (
-    <div className="space-y-8 p-8">
+    <div className="space-y-6 p-8 max-w-6xl mx-auto">
       {/* Error Alert */}
       {error && (
         <div className="p-4 bg-red-50 border border-red-300 rounded-lg flex gap-3">
           <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-red-800 font-medium">Error</p>
+            <p className="font-medium text-red-800">Error</p>
             <p className="text-sm text-red-700">{error}</p>
           </div>
         </div>
@@ -228,7 +174,7 @@ export function AdminIntegrationsEditor() {
         <div className="p-4 bg-green-50 border border-green-300 rounded-lg flex gap-3">
           <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-green-800 font-medium">Success</p>
+            <p className="font-medium text-green-800">Success</p>
             <p className="text-sm text-green-700">All integrations saved successfully!</p>
           </div>
         </div>
@@ -236,38 +182,35 @@ export function AdminIntegrationsEditor() {
 
       {/* Firebase Admin SDK */}
       <div className="bg-white border rounded-lg p-6">
-        <h3 className="text-xl font-semibold mb-2 flex items-center gap-2">
-          <span>🔑</span> Firebase Admin SDK
-        </h3>
-        <p className="text-muted-foreground mb-4">Server-side access to Firestore, Auth, Storage, and Cloud Messaging</p>
-
+        <h3 className="text-lg font-semibold mb-2">🔑 Firebase Admin SDK</h3>
+        <p className="text-sm text-gray-600 mb-4">Server-side access to Firestore, Auth, Storage</p>
+        
         <div className="space-y-3">
-          <label className="block">
-            <span className="text-sm font-medium mb-2 block">Paste Service Account JSON</span>
+          <div>
+            <label className="block text-sm font-medium mb-2">Service Account JSON</label>
             <textarea
               value={firebaseAdminJson}
-              onChange={(e) => handleAdminJsonChange(e.target.value)}
-              placeholder="Paste your entire Firebase service account JSON file here..."
-              className="w-full h-48 p-3 border rounded-lg font-mono text-sm resize-vertical"
+              onChange={(e) => setFirebaseAdminJson(e.target.value)}
+              placeholder="Paste entire Firebase service account JSON..."
+              className="w-full h-40 p-3 border rounded-lg font-mono text-xs resize-none"
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              From Firebase Console → Project Settings → Service Accounts → Generate Key
-            </p>
-          </label>
+            <p className="text-xs text-gray-500 mt-1">From Firebase Console → Project Settings → Service Accounts → Generate Key</p>
+          </div>
 
-          {/* Display extracted fields */}
-          {integrations.firebase_admin.config.projectId && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
-              <p className="text-sm font-medium text-green-900">✓ Service Account Loaded</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2 text-sm">
-                <div>
-                  <p className="text-xs text-gray-600">Project ID</p>
-                  <p className="font-mono">{integrations.firebase_admin.config.projectId}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-600">Client Email</p>
-                  <p className="font-mono text-xs">{integrations.firebase_admin.config.clientEmail}</p>
-                </div>
+          {/* Display extracted Firebase Admin fields */}
+          {configs.firebaseAdmin.projectId && (
+            <div className="bg-blue-50 p-3 rounded-lg space-y-2">
+              <div className="flex items-center gap-2 text-sm text-green-700">
+                <Check className="w-4 h-4" />
+                <span>Project ID: {configs.firebaseAdmin.projectId}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-green-700">
+                <Check className="w-4 h-4" />
+                <span>Client Email: {configs.firebaseAdmin.clientEmail}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-green-700">
+                <Check className="w-4 h-4" />
+                <span>Private Key: ••••••••••••••••</span>
               </div>
             </div>
           )}
@@ -276,138 +219,121 @@ export function AdminIntegrationsEditor() {
 
       {/* Firebase Client SDK */}
       <div className="bg-white border rounded-lg p-6">
-        <h3 className="text-xl font-semibold mb-2 flex items-center gap-2">
-          <span>🌐</span> Firebase Client SDK
-        </h3>
-        <p className="text-muted-foreground mb-4">Browser-side SDK for authentication, realtime database, and client storage</p>
-
+        <h3 className="text-lg font-semibold mb-2">🌐 Firebase Client SDK</h3>
+        <p className="text-sm text-gray-600 mb-4">Browser-side configuration for authentication and database</p>
+        
         <div className="space-y-3">
-          <label className="block">
-            <span className="text-sm font-medium mb-2 block">Paste Firebase Config JSON</span>
+          <div>
+            <label className="block text-sm font-medium mb-2">Firebase Config JSON</label>
             <textarea
               value={firebaseClientJson}
-              onChange={(e) => handleClientJsonChange(e.target.value)}
-              placeholder="Paste your entire Firebase configuration JSON file here..."
-              className="w-full h-48 p-3 border rounded-lg font-mono text-sm resize-vertical"
+              onChange={(e) => setFirebaseClientJson(e.target.value)}
+              placeholder="Paste entire Firebase configuration JSON..."
+              className="w-full h-40 p-3 border rounded-lg font-mono text-xs resize-none"
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              From Firebase Console → Project Settings → Your apps → Config
-            </p>
-          </label>
+            <p className="text-xs text-gray-500 mt-1">From Firebase Console → Project Settings → Your apps → Web → Config</p>
+          </div>
 
-          {/* Display extracted fields */}
-          {integrations.firebase_client.config.projectId && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
-              <p className="text-sm font-medium text-green-900">✓ Firebase Config Loaded</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2 text-sm">
-                <div>
-                  <p className="text-xs text-gray-600">Project ID</p>
-                  <p className="font-mono">{integrations.firebase_client.config.projectId}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-600">Auth Domain</p>
-                  <p className="font-mono text-xs">{integrations.firebase_client.config.authDomain}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-600">Storage Bucket</p>
-                  <p className="font-mono text-xs">{integrations.firebase_client.config.storageBucket}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-600">App ID</p>
-                  <p className="font-mono text-xs">{integrations.firebase_client.config.appId}</p>
-                </div>
+          {/* Display extracted Firebase Client fields */}
+          {configs.firebaseClient.projectId && (
+            <div className="bg-blue-50 p-3 rounded-lg space-y-2">
+              <div className="flex items-center gap-2 text-sm text-green-700">
+                <Check className="w-4 h-4" />
+                <span>Project ID: {configs.firebaseClient.projectId}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-green-700">
+                <Check className="w-4 h-4" />
+                <span>Auth Domain: {configs.firebaseClient.authDomain}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-green-700">
+                <Check className="w-4 h-4" />
+                <span>API Key: {configs.firebaseClient.apiKey?.substring(0, 10)}...</span>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Other Integrations */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Other Integrations - Compact cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Gmail SMTP */}
-        <div className="bg-white border rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <span>📧</span> Gmail SMTP
-          </h3>
-          <div className="space-y-3">
+        <div className="bg-white border rounded-lg p-4">
+          <h4 className="font-semibold text-sm mb-3">📧 Gmail SMTP</h4>
+          <div className="space-y-2">
             <input
               type="email"
               placeholder="Email address"
-              value={integrations.gmail_smtp.config.email || ''}
-              onChange={(e) => updateConfig('gmail_smtp', 'email', e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              value={configs.gmailSmtp.email || ''}
+              onChange={(e) => updateConfig('gmailSmtp', 'email', e.target.value)}
+              className="w-full px-3 py-2 border rounded text-sm"
             />
             <input
               type="password"
-              placeholder="App Password"
-              value={integrations.gmail_smtp.config.appPassword || ''}
-              onChange={(e) => updateConfig('gmail_smtp', 'appPassword', e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              placeholder="App password"
+              value={configs.gmailSmtp.appPassword || ''}
+              onChange={(e) => updateConfig('gmailSmtp', 'appPassword', e.target.value)}
+              className="w-full px-3 py-2 border rounded text-sm"
             />
             <input
               type="text"
-              placeholder="Sender Name"
-              value={integrations.gmail_smtp.config.senderName || ''}
-              onChange={(e) => updateConfig('gmail_smtp', 'senderName', e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              placeholder="Sender name"
+              value={configs.gmailSmtp.senderName || ''}
+              onChange={(e) => updateConfig('gmailSmtp', 'senderName', e.target.value)}
+              className="w-full px-3 py-2 border rounded text-sm"
             />
           </div>
         </div>
 
         {/* Stripe */}
-        <div className="bg-white border rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <span>💳</span> Stripe
-          </h3>
-          <div className="space-y-3">
+        <div className="bg-white border rounded-lg p-4">
+          <h4 className="font-semibold text-sm mb-3">💳 Stripe</h4>
+          <div className="space-y-2">
             <input
-              type="text"
-              placeholder="Publishable Key"
-              value={integrations.stripe.config.publishableKey || ''}
+              type="password"
+              placeholder="Publishable key"
+              value={configs.stripe.publishableKey || ''}
               onChange={(e) => updateConfig('stripe', 'publishableKey', e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              className="w-full px-3 py-2 border rounded text-sm"
             />
             <input
               type="password"
-              placeholder="Secret Key"
-              value={integrations.stripe.config.secretKey || ''}
+              placeholder="Secret key"
+              value={configs.stripe.secretKey || ''}
               onChange={(e) => updateConfig('stripe', 'secretKey', e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              className="w-full px-3 py-2 border rounded text-sm"
             />
             <input
               type="password"
-              placeholder="Webhook Secret"
-              value={integrations.stripe.config.webhookSecret || ''}
+              placeholder="Webhook secret"
+              value={configs.stripe.webhookSecret || ''}
               onChange={(e) => updateConfig('stripe', 'webhookSecret', e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              className="w-full px-3 py-2 border rounded text-sm"
             />
           </div>
         </div>
 
         {/* PayPal */}
-        <div className="bg-white border rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <span>🅿️</span> PayPal
-          </h3>
-          <div className="space-y-3">
+        <div className="bg-white border rounded-lg p-4">
+          <h4 className="font-semibold text-sm mb-3">🅿️ PayPal</h4>
+          <div className="space-y-2">
             <input
               type="password"
               placeholder="Client ID"
-              value={integrations.paypal.config.clientId || ''}
+              value={configs.paypal.clientId || ''}
               onChange={(e) => updateConfig('paypal', 'clientId', e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              className="w-full px-3 py-2 border rounded text-sm"
             />
             <input
               type="password"
               placeholder="Secret"
-              value={integrations.paypal.config.secret || ''}
+              value={configs.paypal.secret || ''}
               onChange={(e) => updateConfig('paypal', 'secret', e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              className="w-full px-3 py-2 border rounded text-sm"
             />
             <select
-              value={integrations.paypal.config.mode || 'sandbox'}
+              value={configs.paypal.mode || 'sandbox'}
               onChange={(e) => updateConfig('paypal', 'mode', e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              className="w-full px-3 py-2 border rounded text-sm"
             >
               <option value="sandbox">Sandbox</option>
               <option value="live">Live</option>
@@ -416,110 +342,103 @@ export function AdminIntegrationsEditor() {
         </div>
 
         {/* Google Calendar */}
-        <div className="bg-white border rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <span>📅</span> Google Calendar
-          </h3>
-          <div className="space-y-3">
+        <div className="bg-white border rounded-lg p-4">
+          <h4 className="font-semibold text-sm mb-3">📅 Google Calendar</h4>
+          <div className="space-y-2">
             <input
               type="password"
               placeholder="API Key"
-              value={integrations.google_calendar.config.apiKey || ''}
-              onChange={(e) => updateConfig('google_calendar', 'apiKey', e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              value={configs.googleCalendar.apiKey || ''}
+              onChange={(e) => updateConfig('googleCalendar', 'apiKey', e.target.value)}
+              className="w-full px-3 py-2 border rounded text-sm"
             />
             <input
               type="text"
               placeholder="Calendar ID"
-              value={integrations.google_calendar.config.calendarId || ''}
-              onChange={(e) => updateConfig('google_calendar', 'calendarId', e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              value={configs.googleCalendar.calendarId || ''}
+              onChange={(e) => updateConfig('googleCalendar', 'calendarId', e.target.value)}
+              className="w-full px-3 py-2 border rounded text-sm"
             />
           </div>
         </div>
 
         {/* Microsoft Calendar */}
-        <div className="bg-white border rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <span>📆</span> Microsoft Calendar
-          </h3>
-          <div className="space-y-3">
+        <div className="bg-white border rounded-lg p-4">
+          <h4 className="font-semibold text-sm mb-3">📆 Microsoft Calendar</h4>
+          <div className="space-y-2">
             <input
               type="password"
               placeholder="Client ID"
-              value={integrations.microsoft_calendar.config.clientId || ''}
-              onChange={(e) => updateConfig('microsoft_calendar', 'clientId', e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              value={configs.microsoftCalendar.clientId || ''}
+              onChange={(e) => updateConfig('microsoftCalendar', 'clientId', e.target.value)}
+              className="w-full px-3 py-2 border rounded text-sm"
             />
             <input
               type="password"
               placeholder="Secret"
-              value={integrations.microsoft_calendar.config.secret || ''}
-              onChange={(e) => updateConfig('microsoft_calendar', 'secret', e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              value={configs.microsoftCalendar.secret || ''}
+              onChange={(e) => updateConfig('microsoftCalendar', 'secret', e.target.value)}
+              className="w-full px-3 py-2 border rounded text-sm"
             />
             <input
               type="text"
               placeholder="Tenant ID"
-              value={integrations.microsoft_calendar.config.tenantId || ''}
-              onChange={(e) => updateConfig('microsoft_calendar', 'tenantId', e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              value={configs.microsoftCalendar.tenantId || ''}
+              onChange={(e) => updateConfig('microsoftCalendar', 'tenantId', e.target.value)}
+              className="w-full px-3 py-2 border rounded text-sm"
             />
           </div>
         </div>
 
         {/* YouTube */}
-        <div className="bg-white border rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <span>🎬</span> YouTube Data API
-          </h3>
-          <div className="space-y-3">
+        <div className="bg-white border rounded-lg p-4">
+          <h4 className="font-semibold text-sm mb-3">🎥 YouTube Data API</h4>
+          <div className="space-y-2">
             <input
               type="password"
               placeholder="API Key"
-              value={integrations.youtube.config.apiKey || ''}
+              value={configs.youtube.apiKey || ''}
               onChange={(e) => updateConfig('youtube', 'apiKey', e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              className="w-full px-3 py-2 border rounded text-sm"
             />
             <input
               type="text"
               placeholder="Channel ID"
-              value={integrations.youtube.config.channelId || ''}
+              value={configs.youtube.channelId || ''}
               onChange={(e) => updateConfig('youtube', 'channelId', e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              className="w-full px-3 py-2 border rounded text-sm"
             />
           </div>
         </div>
 
         {/* Google Places */}
-        <div className="bg-white border rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <span>📍</span> Google Places API
-          </h3>
-          <div className="space-y-3">
+        <div className="bg-white border rounded-lg p-4">
+          <h4 className="font-semibold text-sm mb-3">📍 Google Places API</h4>
+          <div className="space-y-2">
             <input
               type="password"
               placeholder="API Key"
-              value={integrations.google_places.config.apiKey || ''}
-              onChange={(e) => updateConfig('google_places', 'apiKey', e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              value={configs.googlePlaces.apiKey || ''}
+              onChange={(e) => updateConfig('googlePlaces', 'apiKey', e.target.value)}
+              className="w-full px-3 py-2 border rounded text-sm"
             />
           </div>
         </div>
       </div>
 
       {/* Save Button */}
-      <div className="sticky bottom-0 bg-white border-t p-4 flex justify-between items-center">
-        <div className="text-sm text-muted-foreground">
-          {Object.values(integrations).filter(i => Object.keys(i.config).length > 0).length} integrations configured
-        </div>
+      <div className="flex justify-end">
         <button
-          onClick={saveIntegrations}
-          disabled={saving || !currentUser}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-medium flex items-center gap-2"
+          onClick={handleSave}
+          disabled={saving || !hasConfigs}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700"
         >
-          {saving ? '⏳ Saving...' : '💾 Save All Integrations'}
+          {saving ? 'Saving...' : 'Save All Integrations'}
         </button>
+      </div>
+
+      <div className="text-sm text-gray-600">
+        {hasConfigs ? `${Object.values(configs).filter(c => Object.keys(c).length > 0).length} integration(s) configured` : 'No integrations configured yet'}
       </div>
     </div>
   );
