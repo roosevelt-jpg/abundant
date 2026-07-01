@@ -51,7 +51,7 @@ export default function AdminSettingsEditor() {
       const token = await currentUser.getIdToken();
 
       const response = await fetch('/api/settings', {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
