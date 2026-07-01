@@ -71,48 +71,61 @@ export function AdminIntegrationsEditor() {
       // Try direct JSON parse first
       return JSON.parse(text);
     } catch (e) {
-      // Step 1: Remove // comments (but not in strings)
-      let lines = text.split('\n');
-      let cleaned = lines.map(line => {
-        let inString = false;
-        let escape = false;
-        for (let i = 0; i < line.length - 1; i++) {
-          if (escape) {
-            escape = false;
-            continue;
-          }
-          if (line[i] === '\\') {
-            escape = true;
-            continue;
-          }
-          if (line[i] === '"') {
-            inString = !inString;
-            continue;
-          }
-          if (!inString && line[i] === '/' && line[i + 1] === '/') {
-            return line.substring(0, i);
+      // Find the JSON object { ... } in the text
+      let firstBraceIdx = -1;
+      let braceCount = 0;
+      let inString = false;
+      let escape = false;
+      let lastBraceIdx = -1;
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+
+        // Handle escape sequences
+        if (escape) {
+          escape = false;
+          continue;
+        }
+        if (char === '\\') {
+          escape = true;
+          continue;
+        }
+
+        // Handle strings
+        if (char === '"') {
+          inString = !inString;
+          continue;
+        }
+
+        // Skip if inside string
+        if (inString) continue;
+
+        // Track braces
+        if (char === '{') {
+          if (firstBraceIdx === -1) firstBraceIdx = i;
+          braceCount++;
+        } else if (char === '}') {
+          braceCount--;
+          if (braceCount === 0 && firstBraceIdx !== -1) {
+            lastBraceIdx = i;
+            break; // Found complete object
           }
         }
-        return line;
-      }).join('\n');
-
-      // Step 2: Remove /* */ comments
-      cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, '');
-
-      // Step 3: Extract just the { } object - find first { and last }
-      const firstBrace = cleaned.indexOf('{');
-      const lastBrace = cleaned.lastIndexOf('}');
-      
-      if (firstBrace === -1 || lastBrace === -1 || firstBrace >= lastBrace) {
-        throw new Error('No JSON object found');
       }
 
-      let jsonStr = cleaned.substring(firstBrace, lastBrace + 1);
+      if (firstBraceIdx === -1 || lastBraceIdx === -1) {
+        throw new Error('Could not find JSON object in text');
+      }
+
+      let jsonStr = text.substring(firstBraceIdx, lastBraceIdx + 1);
       
-      // Step 4: Remove trailing commas before } or ]
+      // Remove trailing commas before } or ]
       jsonStr = jsonStr.replace(/,(\s*[}\]])/g, '$1');
       
-      // Step 5: Parse
+      // Quote unquoted keys (fix JavaScript object literals to valid JSON)
+      // Replace unquoted keys like: key: with "key":
+      jsonStr = jsonStr.replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":');
+      
       return JSON.parse(jsonStr);
     }
   };
