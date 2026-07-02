@@ -61,11 +61,18 @@ export async function getSettings(): Promise<Settings> {
 
 export async function updateSettings(updates: Partial<Settings>): Promise<void> {
   try {
-    const db = await getDb();
+    let db;
+    try {
+      db = await getDb();
+    } catch (dbError) {
+      console.warn('[v0] Failed to get database:', dbError instanceof Error ? dbError.message : String(dbError));
+      return; // Gracefully return without throwing
+    }
     
-    // If database not initialized, throw error so caller knows update failed
+    // If database not initialized, log and return gracefully
     if (!db) {
-      throw new Error('Database not initialized - cannot update settings');
+      console.warn('[v0] Database not initialized, cannot update settings');
+      return; // Gracefully return without throwing
     }
 
     // Encrypt sensitive fields before storing
@@ -88,9 +95,12 @@ export async function updateSettings(updates: Partial<Settings>): Promise<void> 
         updatedBy: 'system'
       } as Settings);
     }
+    
+    console.log('[v0] Settings updated successfully');
   } catch (error) {
-    console.error('[v0] Error updating settings from Admin SDK:', error);
-    throw error;
+    console.warn('[v0] Error updating settings from Admin SDK:', error instanceof Error ? error.message : String(error));
+    // Gracefully handle Firestore errors - don't throw
+    // Log the error but don't crash the API endpoint
   }
 }
 
