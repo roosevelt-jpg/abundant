@@ -46,29 +46,31 @@ export function AdminIntegrationsEditor() {
     const loadIntegrations = async () => {
       try {
         console.log('[v0] Loading saved integrations...');
-        const response = await fetch('/api/integrations');
+        const response = await fetch('/api/integrations', { 
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
         
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
+        console.log('[v0] Response status:', response.status);
 
         const data = await response.json();
-        console.log('[v0] Integrations loaded, setting state');
+        console.log('[v0] Integrations loaded, keys:', Object.keys(data || {}));
         
-        setConfigs(data);
-        
-        // Set the JSON textareas if data exists
-        if (data.firebaseAdmin && Object.keys(data.firebaseAdmin).length > 0) {
-          setFirebaseAdminJson(JSON.stringify(data.firebaseAdmin, null, 2));
-        }
-        
-        if (data.firebaseClient && Object.keys(data.firebaseClient).length > 0) {
-          setFirebaseClientJson(JSON.stringify(data.firebaseClient, null, 2));
+        if (data && typeof data === 'object') {
+          setConfigs(prev => ({...prev, ...data}));
+          
+          // Set the JSON textareas if data exists
+          if (data.firebaseAdmin && Object.keys(data.firebaseAdmin).length > 0) {
+            setFirebaseAdminJson(JSON.stringify(data.firebaseAdmin, null, 2));
+          }
+          
+          if (data.firebaseClient && Object.keys(data.firebaseClient).length > 0) {
+            setFirebaseClientJson(JSON.stringify(data.firebaseClient, null, 2));
+          }
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.warn('[v0] Failed to load integrations:', msg);
-        // Don't show error to user - just use empty state
       } finally {
         setLoading(false);
       }
