@@ -20,34 +20,40 @@ export const HeroSlider = ({ settings: initialSettings }: HeroSliderProps) => {
       return;
     }
 
-    // Load settings on client side if not provided
     const loadSettings = async () => {
       try {
-        const { getSettings } = await import('@/lib/db-service');
-        const data = await getSettings();
-        setSettings(data);
+        const response = await fetch('/api/hero-slider');
+        if (response.ok) {
+          const data = await response.json();
+          setSettings(data);
+        }
       } catch (error) {
-        console.error('[v0] Error loading settings:', error);
+        console.error('[v0] HeroSlider: Error loading settings:', error);
+        // Silently fail - hero slider is optional
       }
     };
     loadSettings();
   }, [initialSettings]);
 
-  const slides = settings?.heroSlider || [];
+  const sliderConfig = settings?.heroSlider;
+  const slides = sliderConfig?.slides || [];
+  const speed = sliderConfig?.speed || 5000;
+  const transition = sliderConfig?.transition || 'fade';
+  const shouldAutoPlay = sliderConfig?.autoPlay !== false && autoPlay;
 
   if (!slides || slides.length === 0) {
     return null;
   }
 
   useEffect(() => {
-    if (!autoPlay) return;
+    if (!shouldAutoPlay) return;
 
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
+    }, speed);
 
     return () => clearInterval(interval);
-  }, [autoPlay, slides.length]);
+  }, [shouldAutoPlay, slides.length, speed]);
 
   const goToSlide = (index: number) => {
     setCurrentSlide(index);
@@ -64,6 +70,7 @@ export const HeroSlider = ({ settings: initialSettings }: HeroSliderProps) => {
   };
 
   const slide = slides[currentSlide];
+  const transitionClass = transition === 'slide' ? 'duration-700' : 'duration-1000';
 
   return (
     <section className="relative w-full py-8 md:py-12 px-4 sm:px-6 lg:px-8">
@@ -73,15 +80,30 @@ export const HeroSlider = ({ settings: initialSettings }: HeroSliderProps) => {
           {slides.map((s, idx) => (
             <div
               key={idx}
-              className={`absolute inset-0 transition-opacity duration-1000 ${
-                idx === currentSlide ? 'opacity-100' : 'opacity-0'
+              className={`absolute inset-0 transition-${transition === 'slide' ? 'all' : 'opacity'} ${transitionClass} ${
+                idx === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
               }`}
-              style={{
-                backgroundImage: `url(${s.image})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
             >
+              {/* Image or Video */}
+              {s.type === 'video' ? (
+                <video
+                  src={s.url}
+                  autoPlay
+                  muted
+                  loop
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div
+                  style={{
+                    backgroundImage: `url(${s.url})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                  className="w-full h-full"
+                />
+              )}
+
               {/* Overlay */}
               <div className="absolute inset-0 bg-black/30" />
 
@@ -92,10 +114,12 @@ export const HeroSlider = ({ settings: initialSettings }: HeroSliderProps) => {
                     {s.subtitle}
                   </span>
                 )}
-                <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 max-w-2xl leading-tight">
-                  {s.title}
-                </h1>
-                {s.cta && (
+                {s.title && (
+                  <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 max-w-2xl leading-tight">
+                    {s.title}
+                  </h1>
+                )}
+                {s.cta && s.cta.text && s.cta.link && (
                   <Link
                     href={s.cta.link}
                     className="btn-gradient inline-flex items-center justify-center px-8 py-3 rounded-lg font-semibold mt-6"

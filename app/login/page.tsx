@@ -1,7 +1,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Header } from '@/components/header';
@@ -15,7 +15,18 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signIn, userData, currentUser } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (currentUser && userData) {
+      if (userData.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
+    }
+  }, [currentUser, userData, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,10 +35,29 @@ export default function Login() {
 
     try {
       await signIn(email, password);
-      router.push('/dashboard');
+      // SignIn updates the AuthContext which triggers the useEffect above
+      // No polling needed - just wait for the useEffect to handle redirect
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in');
-    } finally {
+      // Parse Firebase error codes to user-friendly messages
+      let errorMessage = 'Failed to sign in';
+      
+      if (err.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email address';
+      } else if (err.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password';
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address';
+      } else if (err.code === 'auth/user-disabled') {
+        errorMessage = 'This account has been disabled';
+      } else if (err.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed login attempts. Please try again later';
+      } else if (err.code === 'auth/invalid-credential') {
+        errorMessage = 'Email or password is incorrect';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
       setLoading(false);
     }
   };

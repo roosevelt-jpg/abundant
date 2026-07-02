@@ -2,15 +2,34 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export const Footer = () => {
+  const [logoUrl, setLogoUrl] = useState<string>('/logo.png');
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      try {
+        const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
+        if (settingsDoc.exists() && settingsDoc.data().logos?.footer) {
+          setLogoUrl(settingsDoc.data().logos.footer);
+        }
+      } catch (error) {
+        console.error('[v0] Error fetching footer logo:', error);
+      }
+    };
+    fetchLogo();
+  }, []);
+
   return (
     <footer className="footer-bg border-t border-border mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div>
             <Image 
-              src="/logo-text.png" 
+              src={logoUrl}
               alt="Abundant Global Club Logo"
               width={160}
               height={60}
@@ -44,7 +63,7 @@ export const Footer = () => {
         </div>
 
         <div className="border-t border-gray-700 pt-8 flex items-center justify-between">
-          <p className="text-sm text-gray-400">© 2026 Abundant Global Club. All rights reserved.</p>
+          <p className="text-sm text-gray-400">© 2026 Abundant Global Club. All rights reserved. Made with ❤️ by <Link href="https://myflynai.com" target="_blank" rel="noopener noreferrer" className="font-light hover:text-white transition-colors">FLYN.AI</Link></p>
         </div>
       </div>
     </footer>

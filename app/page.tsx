@@ -3,33 +3,20 @@ export const dynamic = 'force-dynamic';
 
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { WhatsAppButton } from '@/components/whatsapp-button';
 import { HeroSlider } from '@/components/hero-slider';
 import { YouTubeWidget } from '@/components/youtube-widget';
+import { UpcomingEventsWidget } from '@/components/upcoming-events-widget';
 import Link from 'next/link';
-import { ArrowRight, Users, Calendar, Zap, Globe, Eye, EyeOff } from 'lucide-react';
+import { ArrowRight, Users, Calendar, Zap, Globe } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
-  const [showMembership, setShowMembership] = useState(true);
-  const [settings, setSettings] = useState(null);
-  const [loadingSettings, setLoadingSettings] = useState(true);
 
   useEffect(() => {
     setMounted(true);
-    // Persist membership visibility in localStorage
-    const savedVisibility = localStorage.getItem('showMembershipTiers');
-    if (savedVisibility !== null) {
-      setShowMembership(JSON.parse(savedVisibility));
-    }
-    setLoadingSettings(false);
   }, []);
-
-  const handleToggleMembership = () => {
-    const newValue = !showMembership;
-    setShowMembership(newValue);
-    localStorage.setItem('showMembershipTiers', JSON.stringify(newValue));
-  };
 
   if (!mounted) {
     return <div className="min-h-screen bg-background" />;
@@ -38,6 +25,7 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
+      <WhatsAppButton />
       
       <main className="flex-1">
         {/* Hero Slider - Load independently */}
@@ -84,6 +72,9 @@ export default function Home() {
         {/* YouTube Widget - Load independently */}
         <YouTubeWidget settings={null} />
 
+        {/* Upcoming Events Section */}
+        <UpcomingEventsWidget />
+
         {/* Features Section */}
         <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-card/50">
           <div className="max-w-7xl mx-auto">
@@ -129,56 +120,7 @@ export default function Home() {
         </section>
 
         {/* Membership Tiers Preview */}
-        {showMembership && (
-        <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center justify-between mb-12">
-              <div className="text-center flex-1">
-                <h2 className="font-heading text-3xl md:text-4xl font-bold mb-4">Membership Tiers</h2>
-                <p className="text-lg text-muted-foreground">Choose the plan that suits your ambitions</p>
-              </div>
-              <button
-                onClick={handleToggleMembership}
-                className="p-2 rounded-lg hover:bg-card transition-colors ml-4"
-                title="Hide membership section"
-              >
-                <Eye className="w-5 h-5 text-muted-foreground hover:text-accent" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                { name: 'Member', price: '$99', features: ['Community Access', 'Monthly Events', 'Member Directory'] },
-                { name: 'Elite', price: '$299', features: ['All Member Benefits', 'Quarterly Mastermind', 'Priority Support'], highlighted: true },
-                { name: 'Inner Circle', price: 'Custom', features: ['All Elite Benefits', 'One-on-One Coaching', 'Custom Opportunities'] }
-              ].map((tier, i) => (
-                <div
-                  key={i}
-                  className={`p-8 rounded-xl border transition-all ${
-                    tier.highlighted
-                      ? 'border-accent bg-accent/5 scale-105 shadow-lg'
-                      : 'border-border hover:border-accent'
-                  }`}
-                >
-                  <h3 className="font-heading text-2xl font-bold mb-2">{tier.name}</h3>
-                  <p className="text-3xl font-bold text-accent mb-6">{tier.price}</p>
-                  <ul className="space-y-3 mb-8">
-                    {tier.features.map((feature, j) => (
-                      <li key={j} className="flex items-center gap-3">
-                        <span className="w-2 h-2 bg-accent rounded-full"></span>
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <button className={`w-full py-2 rounded-lg font-semibold transition-colors btn-gradient`}>
-                    Learn More
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-        )}
+        {/* Removed - Membership page available at /membership */}
 
         {/* CTA Section */}
         <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-[#B8973A] to-[#001F3F]">
