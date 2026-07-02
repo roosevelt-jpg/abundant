@@ -141,3 +141,53 @@ export async function updateYouTubeConfig(config: YouTubeConfig) {
     return { success: false, error: error instanceof Error ? error.message : 'Failed to update YouTube config' };
   }
 }
+
+// INTEGRATIONS
+export async function loadIntegrations() {
+  try {
+    const db = await getAdminDb();
+    
+    const doc = await db.collection('settings').doc('integrations').get();
+    
+    if (doc.exists) {
+      const data = doc.data();
+      console.log('[v0] Integrations loaded from Firestore');
+      return { 
+        success: true, 
+        data: data || {}
+      };
+    }
+    
+    console.log('[v0] No integrations found, returning empty');
+    return { 
+      success: true, 
+      data: {}
+    };
+  } catch (error) {
+    console.error('[v0] Load integrations error:', error);
+    // Return empty data but don't fail
+    return { 
+      success: true, 
+      data: {}
+    };
+  }
+}
+
+export async function saveIntegrations(integrations: any) {
+  try {
+    console.log('[v0] Saving integrations...');
+    const db = await getAdminDb();
+    
+    await db.collection('settings').doc('integrations').set({
+      ...integrations,
+      updatedAt: Date.now(),
+      updatedBy: 'admin'
+    }, { merge: true });
+    
+    console.log('[v0] Integrations saved successfully');
+    return { success: true };
+  } catch (error) {
+    console.error('[v0] Save integrations error:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to save integrations' };
+  }
+}

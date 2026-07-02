@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { saveIntegrations, loadIntegrations } from '@/app/admin/actions';
 
 interface ConfigType {
   [key: string]: any;
@@ -43,40 +44,30 @@ export function AdminIntegrationsEditor() {
 
   // Load saved integrations on component mount
   useEffect(() => {
-    const loadIntegrations = async () => {
+    const loadIntegrationsData = async () => {
       try {
-        console.log('[v0] Loading saved integrations...');
-        const response = await fetch('/api/integrations', { 
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' }
-        });
+        const result = await loadIntegrations();
         
-        console.log('[v0] Response status:', response.status);
-
-        const data = await response.json();
-        console.log('[v0] Integrations loaded, keys:', Object.keys(data || {}));
-        
-        if (data && typeof data === 'object') {
-          setConfigs(prev => ({...prev, ...data}));
+        if (result.success && result.data) {
+          setConfigs(prev => ({...prev, ...result.data}));
           
           // Set the JSON textareas if data exists
-          if (data.firebaseAdmin && Object.keys(data.firebaseAdmin).length > 0) {
-            setFirebaseAdminJson(JSON.stringify(data.firebaseAdmin, null, 2));
+          if (result.data.firebaseAdmin && Object.keys(result.data.firebaseAdmin).length > 0) {
+            setFirebaseAdminJson(JSON.stringify(result.data.firebaseAdmin, null, 2));
           }
           
-          if (data.firebaseClient && Object.keys(data.firebaseClient).length > 0) {
-            setFirebaseClientJson(JSON.stringify(data.firebaseClient, null, 2));
+          if (result.data.firebaseClient && Object.keys(result.data.firebaseClient).length > 0) {
+            setFirebaseClientJson(JSON.stringify(result.data.firebaseClient, null, 2));
           }
         }
       } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.warn('[v0] Failed to load integrations:', msg);
+        console.warn('[v0] Failed to load integrations:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    loadIntegrations();
+    loadIntegrationsData();
   }, []);
 
   // Parse Firebase Admin SDK JSON
