@@ -39,6 +39,43 @@ export function AdminIntegrationsEditor() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Load saved integrations on component mount
+  useEffect(() => {
+    const loadIntegrations = async () => {
+      try {
+        console.log('[v0] Loading saved integrations...');
+        const response = await fetch('/api/integrations');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('[v0] Integrations loaded, setting state');
+        
+        setConfigs(data);
+        
+        // Set the JSON textareas if data exists
+        if (data.firebaseAdmin && Object.keys(data.firebaseAdmin).length > 0) {
+          setFirebaseAdminJson(JSON.stringify(data.firebaseAdmin, null, 2));
+        }
+        
+        if (data.firebaseClient && Object.keys(data.firebaseClient).length > 0) {
+          setFirebaseClientJson(JSON.stringify(data.firebaseClient, null, 2));
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn('[v0] Failed to load integrations:', msg);
+        // Don't show error to user - just use empty state
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadIntegrations();
+  }, []);
 
   // Parse Firebase Admin SDK JSON
   useEffect(() => {
@@ -226,6 +263,17 @@ export function AdminIntegrationsEditor() {
   }).length;
   
   const hasConfigs = countConfigurations > 0;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading integrations...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-8 max-w-6xl mx-auto">
