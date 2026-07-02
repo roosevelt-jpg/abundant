@@ -1,81 +1,38 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/firebase-admin-server';
 
 /**
  * GET /api/integrations
- * Fetches saved integrations from Firestore
- * Used by admin to load previously saved configurations
+ * Fetches saved integrations from the settings document
+ * Always returns a valid integrations object even if database unavailable
  */
 export async function GET() {
   try {
-    console.log('[v0] GET /api/integrations - Fetching saved integrations');
+    console.log('[v0] GET /api/integrations - Fetching');
     
-    const db = await getDb();
-    
-    if (!db) {
-      console.warn('[v0] Database not available, returning empty integrations');
-      return NextResponse.json(
-        {
-          firebaseAdmin: {},
-          firebaseClient: {},
-          gmailSmtp: {},
-          stripe: {},
-          paypal: {},
-          googleCalendar: {},
-          microsoftCalendar: {},
-          youtube: {},
-          googlePlaces: {}
-        },
-        { status: 200 }
-      );
+    let settings;
+    try {
+      // Dynamically import to avoid server-side-only issues
+      const { getSettings } = await import('@/lib/firestore-admin-service');
+      settings = await getSettings();
+    } catch (settingsError) {
+      const msg = settingsError instanceof Error ? settingsError.message : String(settingsError);
+      console.error('[v0] getSettings error:', msg);
+      // Return empty on error
+      return NextResponse.json({}, { status: 200 });
     }
-
-    // Fetch from settings.main document
-    const settingsRef = db.collection('settings').doc('main');
-    const docSnap = await settingsRef.get();
-
-    if (!docSnap.exists) {
-      console.log('[v0] No saved integrations found');
-      return NextResponse.json(
-        {
-          firebaseAdmin: {},
-          firebaseClient: {},
-          gmailSmtp: {},
-          stripe: {},
-          paypal: {},
-          googleCalendar: {},
-          microsoftCalendar: {},
-          youtube: {},
-          googlePlaces: {}
-        },
-        { status: 200 }
-      );
-    }
-
-    const data = docSnap.data();
-    const integrations = data?.integrations || {};
     
-    console.log('[v0] Integrations loaded, count:', Object.keys(integrations).length);
+    console.log('[v0] Settings fetched, integrations:', !!settings?.integrations);
+    
+    // Return integrations from settings, or empty object if not configured
+    const integrations = settings?.integrations || {};
     
     return NextResponse.json(integrations, { status: 200 });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
-    console.error('[v0] GET /api/integrations error:', msg);
+    console.error('[v0] GET /api/integrations unexpected error:', msg);
+    console.error('[v0] Error:', error);
     
-    // Gracefully return empty integrations on error
-    return NextResponse.json(
-      {
-        firebaseAdmin: {},
-        firebaseClient: {},
-        gmailSmtp: {},
-        stripe: {},
-        paypal: {},
-        googleCalendar: {},
-        microsoftCalendar: {},
-        youtube: {},
-        googlePlaces: {}
-      },
-      { status: 200 }
-    );
+    // Always return empty integrations on error
+    return NextResponse.json({}, { status: 200 });
   }
 }
