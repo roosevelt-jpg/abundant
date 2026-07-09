@@ -643,8 +643,8 @@ export default function AdminSettingsEditor() {
                           ))}
                         </select>
                       </div>
-                      <input value={card.title} onChange={(e) => updateFeatureCard(i, { title: e.target.value })} placeholder="Title" className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm" />
-                      <textarea value={card.description} onChange={(e) => updateFeatureCard(i, { description: e.target.value })} placeholder="Description" rows={2} className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm" />
+                      <input value={card.title ?? ''} onChange={(e) => updateFeatureCard(i, { title: e.target.value })} placeholder="Title" className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm" />
+                      <textarea value={card.description ?? ''} onChange={(e) => updateFeatureCard(i, { description: e.target.value })} placeholder="Description" rows={2} className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm" />
                     </div>
                   ))}
                 </section>
@@ -694,19 +694,20 @@ function Field({
   multiline = false,
 }: {
   label: string;
-  value: string;
+  value?: string;
   onChange: (v: string) => void;
   type?: string;
   multiline?: boolean;
 }) {
   const cls = 'w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent';
+  const safeValue = value ?? '';
   return (
     <div>
       <label className="block text-sm font-medium mb-2">{label}</label>
       {multiline ? (
-        <textarea value={value} onChange={(e) => onChange(e.target.value)} className={cls} rows={3} />
+        <textarea value={safeValue} onChange={(e) => onChange(e.target.value)} className={cls} rows={3} />
       ) : (
-        <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className={cls} />
+        <input type={type} value={safeValue} onChange={(e) => onChange(e.target.value)} className={cls} />
       )}
     </div>
   );
