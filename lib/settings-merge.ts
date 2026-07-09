@@ -186,24 +186,28 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
   }
 
   if (updates.homePage) {
+    const incomingEvents = updates.homePage.eventsSection ?? {};
+    const incomingFeatures = updates.homePage.featuresSection ?? {};
+    const incomingCta = updates.homePage.ctaSection ?? {};
+
     result.homePage = {
       ...existing.homePage,
       ...updates.homePage,
       eventsSection: {
         ...existing.homePage?.eventsSection,
-        ...updates.homePage.eventsSection,
+        ...incomingEvents,
       },
       featuresSection: {
         ...existing.homePage?.featuresSection,
-        ...updates.homePage.featuresSection,
+        ...incomingFeatures,
         cards:
-          updates.homePage.featuresSection?.cards?.length
-            ? updates.homePage.featuresSection.cards
+          incomingFeatures.cards?.length
+            ? incomingFeatures.cards
             : existing.homePage?.featuresSection?.cards ?? [],
       },
       ctaSection: {
         ...existing.homePage?.ctaSection,
-        ...updates.homePage.ctaSection,
+        ...incomingCta,
       },
       updatedAt: updates.homePage.updatedAt ?? Date.now(),
     };

@@ -77,8 +77,8 @@ export const Footer = () => {
           ))}
         </div>
 
-        <div className="border-t border-gray-700 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-gray-400">
+        <div className="border-t border-gray-700 pt-8">
+          <p className="text-sm text-gray-400 text-center sm:text-left">
             {settings?.branding?.copyrightText ||
               t('footer.copyright', `© ${new Date().getFullYear()} Abundant Global Club. All rights reserved.`)}
             {' '}
@@ -91,9 +91,6 @@ export const Footer = () => {
               Made with ❤️ by {FOOTER_CREDIT_NAME}
             </a>
           </p>
-          {settings?.contactEmail && (
-            <a href={`mailto:${settings.contactEmail}`} className="text-sm text-gray-400 hover:text-white">{settings.contactEmail}</a>
-          )}
         </div>
       </div>
     </footer>
