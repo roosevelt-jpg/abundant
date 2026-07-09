@@ -53,6 +53,10 @@ export async function POST(req: NextRequest) {
           const eventDoc = await db.collection('events').doc(eventId).get();
 
           if (eventDoc.exists) {
+            const discountCodeId = session.metadata?.discountCodeId;
+            const discountCode = session.metadata?.discountCode;
+            const discountAmount = parseFloat(session.metadata?.discountAmount || '0');
+
             const regRef = db.collection('eventRegistrations').doc();
             await regRef.set({
               id: regRef.id,
@@ -65,10 +69,21 @@ export async function POST(req: NextRequest) {
               paymentStatus: 'paid',
               stripePaymentId: session.payment_intent,
               amountPaid: (session.amount_total || 0) / 100,
+              discountCode: discountCode || undefined,
+              discountAmount: discountAmount || undefined,
             });
 
             const ev = eventDoc.data()!;
             await eventDoc.ref.update({ registered: (ev.registered || 0) + 1 });
+
+            if (discountCodeId) {
+              const codeRef = db.collection('eventDiscountCodes').doc(discountCodeId);
+              const codeDoc = await codeRef.get();
+              if (codeDoc.exists) {
+                const codeData = codeDoc.data()!;
+                await codeRef.update({ usedCount: (codeData.usedCount || 0) + 1 });
+              }
+            }
           }
         }
         break;

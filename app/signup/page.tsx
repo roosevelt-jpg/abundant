@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { MemberLocationFields } from '@/components/member-location-fields';
+import { MemberProfileFields } from '@/components/member-profile-fields';
 import { MemberProfile } from '@/lib/types';
 import Link from 'next/link';
 import { Mail, Lock, User } from 'lucide-react';
@@ -27,6 +28,23 @@ export default function SignUp() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!profile.dateOfBirth) {
+      setError('Please enter your date of birth');
+      return;
+    }
+    if (!profile.gender) {
+      setError('Please select your gender');
+      return;
+    }
+    if (!profile.profession?.trim()) {
+      setError('Please enter your profession');
+      return;
+    }
+    if (!profile.joinReason?.trim()) {
+      setError('Please tell us why you joined');
+      return;
+    }
 
     if (isMemberSignup) {
       if (!profile.country) {
@@ -55,7 +73,7 @@ export default function SignUp() {
         password,
         displayName,
         inviteCode || undefined,
-        isMemberSignup ? profile : undefined
+        profile
       );
       router.push(inviteCode ? '/admin/dashboard' : '/dashboard');
     } catch (err: unknown) {
@@ -127,6 +145,10 @@ export default function SignUp() {
                   required
                 />
               </div>
+            </div>
+
+            <div className="pt-2 border-t border-border">
+              <MemberProfileFields value={profile} onChange={setProfile} />
             </div>
 
             {isMemberSignup && (

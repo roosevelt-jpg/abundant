@@ -201,18 +201,9 @@ export default function AdminSettingsEditor() {
                   value={settings.branding?.copyrightText || ''}
                   onChange={(v) => update({ branding: { ...settings.branding, copyrightText: v } })}
                 />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field
-                    label="Credit Name (e.g. FLYN.AI)"
-                    value={settings.branding?.creditName || ''}
-                    onChange={(v) => update({ branding: { ...settings.branding, creditName: v } })}
-                  />
-                  <Field
-                    label="Credit Link URL"
-                    value={settings.branding?.creditUrl || ''}
-                    onChange={(v) => update({ branding: { ...settings.branding, creditUrl: v } })}
-                  />
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  Site credit is fixed: Made with ❤️ by FLYN.AI
+                </p>
               </div>
             )}
 
@@ -235,6 +226,106 @@ export default function AdminSettingsEditor() {
 
             {activeTab === 'integrations' && (
               <div className="space-y-6">
+                <IntegrationBlock
+                  title="Firebase Admin SDK"
+                  configured={settings.integrations.firebaseAdmin?.configured}
+                  fields={[
+                    { label: 'Project ID', key: 'projectId' },
+                    { label: 'Client Email', key: 'clientEmail' },
+                    { label: 'Private Key (server only)', key: 'privateKey', type: 'password', multiline: true },
+                  ]}
+                  values={settings.integrations.firebaseAdmin || {}}
+                  onChange={(key, val) => {
+                    const next = { ...settings.integrations.firebaseAdmin, [key]: val };
+                    updateIntegrations('firebaseAdmin', {
+                      ...next,
+                      configured: !!(next.projectId && next.clientEmail && next.privateKey),
+                    });
+                  }}
+                />
+                <p className="text-xs text-muted-foreground -mt-4 px-2">
+                  Server-side credentials for Firestore, Auth, Storage, and FCM. Falls back to environment variables if empty.
+                </p>
+                <IntegrationBlock
+                  title="Firebase Client SDK"
+                  configured={settings.integrations.firebaseClient?.configured}
+                  fields={[
+                    { label: 'API Key', key: 'apiKey', type: 'password' },
+                    { label: 'Auth Domain', key: 'authDomain' },
+                    { label: 'Project ID', key: 'projectId' },
+                    { label: 'Storage Bucket', key: 'storageBucket' },
+                    { label: 'Messaging Sender ID', key: 'messagingSenderId' },
+                    { label: 'App ID', key: 'appId' },
+                  ]}
+                  values={settings.integrations.firebaseClient || {}}
+                  onChange={(key, val) => {
+                    const next = { ...settings.integrations.firebaseClient, [key]: val };
+                    updateIntegrations('firebaseClient', {
+                      ...next,
+                      configured: !!(next.apiKey && next.projectId && next.appId),
+                    });
+                  }}
+                />
+                <p className="text-xs text-muted-foreground -mt-4 px-2">
+                  Client-side Firebase config. Falls back to NEXT_PUBLIC_FIREBASE_* env vars if empty.
+                </p>
+                <div className="p-6 bg-card rounded-xl border border-border space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-heading font-bold">Gmail SMTP</h3>
+                    <span className={`flex items-center gap-2 text-xs font-semibold ${settings.integrations.gmailSmtp?.configured ? 'text-green-600' : 'text-muted-foreground'}`}>
+                      <span className={`w-2 h-2 rounded-full ${settings.integrations.gmailSmtp?.configured ? 'bg-green-500' : 'bg-gray-400'}`} />
+                      {settings.integrations.gmailSmtp?.configured ? 'Live' : 'Not configured'}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Used to email admin invite codes. Use a Gmail App Password if 2FA is enabled.</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Field label="SMTP Host" value={settings.integrations.gmailSmtp?.host || 'smtp.gmail.com'} onChange={(v) => updateIntegrations('gmailSmtp', { host: v, configured: !!(settings.integrations.gmailSmtp?.user && settings.integrations.gmailSmtp?.password) })} />
+                    <Field label="SMTP Port" value={String(settings.integrations.gmailSmtp?.port || 587)} onChange={(v) => updateIntegrations('gmailSmtp', { port: parseInt(v) || 587, configured: !!(settings.integrations.gmailSmtp?.user && settings.integrations.gmailSmtp?.password) })} />
+                  </div>
+                  <Field label="Gmail Address" value={settings.integrations.gmailSmtp?.user || ''} onChange={(v) => updateIntegrations('gmailSmtp', { user: v, configured: !!(v && settings.integrations.gmailSmtp?.password) })} />
+                  <Field label="App Password" value={settings.integrations.gmailSmtp?.password || ''} onChange={(v) => updateIntegrations('gmailSmtp', { password: v, configured: !!(settings.integrations.gmailSmtp?.user && v) })} type="password" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Field label="From Email" value={settings.integrations.gmailSmtp?.fromEmail || ''} onChange={(v) => updateIntegrations('gmailSmtp', { fromEmail: v })} />
+                    <Field label="From Name" value={settings.integrations.gmailSmtp?.fromName || ''} onChange={(v) => updateIntegrations('gmailSmtp', { fromName: v })} />
+                  </div>
+                </div>
+                <div className="p-6 bg-card rounded-xl border border-border space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-heading font-bold">FCM Push Notifications</h3>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={settings.integrations.fcm?.enabled || false}
+                        onChange={(e) =>
+                          updateIntegrations('fcm', {
+                            ...settings.integrations.fcm,
+                            enabled: e.target.checked,
+                            configured: !!(settings.integrations.fcm?.vapidKey),
+                          })
+                        }
+                      />
+                      Enable push notifications
+                    </label>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Send push notifications to members. Requires Firebase Admin SDK and FCM enabled in Firebase Console.</p>
+                  <Field
+                    label="VAPID Key (Web Push)"
+                    value={settings.integrations.fcm?.vapidKey || ''}
+                    onChange={(v) =>
+                      updateIntegrations('fcm', {
+                        vapidKey: v,
+                        enabled: settings.integrations.fcm?.enabled,
+                        configured: !!v,
+                      })
+                    }
+                  />
+                  <Field
+                    label="FCM Server Key (legacy, optional)"
+                    value={settings.integrations.fcm?.serverKey || ''}
+                    onChange={(v) => updateIntegrations('fcm', { serverKey: v })}
+                    type="password"
+                  />
+                </div>
                 <IntegrationBlock
                   title="Stripe"
                   configured={settings.integrations.stripe?.configured}
@@ -505,10 +596,11 @@ function IntegrationBlock({
 }: {
   title: string;
   configured?: boolean;
-  fields: { label: string; key: string; type?: string }[];
+  fields: { label: string; key: string; type?: string; multiline?: boolean }[];
   values: Record<string, unknown>;
   onChange: (key: string, value: string) => void;
 }) {
+  const cls = 'w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent';
   return (
     <div className="p-6 bg-card rounded-xl border border-border">
       <div className="flex items-center justify-between mb-4">
@@ -520,13 +612,24 @@ function IntegrationBlock({
       </div>
       <div className="space-y-3">
         {fields.map((f) => (
-          <Field
-            key={f.key}
-            label={f.label}
-            type={f.type}
-            value={String(values[f.key] || '')}
-            onChange={(v) => onChange(f.key, v)}
-          />
+          <div key={f.key}>
+            <label className="block text-sm font-medium mb-2">{f.label}</label>
+            {f.multiline ? (
+              <textarea
+                value={String(values[f.key] || '')}
+                onChange={(e) => onChange(f.key, e.target.value)}
+                className={cls}
+                rows={4}
+              />
+            ) : (
+              <input
+                type={f.type || 'text'}
+                value={String(values[f.key] || '')}
+                onChange={(e) => onChange(f.key, e.target.value)}
+                className={cls}
+              />
+            )}
+          </div>
         ))}
       </div>
     </div>

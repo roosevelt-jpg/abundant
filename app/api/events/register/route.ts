@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/api-auth';
 import { getAdminDb } from '@/lib/firebase-admin';
+import { canUserRegisterForEvent } from '@/lib/event-eligibility';
+import { User } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,6 +24,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Paid events require checkout' }, { status: 400 });
     }
 
+    const userDoc = await db.collection('users').doc(user.uid).get();
+    const userData = userDoc.data() as User | undefined;
+
+    const eligibility = canUserRegisterForEvent(userData, event);
+    if (!eligibility.allowed) {
+      return NextResponse.json({ error: eligibility.reason }, { status: 403 });
+    }
+
+    if (event.capacity && (event.registered || 0) >= event.capacity) {
+      return NextResponse.json({ error: 'This event is at full capacity' }, { status: 400 });
+    }
+
     const existing = await db
       .collection('eventRegistrations')
       .where('eventId', '==', eventId)
@@ -32,9 +46,6 @@ export async function POST(req: NextRequest) {
     if (!existing.empty) {
       return NextResponse.json({ error: 'Already registered', registrationId: existing.docs[0].id });
     }
-
-    const userDoc = await db.collection('users').doc(user.uid).get();
-    const userData = userDoc.data();
 
     const regRef = db.collection('eventRegistrations').doc();
     await regRef.set({

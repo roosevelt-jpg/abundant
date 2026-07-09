@@ -27,6 +27,30 @@ export function sanitizePublicSettings(settings: Settings): Settings {
       anthropic: settings.integrations.anthropic
         ? { configured: settings.integrations.anthropic.configured }
         : undefined,
+      firebaseAdmin: settings.integrations.firebaseAdmin
+        ? { configured: settings.integrations.firebaseAdmin.configured }
+        : undefined,
+      firebaseClient: settings.integrations.firebaseClient
+        ? {
+            apiKey: settings.integrations.firebaseClient.apiKey,
+            authDomain: settings.integrations.firebaseClient.authDomain,
+            projectId: settings.integrations.firebaseClient.projectId,
+            storageBucket: settings.integrations.firebaseClient.storageBucket,
+            messagingSenderId: settings.integrations.firebaseClient.messagingSenderId,
+            appId: settings.integrations.firebaseClient.appId,
+            configured: settings.integrations.firebaseClient.configured,
+          }
+        : undefined,
+      gmailSmtp: settings.integrations.gmailSmtp
+        ? { configured: settings.integrations.gmailSmtp.configured }
+        : undefined,
+      fcm: settings.integrations.fcm
+        ? {
+            vapidKey: settings.integrations.fcm.vapidKey,
+            enabled: settings.integrations.fcm.enabled,
+            configured: settings.integrations.fcm.configured,
+          }
+        : undefined,
     },
   };
 }

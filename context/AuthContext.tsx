@@ -170,6 +170,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         city: profile?.city,
         address: profile?.address,
         locationPlaceId: profile?.locationPlaceId,
+        dateOfBirth: profile?.dateOfBirth,
+        gender: profile?.gender,
+        profession: profile?.profession,
+        joinReason: profile?.joinReason,
       };
 
       await setDoc(doc(db, 'users', result.user.uid), newUser);

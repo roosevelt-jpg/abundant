@@ -115,6 +115,10 @@ export function getDefaultSettings(): Settings {
       whatsapp: { phoneNumber: '+1234567890', configured: true },
       youtube: { configured: false },
       anthropic: { configured: false },
+      firebaseAdmin: { configured: false },
+      firebaseClient: { configured: false },
+      gmailSmtp: { host: 'smtp.gmail.com', port: 587, configured: false },
+      fcm: { enabled: false, configured: false },
     },
     languages: ['en', 'ar'],
     defaultLanguage: 'en',
@@ -137,8 +141,6 @@ export function getDefaultSettings(): Settings {
     branding: {
       footerTagline: 'A global network of success',
       copyrightText: `© ${new Date().getFullYear()} Abundant Global Club. All rights reserved.`,
-      creditName: 'FLYN.AI',
-      creditUrl: 'https://myflynai.com/',
     },
     chatbot: {
       enabled: false,

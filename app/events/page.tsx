@@ -8,9 +8,11 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { getAllEvents } from '@/lib/events-service';
-import { Event } from '@/lib/types';
-import { Calendar, MapPin, Users, X, Download, ExternalLink } from 'lucide-react';
-import { isSameDay, isSameMonth, format } from 'date-fns';
+import { getAllEventTags } from '@/lib/event-tags-service';
+import { Event, EventTag } from '@/lib/types';
+import { canUserRegisterForEvent, getAudienceGenderLabel } from '@/lib/event-eligibility';
+import { Calendar, MapPin, Users, X, Download, ExternalLink, Tag, Percent } from 'lucide-react';
+import { isSameDay, format } from 'date-fns';
 import { downloadIcs, googleCalendarUrl } from '@/lib/ics';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -25,10 +27,11 @@ export default function EventsPage() {
 
 function EventsContent() {
   const { t } = useLanguage();
-  const { currentUser } = useAuth();
+  const { currentUser, userData } = useAuth();
   const { authFetch } = useApiAuth();
   const searchParams = useSearchParams();
   const [events, setEvents] = useState<Event[]>([]);
+  const [tags, setTags] = useState<EventTag[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'calendar' | 'list'>('list');
   const [filter, setFilter] = useState<'all' | 'free' | 'paid'>('all');
@@ -37,12 +40,18 @@ function EventsContent() {
   const [registering, setRegistering] = useState(false);
   const [registered, setRegistered] = useState<string | null>(null);
   const [showCalendarOptions, setShowCalendarOptions] = useState<Event | null>(null);
+  const [discountCode, setDiscountCode] = useState('');
+  const [discountPreview, setDiscountPreview] = useState<{ finalPrice: number; discountAmount: number } | null>(null);
+  const [validatingDiscount, setValidatingDiscount] = useState(false);
 
   useEffect(() => {
-    getAllEvents().then((data) => {
-      setEvents(data.filter((e) => e.isPublic && e.status !== 'cancelled' && e.status !== 'draft'));
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    Promise.all([getAllEvents(), getAllEventTags()])
+      .then(([data, tagData]) => {
+        setEvents(data.filter((e) => e.isPublic && e.status !== 'cancelled' && e.status !== 'draft'));
+        setTags(tagData.filter((tg) => tg.active));
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -56,6 +65,8 @@ function EventsContent() {
     }
   }, [searchParams, events]);
 
+  const tagMap = useMemo(() => Object.fromEntries(tags.map((tg) => [tg.id, tg])), [tags]);
+
   const filtered = useMemo(() => {
     let list = events.filter((e) => e.date >= Date.now() - 86400000);
     if (filter !== 'all') list = list.filter((e) => e.pricingType === filter);
@@ -63,17 +74,55 @@ function EventsContent() {
     return list.sort((a, b) => a.date - b.date);
   }, [events, filter, selectedDate]);
 
+  const getEligibility = (event: Event) => canUserRegisterForEvent(userData, event);
+
+  const handleValidateDiscount = async () => {
+    if (!selectedEvent || !discountCode.trim()) return;
+    setValidatingDiscount(true);
+    try {
+      const res = await authFetch('/api/events/validate-discount', {
+        method: 'POST',
+        body: JSON.stringify({
+          code: discountCode.trim(),
+          eventId: selectedEvent.id,
+          price: selectedEvent.price,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setDiscountPreview({ finalPrice: data.finalPrice, discountAmount: data.discountAmount });
+      } else {
+        setDiscountPreview(null);
+        alert(data.error || 'Invalid discount code');
+      }
+    } catch {
+      alert('Failed to validate discount code');
+    } finally {
+      setValidatingDiscount(false);
+    }
+  };
+
   const handleRegister = async (event: Event) => {
     if (!currentUser) {
       window.location.href = '/login';
       return;
     }
+
+    const eligibility = getEligibility(event);
+    if (!eligibility.allowed) {
+      alert(eligibility.reason);
+      return;
+    }
+
     setRegistering(true);
     try {
       if (event.pricingType === 'paid') {
         const res = await authFetch('/api/events/checkout', {
           method: 'POST',
-          body: JSON.stringify({ eventId: event.id }),
+          body: JSON.stringify({
+            eventId: event.id,
+            discountCode: discountCode.trim() || undefined,
+          }),
         });
         const data = await res.json();
         if (data.url) window.location.href = data.url;
@@ -96,6 +145,12 @@ function EventsContent() {
     } finally {
       setRegistering(false);
     }
+  };
+
+  const openEvent = (event: Event) => {
+    setSelectedEvent(event);
+    setDiscountCode('');
+    setDiscountPreview(null);
   };
 
   return (
@@ -144,7 +199,7 @@ function EventsContent() {
                   {filtered.length === 0 ? (
                     <p className="text-muted-foreground text-sm">{t('events.none', 'No events on this date')}</p>
                   ) : (
-                    filtered.map((e) => <EventCard key={e.id} event={e} onSelect={() => setSelectedEvent(e)} compact />)
+                    filtered.map((e) => <EventCard key={e.id} event={e} tagMap={tagMap} onSelect={() => openEvent(e)} compact />)
                   )}
                 </div>
               </div>
@@ -159,7 +214,7 @@ function EventsContent() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filtered.map((e) => (
-                  <EventCard key={e.id} event={e} onSelect={() => setSelectedEvent(e)} />
+                  <EventCard key={e.id} event={e} tagMap={tagMap} onSelect={() => openEvent(e)} />
                 ))}
               </div>
             )}
@@ -174,19 +229,71 @@ function EventsContent() {
               <h2 className="font-heading font-bold text-xl">{selectedEvent.title}</h2>
               <button onClick={() => setSelectedEvent(null)}><X className="w-5 h-5" /></button>
             </div>
+
+            {(selectedEvent.tags?.length ?? 0) > 0 && (
+              <div className="flex flex-wrap gap-1 mb-3">
+                {selectedEvent.tags!.map((tagId) => {
+                  const tag = tagMap[tagId];
+                  return tag ? (
+                    <span key={tagId} className="px-2 py-0.5 text-xs rounded-full border" style={{ borderColor: tag.color, color: tag.color }}>
+                      {tag.name}
+                    </span>
+                  ) : null;
+                })}
+              </div>
+            )}
+
             <p className="text-muted-foreground text-sm mb-4">{selectedEvent.description}</p>
             <div className="space-y-2 text-sm text-muted-foreground mb-6">
               <p className="flex items-center gap-2"><Calendar className="w-4 h-4" />{new Date(selectedEvent.date).toLocaleString()}</p>
               <p className="flex items-center gap-2"><MapPin className="w-4 h-4" />{selectedEvent.location}</p>
               <p className="flex items-center gap-2"><Users className="w-4 h-4" />{selectedEvent.registered} registered</p>
-              <p className="capitalize font-medium text-accent">{selectedEvent.pricingType === 'paid' ? `$${selectedEvent.price}` : 'Free'}</p>
+              {selectedEvent.audienceGender && selectedEvent.audienceGender !== 'mixed' && (
+                <p className="flex items-center gap-2 text-accent"><Tag className="w-4 h-4" />{getAudienceGenderLabel(selectedEvent.audienceGender)}</p>
+              )}
+              <p className="capitalize font-medium text-accent">
+                {selectedEvent.pricingType === 'paid'
+                  ? discountPreview
+                    ? `$${discountPreview.finalPrice} (was $${selectedEvent.price})`
+                    : `$${selectedEvent.price}`
+                  : 'Free'}
+              </p>
             </div>
+
+            {selectedEvent.pricingType === 'paid' && (
+              <div className="mb-4 p-3 bg-background/50 rounded-lg border border-border">
+                <label className="block text-sm font-medium mb-2">Discount Code (optional)</label>
+                <div className="flex gap-2">
+                  <input
+                    value={discountCode}
+                    onChange={(e) => { setDiscountCode(e.target.value.toUpperCase()); setDiscountPreview(null); }}
+                    placeholder="MEMBER20"
+                    className="flex-1 px-3 py-2 bg-input border border-border rounded-lg text-sm font-mono"
+                  />
+                  <button
+                    onClick={handleValidateDiscount}
+                    disabled={validatingDiscount || !discountCode.trim()}
+                    className="px-3 py-2 border border-border rounded-lg text-sm flex items-center gap-1 disabled:opacity-50"
+                  >
+                    <Percent className="w-3 h-3" /> Apply
+                  </button>
+                </div>
+                {discountPreview && (
+                  <p className="text-xs text-green-600 mt-2">You save ${discountPreview.discountAmount.toFixed(2)}</p>
+                )}
+              </div>
+            )}
+
+            {currentUser && !getEligibility(selectedEvent).allowed ? (
+              <p className="text-sm text-destructive mb-4">{getEligibility(selectedEvent).reason}</p>
+            ) : null}
+
             <button
               onClick={() => handleRegister(selectedEvent)}
-              disabled={registering || registered === selectedEvent.id}
+              disabled={registering || registered === selectedEvent.id || (currentUser ? !getEligibility(selectedEvent).allowed : false)}
               className="w-full py-2 bg-accent text-accent-foreground rounded-lg font-semibold disabled:opacity-50"
             >
-              {registered === selectedEvent.id ? 'Registered ✓' : registering ? 'Processing...' : 'Register'}
+              {registered === selectedEvent.id ? 'Registered ✓' : registering ? 'Processing...' : !currentUser ? 'Sign in to Register' : 'Register'}
             </button>
           </div>
         </div>
@@ -215,16 +322,41 @@ function EventsContent() {
   );
 }
 
-function EventCard({ event, onSelect, compact = false }: { event: Event; onSelect: () => void; compact?: boolean }) {
+function EventCard({
+  event,
+  tagMap,
+  onSelect,
+  compact = false,
+}: {
+  event: Event;
+  tagMap: Record<string, EventTag>;
+  onSelect: () => void;
+  compact?: boolean;
+}) {
   return (
     <button onClick={onSelect} className={`text-left bg-card rounded-xl border border-border hover:border-accent transition-all w-full ${compact ? 'p-4' : 'overflow-hidden'}`}>
       {!compact && event.imageUrl && (
         <img src={event.imageUrl} alt="" className="w-full h-32 object-cover" />
       )}
       <div className={compact ? '' : 'p-6'}>
-        <span className="inline-block px-2 py-0.5 bg-accent/10 text-accent text-xs font-semibold rounded capitalize mb-2">
-          {event.pricingType || 'free'}
-        </span>
+        <div className="flex flex-wrap gap-1 mb-2">
+          <span className="inline-block px-2 py-0.5 bg-accent/10 text-accent text-xs font-semibold rounded capitalize">
+            {event.pricingType || 'free'}
+          </span>
+          {event.audienceGender && event.audienceGender !== 'mixed' && (
+            <span className="inline-block px-2 py-0.5 bg-blue-500/10 text-blue-600 text-xs font-semibold rounded">
+              {getAudienceGenderLabel(event.audienceGender)}
+            </span>
+          )}
+          {event.tags?.map((tagId) => {
+            const tag = tagMap[tagId];
+            return tag ? (
+              <span key={tagId} className="inline-block px-2 py-0.5 text-xs rounded border" style={{ borderColor: tag.color, color: tag.color }}>
+                {tag.name}
+              </span>
+            ) : null;
+          })}
+        </div>
         <h3 className="font-heading font-bold mb-2">{event.title}</h3>
         <div className="space-y-1 text-sm text-muted-foreground">
           <p className="flex items-center gap-2"><Calendar className="w-3 h-3" />{new Date(event.date).toLocaleDateString()}</p>

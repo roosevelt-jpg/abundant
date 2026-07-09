@@ -13,7 +13,34 @@ export const AdminHeader = () => {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [currentTime, setCurrentTime] = useState('');
+  const [currentDate, setCurrentDate] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const updateDateTime = () => {
+      const now = new Date();
+      setCurrentTime(
+        now.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true,
+        })
+      );
+      setCurrentDate(
+        now.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })
+      );
+    };
+    updateDateTime();
+    const interval = setInterval(updateDateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -38,18 +65,18 @@ export const AdminHeader = () => {
 
   return (
     <header className="bg-card border-b border-border">
-      <div className="flex items-center justify-between px-4 sm:px-8 py-4">
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg sm:text-xl font-bold text-foreground">Admin Dashboard</h1>
-        </div>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 sm:px-8 py-4">
+        <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">Admin Dashboard</h1>
 
-        <div className="flex items-center gap-2 sm:gap-4">
-          {currentUser && (
-            <div className="hidden md:flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
-              <span className="text-sm font-medium">{userData?.displayName || 'Admin'}</span>
-              <span className="text-xs text-muted-foreground">{currentUser.email}</span>
-            </div>
-          )}
+        <p className="hidden sm:block text-sm text-muted-foreground text-center whitespace-nowrap">
+          Welcome back, <span className="font-medium text-foreground">{userData?.displayName || 'Admin'}</span>
+        </p>
+
+        <div className="flex items-center justify-end gap-2 sm:gap-4">
+          <div className="hidden md:flex flex-col items-end text-right">
+            <span className="font-mono text-sm font-semibold text-accent leading-tight">{currentTime}</span>
+            <span className="text-xs text-muted-foreground leading-tight">{currentDate}</span>
+          </div>
 
           <div className="relative" ref={menuRef}>
             <button
@@ -63,7 +90,12 @@ export const AdminHeader = () => {
             </button>
 
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-48 bg-card border border-border rounded-lg shadow-lg py-1 z-50">
+              <div className="absolute right-0 top-full mt-1 w-52 bg-card border border-border rounded-lg shadow-lg py-1 z-50">
+                {currentUser?.email && (
+                  <p className="px-4 py-2 text-xs text-muted-foreground border-b border-border truncate">
+                    {currentUser.email}
+                  </p>
+                )}
                 <Link
                   href="/admin/profile"
                   onClick={() => setMenuOpen(false)}

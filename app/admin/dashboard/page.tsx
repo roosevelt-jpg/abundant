@@ -25,24 +25,11 @@ function timeAgo(ts: number): string {
 }
 
 export default function AdminDashboard() {
-  const { userData, currentUser } = useAuth();
-  const [currentTime, setCurrentTime] = useState('');
-  const [currentDate, setCurrentDate] = useState('');
+  const { currentUser } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activity, setActivity] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const updateDateTime = () => {
-      const now = new Date();
-      setCurrentTime(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }));
-      setCurrentDate(now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
-    };
-    updateDateTime();
-    const interval = setInterval(updateDateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -82,21 +69,6 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="font-heading text-3xl font-bold mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back, {userData?.displayName || 'Admin'}</p>
-        <div className="flex flex-wrap items-center gap-4 sm:gap-6 mt-4 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">Current Time:</span>
-            <span className="font-mono font-semibold text-accent">{currentTime}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">Date:</span>
-            <span className="font-mono font-semibold text-accent">{currentDate}</span>
-          </div>
-        </div>
-      </div>
-
       {error && (
         <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
           {error}

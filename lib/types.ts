@@ -20,6 +20,10 @@ export interface User {
   city?: string;
   address?: string;
   locationPlaceId?: string;
+  dateOfBirth?: string;
+  gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
+  profession?: string;
+  joinReason?: string;
   stripeCustomerId?: string;
   subscriptionId?: string;
   subscriptionStatus?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'none';
@@ -32,6 +36,10 @@ export interface MemberProfile {
   city?: string;
   address?: string;
   locationPlaceId?: string;
+  dateOfBirth?: string;
+  gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
+  profession?: string;
+  joinReason?: string;
 }
 
 // Admin invite codes
@@ -39,6 +47,7 @@ export interface AdminInvite {
   id: string;
   code: string;
   role: 'admin' | 'super_admin';
+  email?: string;
   createdBy: string;
   createdAt: number;
   expiresAt: number;
@@ -48,6 +57,32 @@ export interface AdminInvite {
 }
 
 // Event types for Firestore
+export type EventAudienceGender = 'mixed' | 'men' | 'women';
+
+export interface EventTag {
+  id: string;
+  name: string;
+  slug: string;
+  color?: string;
+  order: number;
+  active: boolean;
+  createdAt: number;
+}
+
+export interface EventDiscountCode {
+  id: string;
+  code: string;
+  eventIds: string[];
+  discountType: 'percent' | 'fixed';
+  discountValue: number;
+  maxUses?: number;
+  usedCount: number;
+  expiresAt?: number;
+  active: boolean;
+  createdBy: string;
+  createdAt: number;
+}
+
 export interface Event {
   id: string;
   title: string;
@@ -66,6 +101,8 @@ export interface Event {
   price?: number;
   currency?: string;
   stripePriceId?: string;
+  audienceGender?: EventAudienceGender;
+  tags?: string[];
   createdBy: string;
   createdAt: number;
   updatedAt: number;
@@ -85,6 +122,8 @@ export interface EventRegistration {
   paymentStatus?: 'free' | 'paid' | 'pending' | 'failed';
   stripePaymentId?: string;
   amountPaid?: number;
+  discountCode?: string;
+  discountAmount?: number;
   checkInTime?: number;
 }
 
@@ -303,8 +342,6 @@ export interface BrandingConfig {
   logoUrlDark?: string;
   footerTagline?: string;
   copyrightText?: string;
-  creditName?: string;
-  creditUrl?: string;
 }
 
 export interface Settings {
@@ -337,6 +374,36 @@ export interface Settings {
     whatsapp?: { phoneNumber?: string; configured: boolean };
     youtube?: { apiKey?: string; channelId?: string; configured: boolean };
     anthropic?: { apiKey?: string; configured: boolean };
+    firebaseAdmin?: {
+      projectId?: string;
+      clientEmail?: string;
+      privateKey?: string;
+      configured: boolean;
+    };
+    firebaseClient?: {
+      apiKey?: string;
+      authDomain?: string;
+      projectId?: string;
+      storageBucket?: string;
+      messagingSenderId?: string;
+      appId?: string;
+      configured: boolean;
+    };
+    gmailSmtp?: {
+      host?: string;
+      port?: number;
+      user?: string;
+      password?: string;
+      fromEmail?: string;
+      fromName?: string;
+      configured: boolean;
+    };
+    fcm?: {
+      vapidKey?: string;
+      serverKey?: string;
+      enabled?: boolean;
+      configured: boolean;
+    };
   };
   languages: string[];
   defaultLanguage: string;

@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import { SiteLogo } from './site-logo';
 import { useSettings } from '@/hooks/useSettings';
+import { useLanguage } from '@/context/LanguageContext';
 import { Page, FooterPlacement } from '@/lib/types';
 import { SocialLinks } from './social-links';
 import { useEffect, useState } from 'react';
-import { useLanguage } from '@/context/LanguageContext';
+import { FOOTER_CREDIT_NAME, FOOTER_CREDIT_URL } from '@/lib/constants';
 
 const COLUMN_LABELS: Record<FooterPlacement, string> = {
   platform: 'Platform',
@@ -80,19 +81,15 @@ export const Footer = () => {
           <p className="text-sm text-gray-400">
             {settings?.branding?.copyrightText ||
               t('footer.copyright', `© ${new Date().getFullYear()} Abundant Global Club. All rights reserved.`)}
-            {settings?.branding?.creditName && settings?.branding?.creditUrl && (
-              <>
-                {' '}
-                <a
-                  href={settings.branding.creditUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-white transition-colors"
-                >
-                  Made with ❤️ by {settings.branding.creditName}
-                </a>
-              </>
-            )}
+            {' '}
+            <a
+              href={FOOTER_CREDIT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors"
+            >
+              Made with ❤️ by {FOOTER_CREDIT_NAME}
+            </a>
           </p>
           {settings?.contactEmail && (
             <a href={`mailto:${settings.contactEmail}`} className="text-sm text-gray-400 hover:text-white">{settings.contactEmail}</a>

@@ -13,6 +13,10 @@ export function isWithinFreePeriod(now: Date = new Date()): boolean {
 
 export const SETTINGS_DOC_ID = 'main';
 
+/** Hardcoded footer credit — not editable in admin */
+export const FOOTER_CREDIT_NAME = 'FLYN.AI';
+export const FOOTER_CREDIT_URL = 'https://myflynai.com/';
+
 export const FOOTER_COLUMNS = ['platform', 'company', 'connect'] as const;
 export type FooterColumn = (typeof FOOTER_COLUMNS)[number];
 
