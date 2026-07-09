@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Save, Plus, Trash2, GripVertical } from 'lucide-react';
+import { ImageUpload } from '@/components/image-upload';
 import { useSettings } from '@/hooks/useSettings';
 import { updateSettings } from '@/lib/db-service';
 import { LoadState } from '@/components/load-state';
@@ -309,7 +310,7 @@ export default function AdminSettingsEditor() {
                         </button>
                       </div>
                     </div>
-                    <Field label="Image URL" value={slide.image} onChange={(v) => updateSlide(slide.id, { image: v })} />
+                    <ImageUpload value={slide.image} onChange={(v) => updateSlide(slide.id, { image: v })} folder="hero" label="Slide Image" />
                     <Field label="Title" value={slide.title} onChange={(v) => updateSlide(slide.id, { title: v })} />
                     <Field label="Subtitle" value={slide.subtitle || ''} onChange={(v) => updateSlide(slide.id, { subtitle: v })} />
                     <div className="grid grid-cols-2 gap-3">

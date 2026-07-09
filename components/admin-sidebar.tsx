@@ -15,6 +15,8 @@ import {
   UserPlus,
   Bot,
   Image,
+  Info,
+  FormInput,
 } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -47,6 +49,8 @@ export const AdminSidebar = () => {
     { icon: MessageSquare, label: 'Testimonials', href: '/admin/testimonials' },
     { icon: CreditCard, label: 'Membership Plans', href: '/admin/billing' },
     { icon: FileText, label: 'Pages', href: '/admin/pages' },
+    { icon: Info, label: 'About Page', href: '/admin/about' },
+    { icon: FormInput, label: 'Forms', href: '/admin/forms' },
     { icon: Image, label: 'Hero Slider', href: '/admin/settings?tab=hero' },
     { icon: Mail, label: 'Contact Submissions', href: '/admin/contact' },
     { icon: Bot, label: 'Chatbot', href: '/admin/chatbot' },

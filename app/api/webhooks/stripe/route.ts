@@ -1,27 +1,121 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getStripe, getWebhookSecret } from '@/lib/stripe-server';
+import { getAdminDb } from '@/lib/firebase-admin';
+import Stripe from 'stripe';
 
 export async function POST(req: NextRequest) {
   try {
-    // NOTE: This webhook endpoint requires STRIPE_SECRET_KEY environment variable
-    // and will be fully functional once deployed to Vercel with env vars set
-    
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    
-    if (!stripeKey || !webhookSecret) {
-      return NextResponse.json(
-        { error: 'Stripe webhooks not configured' },
-        { status: 503 }
-      );
+    const body = await req.text();
+    const sig = req.headers.get('stripe-signature');
+
+    if (!sig) {
+      return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
     }
 
-    // TODO: Implement full webhook handling when deployed
+    const stripe = await getStripe();
+    const webhookSecret = await getWebhookSecret();
+
+    let event: Stripe.Event;
+    try {
+      event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+    } catch (err) {
+      console.error('Webhook signature verification failed:', err);
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+    }
+
+    const db = getAdminDb();
+
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const { userId, planId, eventId, type } = session.metadata || {};
+
+        if (type === 'subscription' && userId && planId) {
+          const subscriptionId = typeof session.subscription === 'string'
+            ? session.subscription
+            : session.subscription?.id;
+
+          const planDoc = await db.collection('membershipPlans').doc(planId).get();
+          const tier = planDoc.data()?.tier || 'member';
+
+          await db.collection('users').doc(userId).update({
+            subscriptionId,
+            subscriptionStatus: 'active',
+            planId,
+            membershipTier: tier,
+            stripeCustomerId: session.customer,
+            updatedAt: Date.now(),
+          });
+        }
+
+        if (type === 'event' && userId && eventId) {
+          const userDoc = await db.collection('users').doc(userId).get();
+          const eventDoc = await db.collection('events').doc(eventId).get();
+
+          if (eventDoc.exists) {
+            const regRef = db.collection('eventRegistrations').doc();
+            await regRef.set({
+              id: regRef.id,
+              eventId,
+              userId,
+              userName: userDoc.data()?.displayName || session.customer_email,
+              userEmail: session.customer_email,
+              registeredAt: Date.now(),
+              status: 'registered',
+              paymentStatus: 'paid',
+              stripePaymentId: session.payment_intent,
+              amountPaid: (session.amount_total || 0) / 100,
+            });
+
+            const ev = eventDoc.data()!;
+            await eventDoc.ref.update({ registered: (ev.registered || 0) + 1 });
+          }
+        }
+        break;
+      }
+
+      case 'customer.subscription.updated': {
+        const sub = event.data.object as Stripe.Subscription;
+        const users = await db.collection('users').where('subscriptionId', '==', sub.id).get();
+        for (const doc of users.docs) {
+          await doc.ref.update({
+            subscriptionStatus: sub.status,
+            updatedAt: Date.now(),
+          });
+        }
+        break;
+      }
+
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object as Stripe.Subscription;
+        const users = await db.collection('users').where('subscriptionId', '==', sub.id).get();
+        for (const doc of users.docs) {
+          await doc.ref.update({
+            subscriptionStatus: 'canceled',
+            updatedAt: Date.now(),
+          });
+        }
+        break;
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subId = typeof (invoice as Stripe.Invoice & { subscription?: string | Stripe.Subscription }).subscription === 'string'
+          ? (invoice as Stripe.Invoice & { subscription?: string }).subscription
+          : undefined;
+        if (subId) {
+          const users = await db.collection('users').where('subscriptionId', '==', subId).get();
+          for (const doc of users.docs) {
+            await doc.ref.update({ subscriptionStatus: 'past_due', updatedAt: Date.now() });
+          }
+        }
+        break;
+      }
+    }
+
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error('Webhook error:', error);
-    return NextResponse.json(
-      { error: 'Webhook processing failed' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
   }
 }
