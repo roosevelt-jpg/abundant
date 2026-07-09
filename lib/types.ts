@@ -262,7 +262,17 @@ export interface TeamMember {
   order: number;
 }
 
+export interface AboutHighlightCard {
+  id: string;
+  title: string;
+  text: string;
+  order: number;
+}
+
 export interface AboutPageContent {
+  pageTitle?: string;
+  pageSubtitle?: string;
+  highlightCards?: AboutHighlightCard[];
   foundersMessage?: SideBySideCard;
   missionVision?: SideBySideCard;
   coreValues: CoreValue[];

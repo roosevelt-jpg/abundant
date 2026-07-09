@@ -1,7 +1,23 @@
 'use client';
 
-import { SideBySideCard, CoreValue, TeamMember } from '@/lib/types';
+import { SideBySideCard, CoreValue, TeamMember, AboutHighlightCard } from '@/lib/types';
 import { Globe, Share2, Mail, Phone, MessageCircle, User } from 'lucide-react';
+
+export function HighlightCardsGrid({ cards }: { cards: AboutHighlightCard[] }) {
+  const sorted = [...cards].sort((a, b) => a.order - b.order);
+  if (sorted.length === 0) return null;
+
+  return (
+    <div className={`grid grid-cols-1 gap-8 ${sorted.length >= 3 ? 'md:grid-cols-3' : sorted.length === 2 ? 'md:grid-cols-2' : ''}`}>
+      {sorted.map((card) => (
+        <div key={card.id} className="text-center p-6">
+          <h3 className="font-heading text-2xl font-bold mb-4">{card.title}</h3>
+          <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{card.text}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function SideBySideSection({ card }: { card: SideBySideCard }) {
   const imageEl = card.imageUrl ? (

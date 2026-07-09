@@ -10,8 +10,6 @@ import { useAuth } from '@/context/AuthContext';
 import {
   AboutPageContent,
   SideBySideCard,
-  CoreValue,
-  TeamMember,
   Settings,
 } from '@/lib/types';
 
@@ -92,6 +90,82 @@ export default function AboutPageBuilder() {
           {msg && <div className="mb-4 p-3 bg-green-500/10 text-green-600 rounded-lg text-sm">{msg}</div>}
 
           <div className="space-y-8">
+            <section className="p-6 bg-card rounded-xl border border-border space-y-4">
+              <h2 className="font-heading font-bold text-lg">Page Header</h2>
+              <input
+                value={content.pageTitle || ''}
+                onChange={(e) => updateContent({ pageTitle: e.target.value })}
+                placeholder="About Abundant Global Club"
+                className="w-full px-4 py-2 bg-input border border-border rounded-lg"
+              />
+              <textarea
+                value={content.pageSubtitle || ''}
+                onChange={(e) => updateContent({ pageSubtitle: e.target.value })}
+                placeholder="Cultivating excellence through global community..."
+                rows={2}
+                className="w-full px-4 py-2 bg-input border border-border rounded-lg"
+              />
+            </section>
+
+            <section className="p-6 bg-card rounded-xl border border-border">
+              <div className="flex justify-between mb-4">
+                <div>
+                  <h2 className="font-heading font-bold text-lg">Highlight Cards</h2>
+                  <p className="text-xs text-muted-foreground mt-1">Mission, vision, values — text columns at the top of the page</p>
+                </div>
+                <button
+                  onClick={() =>
+                    updateContent({
+                      highlightCards: [
+                        ...(content.highlightCards || []),
+                        { id: `h-${Date.now()}`, title: '', text: '', order: (content.highlightCards || []).length },
+                      ],
+                    })
+                  }
+                  className="text-sm text-accent flex items-center gap-1"
+                >
+                  <Plus className="w-4 h-4" /> Add
+                </button>
+              </div>
+              {(content.highlightCards || []).map((card, i) => (
+                <div key={card.id} className="mb-4 p-4 bg-background rounded-lg space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-xs text-muted-foreground">Card {i + 1}</span>
+                    <button
+                      onClick={() =>
+                        updateContent({
+                          highlightCards: (content.highlightCards || []).filter((x) => x.id !== card.id),
+                        })
+                      }
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </button>
+                  </div>
+                  <input
+                    value={card.title}
+                    onChange={(e) => {
+                      const cards = [...(content.highlightCards || [])];
+                      cards[i] = { ...card, title: e.target.value };
+                      updateContent({ highlightCards: cards });
+                    }}
+                    placeholder="e.g. Our Mission"
+                    className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm"
+                  />
+                  <textarea
+                    value={card.text}
+                    onChange={(e) => {
+                      const cards = [...(content.highlightCards || [])];
+                      cards[i] = { ...card, text: e.target.value };
+                      updateContent({ highlightCards: cards });
+                    }}
+                    placeholder="Card text..."
+                    rows={3}
+                    className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm"
+                  />
+                </div>
+              ))}
+            </section>
+
             <CardEditor
               title="Founder's Message"
               card={content.foundersMessage}
