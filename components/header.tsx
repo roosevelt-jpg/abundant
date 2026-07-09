@@ -55,7 +55,7 @@ export const Header = () => {
   );
 
   return (
-    <header className="sticky top-0 z-40 header-gradient border-b border-white/10 shadow-md">
+    <header className="sticky top-0 z-40 bg-gradient-to-r from-[#001F3F] from-30% via-[#002850] to-[#B8973A] border-b border-[#B8973A]/30 shadow-md">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
         <Link href="/" className="flex-shrink-0">
           <SiteLogo variant="header" className="h-10 w-auto" />
@@ -70,7 +70,7 @@ export const Header = () => {
                   <button className={`${navLinkCls} flex items-center gap-1`}>
                     {t(item.labelKey, item.label)} <ChevronDown className="w-3 h-3" />
                   </button>
-                  <div className="absolute top-full left-0 mt-1 bg-[#0F1B2E]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-xl py-2 min-w-[160px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                  <div className="absolute top-full left-0 mt-1 bg-[#001F3F]/95 backdrop-blur-md border border-[#B8973A]/20 rounded-lg shadow-xl py-2 min-w-[160px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                     <Link href={item.href} className="block px-4 py-2 text-sm text-white/90 hover:bg-white/10 hover:text-[#D4AF87]">{t(item.labelKey, item.label)}</Link>
                     {children.map((p) => (
                       <Link key={p.id} href={`/${p.slug}`} className="block px-4 py-2 text-sm text-white/90 hover:bg-white/10 hover:text-[#D4AF87]">{p.title}</Link>
@@ -111,7 +111,7 @@ export const Header = () => {
       </nav>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-white/10 px-4 py-4 space-y-3 bg-[#0F1B2E]/95 backdrop-blur-md">
+        <div className="md:hidden border-t border-[#B8973A]/20 px-4 py-4 space-y-3 bg-[#001F3F]/95 backdrop-blur-md">
           {STATIC_NAV.map((item) => (
             <NavLink key={item.href} href={item.href} label={t(item.labelKey, item.label)} />
           ))}

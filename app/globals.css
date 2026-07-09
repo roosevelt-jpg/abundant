@@ -196,25 +196,20 @@
     background: linear-gradient(to right, #D4AF87, #B8973A, #D4AF87);
   }
 
-  /* Site header gradient */
+  /* Site header — footer navy (#001F3F) blended into brand gold */
   .header-gradient {
     background: linear-gradient(
       90deg,
-      #0F1B2E 0%,
-      #001F3F 42%,
-      #0F1B2E 78%,
-      rgba(184, 151, 58, 0.45) 100%
+      #001F3F 0%,
+      #001F3F 35%,
+      #002850 65%,
+      #B8973A 100%
     );
   }
 
-  .dark .header-gradient {
-    background: linear-gradient(
-      90deg,
-      #0A0A0A 0%,
-      #0F1B2E 45%,
-      #001F3F 80%,
-      rgba(184, 151, 58, 0.35) 100%
-    );
+  /* Utility class for footer background */
+  .footer-bg {
+    background-color: #001F3F;
   }
 }
 
