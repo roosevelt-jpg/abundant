@@ -118,6 +118,10 @@ export default function AdminMembers() {
               <p><strong>Name:</strong> {selected.displayName}</p>
               <p><strong>Email:</strong> {selected.email}</p>
               <p><strong>Phone:</strong> {selected.phone || '—'}</p>
+              <p><strong>Country:</strong> {selected.country || '—'}</p>
+              <p><strong>Nationality:</strong> {selected.nationality || '—'}</p>
+              <p><strong>City:</strong> {selected.city || '—'}</p>
+              <p><strong>Address:</strong> {selected.address || '—'}</p>
               <p><strong>Tier:</strong> {selected.membershipTier}</p>
               <p><strong>Status:</strong> {selected.status}</p>
               <p><strong>Subscription:</strong> {selected.subscriptionStatus || 'none'}</p>

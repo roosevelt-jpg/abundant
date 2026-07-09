@@ -11,6 +11,7 @@ import {
 } from '@/lib/events-service';
 import { Event, EventRegistration } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
+import { PlacesAutocomplete } from '@/components/places-autocomplete';
 
 const EMPTY_EVENT = {
   title: '',
@@ -163,7 +164,14 @@ export default function AdminEventsEditor() {
                 <Input label="Date" type="date" value={form.date} onChange={(v) => setForm({ ...form, date: v })} />
                 <Input label="Time" type="time" value={form.time} onChange={(v) => setForm({ ...form, time: v })} />
               </div>
-              <Input label="Location" value={form.location} onChange={(v) => setForm({ ...form, location: v })} />
+              <PlacesAutocomplete
+                label="Location"
+                value={form.location}
+                onChange={(v) => setForm({ ...form, location: v })}
+                types={['establishment', 'geocode']}
+                placeholder="Search for venue or address..."
+                required
+              />
               <Input label="Virtual Link (optional)" value={form.virtualLink} onChange={(v) => setForm({ ...form, virtualLink: v })} />
               <div className="grid grid-cols-2 gap-3">
                 <div>

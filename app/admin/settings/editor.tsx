@@ -200,6 +200,18 @@ export default function AdminSettingsEditor() {
                   }}
                 />
                 <IntegrationBlock
+                  title="Google Maps / Places"
+                  configured={settings.integrations.googlePlaces?.configured}
+                  fields={[{ label: 'Maps API Key (client-side)', key: 'apiKey', type: 'password' }]}
+                  values={settings.integrations.googlePlaces || {}}
+                  onChange={(key, val) => {
+                    updateIntegrations('googlePlaces', { [key]: val, configured: !!val });
+                  }}
+                />
+                <p className="text-xs text-muted-foreground -mt-4 px-2">
+                  Enable Places API and Maps JavaScript API in Google Cloud Console. Used for event locations and member signup address autocomplete.
+                </p>
+                <IntegrationBlock
                   title="Anthropic API"
                   configured={settings.integrations.anthropic?.configured}
                   fields={[{ label: 'API Key (server only)', key: 'apiKey', type: 'password' }]}

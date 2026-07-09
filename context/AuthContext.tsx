@@ -5,7 +5,7 @@ import { User as FirebaseUser } from 'firebase/auth';
 import { onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { getFirebaseServices } from '@/lib/firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { User, UserRole } from '@/lib/types';
+import { User, UserRole, MemberProfile } from '@/lib/types';
 import { isAdminRole } from '@/lib/auth-utils';
 import { validateInviteCode, markInviteUsed } from '@/lib/invites-service';
 
@@ -13,7 +13,7 @@ interface AuthContextType {
   currentUser: FirebaseUser | null;
   userData: User | null;
   loading: boolean;
-  signUp: (email: string, password: string, displayName: string, inviteCode?: string) => Promise<void>;
+  signUp: (email: string, password: string, displayName: string, inviteCode?: string, profile?: MemberProfile) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
@@ -113,7 +113,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  const signUp = async (email: string, password: string, displayName: string, inviteCode?: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    displayName: string,
+    inviteCode?: string,
+    profile?: MemberProfile
+  ) => {
     const { auth, db } = getFirebaseServices();
     if (!auth || !db) throw new Error('Firebase not initialized');
     try {
@@ -140,6 +146,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         status: 'active',
         createdAt: Date.now(),
         updatedAt: Date.now(),
+        country: profile?.country,
+        nationality: profile?.nationality,
+        city: profile?.city,
+        address: profile?.address,
+        locationPlaceId: profile?.locationPlaceId,
       };
 
       await setDoc(doc(db, 'users', result.user.uid), newUser);

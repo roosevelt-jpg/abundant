@@ -15,10 +15,23 @@ export interface User {
   phone?: string;
   bio?: string;
   title?: string;
+  country?: string;
+  nationality?: string;
+  city?: string;
+  address?: string;
+  locationPlaceId?: string;
   stripeCustomerId?: string;
   subscriptionId?: string;
   subscriptionStatus?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'none';
   planId?: string;
+}
+
+export interface MemberProfile {
+  country?: string;
+  nationality?: string;
+  city?: string;
+  address?: string;
+  locationPlaceId?: string;
 }
 
 // Admin invite codes
