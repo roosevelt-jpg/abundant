@@ -177,12 +177,18 @@ export default function AdminSettingsEditor() {
                   onChange={(v) => update({ branding: { ...settings.branding, logoUrl: v } })}
                   folder="branding"
                   label="Site Logo (light backgrounds)"
+                  maxWidth={800}
+                  maxHeight={300}
+                  quality={0.9}
                 />
                 <ImageUpload
                   value={settings.branding?.logoUrlDark || ''}
                   onChange={(v) => update({ branding: { ...settings.branding, logoUrlDark: v } })}
                   folder="branding"
                   label="Site Logo (dark backgrounds, optional)"
+                  maxWidth={800}
+                  maxHeight={300}
+                  quality={0.9}
                 />
                 <Field
                   label="Footer Tagline"
@@ -426,7 +432,15 @@ export default function AdminSettingsEditor() {
                       </div>
                       <div className="space-y-3">
                         <p className="text-xs font-semibold uppercase tracking-wide text-accent">Right — Image</p>
-                        <ImageUpload value={slide.image} onChange={(v) => updateSlide(slide.id, { image: v })} folder="hero" label="Slide Image" />
+                        <ImageUpload
+                          value={slide.image}
+                          onChange={(v) => updateSlide(slide.id, { image: v })}
+                          folder="hero"
+                          label="Slide Image"
+                          maxWidth={1200}
+                          maxHeight={1200}
+                          quality={0.85}
+                        />
                         {slide.image && (
                           <img src={slide.image} alt="Preview" className="w-full aspect-square object-cover rounded-lg border border-border" />
                         )}

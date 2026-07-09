@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { uploadImage } from '@/lib/storage-service';
+import { compressImage, formatFileSize } from '@/lib/compress-image';
 
 interface ImageUploadProps {
   value: string;
@@ -10,10 +11,23 @@ interface ImageUploadProps {
   folder?: string;
   label?: string;
   className?: string;
+  maxWidth?: number;
+  maxHeight?: number;
+  quality?: number;
 }
 
-export function ImageUpload({ value, onChange, folder = 'uploads', label = 'Image', className = '' }: ImageUploadProps) {
+export function ImageUpload({
+  value,
+  onChange,
+  folder = 'uploads',
+  label = 'Image',
+  className = '',
+  maxWidth = 1600,
+  maxHeight = 1600,
+  quality = 0.82,
+}: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
+  const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -22,20 +36,32 @@ export function ImageUpload({ value, onChange, folder = 'uploads', label = 'Imag
       setError('Please select an image file');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image must be under 5MB');
+    if (file.size > 15 * 1024 * 1024) {
+      setError('Image must be under 15MB');
       return;
     }
     try {
       setUploading(true);
       setError('');
-      const url = await uploadImage(file, folder);
+      setStatus('Optimizing...');
+
+      const optimized = await compressImage(file, { maxWidth, maxHeight, quality });
+
+      if (optimized.size < file.size) {
+        setStatus(`Uploading ${formatFileSize(optimized.size)}...`);
+      } else {
+        setStatus('Uploading...');
+      }
+
+      const url = await uploadImage(optimized, folder);
       onChange(url);
     } catch (err) {
       console.error('Upload failed:', err);
       setError('Upload failed. Try a URL instead.');
     } finally {
       setUploading(false);
+      setStatus('');
+      if (inputRef.current) inputRef.current.value = '';
     }
   };
 
@@ -62,7 +88,7 @@ export function ImageUpload({ value, onChange, folder = 'uploads', label = 'Imag
           className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm hover:bg-accent/10 disabled:opacity-50"
         >
           {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-          {uploading ? 'Uploading...' : 'Upload Image'}
+          {uploading ? status || 'Uploading...' : 'Upload Image'}
         </button>
         <input
           type="text"
@@ -75,10 +101,13 @@ export function ImageUpload({ value, onChange, folder = 'uploads', label = 'Imag
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp,image/gif"
         className="hidden"
         onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
       />
+      <p className="text-xs text-muted-foreground mt-1">
+        Images are auto-resized to {maxWidth}px max before upload
+      </p>
       {error && <p className="text-xs text-destructive mt-1">{error}</p>}
     </div>
   );
