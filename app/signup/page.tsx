@@ -16,14 +16,11 @@ export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
   const [profile, setProfile] = useState<MemberProfile>({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { signUp } = useAuth();
-
-  const isMemberSignup = !inviteCode;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,37 +42,28 @@ export default function SignUp() {
       setError('Please tell us why you joined');
       return;
     }
-
-    if (isMemberSignup) {
-      if (!profile.country) {
-        setError('Please select your country');
-        return;
-      }
-      if (!profile.nationality) {
-        setError('Please select your nationality');
-        return;
-      }
-      if (!profile.city) {
-        setError('Please select your city');
-        return;
-      }
-      if (!profile.address) {
-        setError('Please enter your address');
-        return;
-      }
+    if (!profile.country) {
+      setError('Please select your country');
+      return;
+    }
+    if (!profile.nationality) {
+      setError('Please select your nationality');
+      return;
+    }
+    if (!profile.city) {
+      setError('Please select your city');
+      return;
+    }
+    if (!profile.address) {
+      setError('Please enter your address');
+      return;
     }
 
     setLoading(true);
 
     try {
-      await signUp(
-        email,
-        password,
-        displayName,
-        inviteCode || undefined,
-        profile
-      );
-      router.push(inviteCode ? '/admin/dashboard' : '/dashboard');
+      await signUp(email, password, displayName, profile);
+      router.push('/dashboard');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to sign up';
       setError(message);
@@ -92,7 +80,7 @@ export default function SignUp() {
         <div className="w-full max-w-lg bg-card rounded-xl border border-border p-8">
           <div className="text-center mb-8">
             <h1 className="font-heading text-3xl font-bold mb-2">Join Abundant</h1>
-            <p className="text-muted-foreground">Create your account and start your journey</p>
+            <p className="text-muted-foreground">Create your member account and start your journey</p>
           </div>
 
           {error && (
@@ -151,23 +139,9 @@ export default function SignUp() {
               <MemberProfileFields value={profile} onChange={setProfile} />
             </div>
 
-            {isMemberSignup && (
-              <div className="pt-2 border-t border-border">
-                <p className="text-sm font-medium mb-4 text-muted-foreground">Location Details</p>
-                <MemberLocationFields value={profile} onChange={setProfile} />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Admin Invite Code (optional)</label>
-              <input
-                type="text"
-                value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent font-mono"
-                placeholder="ABCD1234"
-              />
-              <p className="text-xs text-muted-foreground mt-1">Leave blank for member registration</p>
+            <div className="pt-2 border-t border-border">
+              <p className="text-sm font-medium mb-4 text-muted-foreground">Location Details</p>
+              <MemberLocationFields value={profile} onChange={setProfile} />
             </div>
 
             <button
@@ -179,11 +153,19 @@ export default function SignUp() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm">
-            Already have an account?{' '}
-            <Link href="/login" className="text-accent hover:text-accent/80 font-semibold">
-              Sign In
-            </Link>
+          <div className="mt-6 text-center text-sm space-y-2">
+            <p>
+              Already have an account?{' '}
+              <Link href="/login" className="text-accent hover:text-accent/80 font-semibold">
+                Sign In
+              </Link>
+            </p>
+            <p className="text-muted-foreground">
+              Invited as an admin?{' '}
+              <Link href="/join-admin" className="text-accent hover:text-accent/80 font-semibold">
+                Create admin account
+              </Link>
+            </p>
           </div>
         </div>
       </main>

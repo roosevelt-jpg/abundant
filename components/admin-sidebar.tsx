@@ -15,34 +15,46 @@ import {
   Image,
   Info,
   FormInput,
+  HelpCircle,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { canManageInvites } from '@/lib/auth-utils';
+import { canManageInvites, hasPermission } from '@/lib/auth-utils';
 import { useAuth } from '@/context/AuthContext';
+import { AdminPermission } from '@/lib/types';
+
+type MenuItem = {
+  icon: typeof Home;
+  label: string;
+  href: string;
+  permission: AdminPermission;
+};
 
 export const AdminSidebar = () => {
   const { userData } = useAuth();
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const menuItems = [
-    { icon: Home, label: 'Dashboard', href: '/admin/dashboard' },
-    { icon: Users, label: 'Members', href: '/admin/members' },
-    { icon: Calendar, label: 'Events', href: '/admin/events' },
-    { icon: MessageSquare, label: 'Testimonials', href: '/admin/testimonials' },
-    { icon: CreditCard, label: 'Membership Plans', href: '/admin/billing' },
-    { icon: FileText, label: 'Pages', href: '/admin/pages' },
-    { icon: Info, label: 'About Page', href: '/admin/about' },
-    { icon: FormInput, label: 'Forms', href: '/admin/forms' },
-    { icon: Image, label: 'Hero Slider', href: '/admin/settings?tab=hero' },
-    { icon: Mail, label: 'Contact Submissions', href: '/admin/contact' },
-    { icon: Bot, label: 'Chatbot', href: '/admin/chatbot' },
+  const allMenuItems: MenuItem[] = [
+    { icon: Home, label: 'Dashboard', href: '/admin/dashboard', permission: 'dashboard' },
+    { icon: Users, label: 'Members', href: '/admin/members', permission: 'members' },
+    { icon: Calendar, label: 'Events', href: '/admin/events', permission: 'events' },
+    { icon: MessageSquare, label: 'Testimonials', href: '/admin/testimonials', permission: 'testimonials' },
+    { icon: CreditCard, label: 'Membership Plans', href: '/admin/billing', permission: 'billing' },
+    { icon: FileText, label: 'Pages', href: '/admin/pages', permission: 'pages' },
+    { icon: Info, label: 'About Page', href: '/admin/about', permission: 'about' },
+    { icon: FormInput, label: 'Forms', href: '/admin/forms', permission: 'forms' },
+    { icon: Image, label: 'Hero Slider', href: '/admin/settings?tab=hero', permission: 'hero' },
+    { icon: HelpCircle, label: 'FAQ', href: '/admin/faq', permission: 'faq' },
+    { icon: Mail, label: 'Contact Submissions', href: '/admin/contact', permission: 'contact' },
+    { icon: Bot, label: 'Chatbot', href: '/admin/chatbot', permission: 'chatbot' },
     ...(canManageInvites(userData?.role)
-      ? [{ icon: UserPlus, label: 'Invite Admins', href: '/admin/invites' }]
+      ? [{ icon: UserPlus, label: 'Invite Admins', href: '/admin/invites', permission: 'invites' as AdminPermission }]
       : []),
-    { icon: Settings, label: 'Settings', href: '/admin/settings' },
+    { icon: Settings, label: 'Settings', href: '/admin/settings', permission: 'settings' },
   ];
+
+  const menuItems = allMenuItems.filter((item) => hasPermission(userData, item.permission));
 
   return (
     <aside

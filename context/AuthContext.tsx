@@ -7,13 +7,12 @@ import { getFirebaseServices } from '@/lib/firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { User, UserRole, MemberProfile } from '@/lib/types';
 import { isAdminRole } from '@/lib/auth-utils';
-import { validateInviteCode, markInviteUsed } from '@/lib/invites-service';
 
 interface AuthContextType {
   currentUser: FirebaseUser | null;
   userData: User | null;
   loading: boolean;
-  signUp: (email: string, password: string, displayName: string, inviteCode?: string, profile?: MemberProfile) => Promise<void>;
+  signUp: (email: string, password: string, displayName: string, profile?: MemberProfile) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
@@ -136,22 +135,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     email: string,
     password: string,
     displayName: string,
-    inviteCode?: string,
     profile?: MemberProfile
   ) => {
     const { auth, db } = getFirebaseServices();
     if (!auth || !db) throw new Error('Firebase not initialized');
     try {
-      let role: UserRole = 'member';
-      let inviteId: string | undefined;
-
-      if (inviteCode) {
-        const invite = await validateInviteCode(inviteCode);
-        if (!invite) throw new Error('Invalid or expired invite code');
-        role = invite.role;
-        inviteId = invite.id;
-      }
-
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(result.user, { displayName });
 
@@ -159,7 +147,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         uid: result.user.uid,
         email,
         displayName,
-        role,
+        role: 'member',
         membershipTier: 'member',
         joinedAt: Date.now(),
         status: 'active',
@@ -177,10 +165,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       };
 
       await setDoc(doc(db, 'users', result.user.uid), newUser);
-
-      if (inviteId) {
-        await markInviteUsed(inviteId, result.user.uid);
-      }
     } catch (error) {
       console.error('Sign up error:', error);
       throw error;

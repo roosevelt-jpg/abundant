@@ -50,11 +50,16 @@ export async function sendAdminInviteEmail(options: {
   to: string;
   code: string;
   role: string;
+  permissions?: string[];
   expiresAt: number;
   signupUrl: string;
 }): Promise<void> {
   const expiry = new Date(options.expiresAt).toLocaleDateString();
   const roleLabel = options.role.replace('_', ' ');
+  const permsList =
+    options.permissions && options.permissions.length > 0
+      ? `\n\nAssigned access:\n${options.permissions.map((p) => `• ${p}`).join('\n')}`
+      : '';
 
   await sendGmailEmail({
     to: options.to,
@@ -63,14 +68,17 @@ export async function sendAdminInviteEmail(options: {
 
 Your invite code: ${options.code}
 
-Sign up at: ${options.signupUrl}
-Enter this code during registration.
+Create your admin account at: ${options.signupUrl}
+
+Use the email address this invite was sent to (${options.to}) along with your invite code.${permsList}
 
 This code expires on ${expiry} and can only be used once.`,
     html: `
       <p>You've been invited to join the <strong>Abundant Global Club</strong> admin dashboard as <strong>${roleLabel}</strong>.</p>
       <p>Your invite code: <strong style="font-size:18px;letter-spacing:2px">${options.code}</strong></p>
-      <p><a href="${options.signupUrl}">Click here to sign up</a> and enter your invite code during registration.</p>
+      <p><a href="${options.signupUrl}">Click here to create your admin account</a></p>
+      <p>Use the email address this invite was sent to: <strong>${options.to}</strong></p>
+      ${options.permissions?.length ? `<p><strong>Assigned access:</strong></p><ul>${options.permissions.map((p) => `<li>${p}</li>`).join('')}</ul>` : ''}
       <p style="color:#666;font-size:12px">This code expires on ${expiry} and can only be used once.</p>
     `,
   });

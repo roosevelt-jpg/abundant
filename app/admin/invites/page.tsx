@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Copy, Check, Mail } from 'lucide-react';
+import { Trash2, Copy, Check, Mail } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { canManageInvites } from '@/lib/auth-utils';
 import { getAllInvites, revokeInvite, deleteInvite } from '@/lib/invites-service';
-import { AdminInvite } from '@/lib/types';
+import { AdminInvite, AdminPermission } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { useApiAuth } from '@/hooks/useApiAuth';
+import { ADMIN_PERMISSION_DEFS } from '@/lib/permissions';
+
+const ASSIGNABLE_PERMISSIONS = ADMIN_PERMISSION_DEFS.filter((p) => p.id !== 'invites');
 
 export default function AdminInvitesPage() {
   const { userData } = useAuth();
@@ -16,6 +19,7 @@ export default function AdminInvitesPage() {
   const [invites, setInvites] = useState<AdminInvite[]>([]);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<'admin' | 'super_admin'>('admin');
+  const [permissions, setPermissions] = useState<AdminPermission[]>(['dashboard', 'members']);
   const [expiryDays, setExpiryDays] = useState(7);
   const [email, setEmail] = useState('');
   const [sending, setSending] = useState(false);
@@ -42,9 +46,19 @@ export default function AdminInvitesPage() {
     }
   };
 
+  const togglePermission = (perm: AdminPermission) => {
+    setPermissions((prev) =>
+      prev.includes(perm) ? prev.filter((p) => p !== perm) : [...prev, perm]
+    );
+  };
+
   const handleSendInvite = async () => {
     if (!email.trim()) {
       setError('Please enter the invitee email address');
+      return;
+    }
+    if (role === 'admin' && permissions.length === 0) {
+      setError('Select at least one permission');
       return;
     }
     try {
@@ -52,7 +66,12 @@ export default function AdminInvitesPage() {
       setError(null);
       const res = await authFetch('/api/admin/invites', {
         method: 'POST',
-        body: JSON.stringify({ email: email.trim(), role, expiresInDays: expiryDays }),
+        body: JSON.stringify({
+          email: email.trim(),
+          role,
+          permissions: role === 'super_admin' ? undefined : permissions,
+          expiresInDays: expiryDays,
+        }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -81,7 +100,10 @@ export default function AdminInvitesPage() {
     <div>
       <div className="mb-8">
         <h1 className="font-heading text-3xl font-bold mb-2">Invite Admins</h1>
-        <p className="text-muted-foreground">Send invite codes via Gmail SMTP to onboard new admins with permissions</p>
+        <p className="text-muted-foreground">
+          Invite admins with specific section permissions. They will use their invite code and email at{' '}
+          <a href="/join-admin" className="text-accent hover:underline">/join-admin</a> to create their account.
+        </p>
       </div>
 
       {error && (
@@ -90,7 +112,7 @@ export default function AdminInvitesPage() {
         </div>
       )}
 
-      <div className="p-6 bg-card rounded-xl border border-border mb-8 max-w-xl space-y-4">
+      <div className="p-6 bg-card rounded-xl border border-border mb-8 max-w-2xl space-y-4">
         <h2 className="font-heading font-bold">Send Admin Invite</h2>
         <p className="text-sm text-muted-foreground">Configure Gmail SMTP in Settings → Integrations first.</p>
         <div>
@@ -111,8 +133,8 @@ export default function AdminInvitesPage() {
               onChange={(e) => setRole(e.target.value as 'admin' | 'super_admin')}
               className="w-full px-4 py-2 bg-input border border-border rounded-lg"
             >
-              <option value="admin">Admin</option>
-              <option value="super_admin">Super Admin</option>
+              <option value="admin">Admin (custom permissions)</option>
+              <option value="super_admin">Super Admin (full access)</option>
             </select>
           </div>
           <div>
@@ -127,6 +149,34 @@ export default function AdminInvitesPage() {
             />
           </div>
         </div>
+
+        {role === 'admin' && (
+          <div>
+            <label className="block text-sm font-medium mb-2">Section Permissions</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {ASSIGNABLE_PERMISSIONS.map((perm) => (
+                <label
+                  key={perm.id}
+                  className={`flex items-start gap-2 p-3 rounded-lg border cursor-pointer text-sm ${
+                    permissions.includes(perm.id) ? 'border-accent bg-accent/5' : 'border-border'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={permissions.includes(perm.id)}
+                    onChange={() => togglePermission(perm.id)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <span className="font-medium block">{perm.label}</span>
+                    <span className="text-xs text-muted-foreground">{perm.description}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
         <button
           onClick={handleSendInvite}
           disabled={sending}
@@ -140,12 +190,13 @@ export default function AdminInvitesPage() {
         <p className="text-muted-foreground">Loading invites...</p>
       ) : (
         <div className="bg-card rounded-xl border border-border overflow-x-auto">
-          <table className="w-full min-w-[700px]">
+          <table className="w-full min-w-[800px]">
             <thead className="bg-background/50 border-b border-border">
               <tr>
                 <th className="px-4 py-3 text-left text-sm font-semibold">Code</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold">Email</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold">Role</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">Permissions</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold">Status</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold">Expires</th>
                 <th className="px-4 py-3 text-right text-sm font-semibold">Actions</th>
@@ -163,8 +214,15 @@ export default function AdminInvitesPage() {
                       {copied === invite.code ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
                     </button>
                   </td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">{invite.email || '—'}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{invite.email}</td>
                   <td className="px-4 py-3 text-sm capitalize">{invite.role.replace('_', ' ')}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
+                    {invite.role === 'super_admin'
+                      ? 'All sections'
+                      : invite.permissions?.length
+                        ? `${invite.permissions.length} section(s)`
+                        : '—'}
+                  </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={invite.status} />
                   </td>

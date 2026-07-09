@@ -1,13 +1,16 @@
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { canAccessAdmin } from '@/lib/auth-utils';
+import { canAccessAdmin, hasPermission } from '@/lib/auth-utils';
+import { getPermissionForPath } from '@/lib/permissions';
 
 export function AdminProtectedLayout({ children }: { children: React.ReactNode }) {
   const { currentUser, userData, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -28,8 +31,21 @@ export function AdminProtectedLayout({ children }: { children: React.ReactNode }
       return;
     }
 
+    const tab = searchParams.get('tab');
+    const pathWithQuery =
+      pathname === '/admin/settings' && tab === 'hero'
+        ? `${pathname}?tab=hero`
+        : pathname;
+
+    const requiredPermission = getPermissionForPath(pathWithQuery);
+    if (requiredPermission && userData && !hasPermission(userData, requiredPermission)) {
+      router.push('/admin/dashboard');
+      setIsAuthorized(false);
+      return;
+    }
+
     setIsAuthorized(true);
-  }, [currentUser, userData, loading, router]);
+  }, [currentUser, userData, loading, router, pathname, searchParams]);
 
   if (loading || isAuthorized === null) {
     return (

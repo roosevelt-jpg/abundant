@@ -1,12 +1,29 @@
 // User types for Firestore
 export type UserRole = 'member' | 'admin' | 'super_admin';
 
+export type AdminPermission =
+  | 'dashboard'
+  | 'members'
+  | 'events'
+  | 'testimonials'
+  | 'billing'
+  | 'pages'
+  | 'about'
+  | 'forms'
+  | 'hero'
+  | 'contact'
+  | 'chatbot'
+  | 'faq'
+  | 'invites'
+  | 'settings';
+
 export interface User {
   uid: string;
   email: string;
   displayName?: string;
   photoURL?: string;
   role: UserRole;
+  permissions?: AdminPermission[];
   membershipTier: 'member' | 'elite' | 'inner-circle';
   joinedAt: number;
   status: 'active' | 'inactive' | 'suspended';
@@ -47,13 +64,26 @@ export interface AdminInvite {
   id: string;
   code: string;
   role: 'admin' | 'super_admin';
-  email?: string;
+  email: string;
+  permissions?: AdminPermission[];
   createdBy: string;
   createdAt: number;
   expiresAt: number;
   usedAt?: number;
   usedBy?: string;
   status: 'pending' | 'used' | 'expired' | 'revoked';
+}
+
+// FAQ items
+export interface FaqItem {
+  id: string;
+  question: string;
+  answer: string;
+  order: number;
+  isPublished: boolean;
+  createdBy?: string;
+  createdAt: number;
+  updatedAt: number;
 }
 
 // Event types for Firestore

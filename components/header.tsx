@@ -17,6 +17,7 @@ const STATIC_NAV = [
   { href: '/events', labelKey: 'nav.events', label: 'Events', menu: 'events' },
   { href: '/membership', labelKey: 'nav.membership', label: 'Membership', menu: 'membership' },
   { href: '/contact', labelKey: 'nav.contact', label: 'Contact', menu: 'contact' },
+  { href: '/faq', labelKey: 'nav.faq', label: 'FAQ', menu: 'faq' },
 ];
 
 export const Header = () => {

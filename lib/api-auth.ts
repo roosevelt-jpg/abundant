@@ -41,3 +41,9 @@ export async function requireAdmin(req: NextRequest): Promise<AuthUser> {
   if (!isAdminRole(user.role)) throw new Error('Forbidden');
   return user;
 }
+
+export async function requireSuperAdmin(req: NextRequest): Promise<AuthUser> {
+  const user = await requireAuth(req);
+  if (user.role !== 'super_admin') throw new Error('Forbidden');
+  return user;
+}

@@ -1,17 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/api-auth';
+import { requireSuperAdmin } from '@/lib/api-auth';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { sendAdminInviteEmail } from '@/lib/gmail-smtp';
 import { logActivityServer } from '@/lib/activity-log';
-import { AdminInvite } from '@/lib/types';
+import { AdminInvite, AdminPermission } from '@/lib/types';
+import { ALL_ADMIN_PERMISSIONS } from '@/lib/permissions';
 
 export async function POST(req: NextRequest) {
   try {
-    const admin = await requireAdmin(req);
-    const { email, role, expiresInDays = 7 } = await req.json();
+    const admin = await requireSuperAdmin(req);
+    const { email, role, expiresInDays = 7, permissions = [] } = await req.json();
 
     if (!email?.trim()) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+    }
+
+    const inviteRole = role === 'super_admin' ? 'super_admin' : 'admin';
+    const invitePermissions: AdminPermission[] =
+      inviteRole === 'super_admin'
+        ? ALL_ADMIN_PERMISSIONS
+        : (permissions as AdminPermission[]).filter((p) => p !== 'invites');
+
+    if (inviteRole === 'admin' && invitePermissions.length === 0) {
+      return NextResponse.json({ error: 'Select at least one permission for the admin' }, { status: 400 });
     }
 
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -23,23 +34,25 @@ export async function POST(req: NextRequest) {
     const invite: AdminInvite = {
       id: ref.id,
       code,
-      role: role === 'super_admin' ? 'super_admin' : 'admin',
+      role: inviteRole,
+      email: email.trim().toLowerCase(),
+      permissions: inviteRole === 'admin' ? invitePermissions : undefined,
       createdBy: admin.uid,
       createdAt: Date.now(),
       expiresAt: Date.now() + expiresInDays * 24 * 60 * 60 * 1000,
       status: 'pending',
-      email: email.trim(),
     };
 
     await ref.set(invite);
 
     const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
-    const signupUrl = `${origin}/signup`;
+    const signupUrl = `${origin}/join-admin?code=${code}`;
 
     await sendAdminInviteEmail({
-      to: email.trim(),
+      to: invite.email,
       code,
       role: invite.role,
+      permissions: invitePermissions,
       expiresAt: invite.expiresAt,
       signupUrl,
     });
@@ -57,7 +70,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('[api/admin/invites]', error);
     const msg = error instanceof Error ? error.message : 'Failed to send invite';
-    const status = msg === 'Unauthorized' || msg === 'Forbidden' ? 401 : 500;
+    const status = msg === 'Unauthorized' || msg === 'Forbidden' ? 403 : 500;
     return NextResponse.json({ error: msg }, { status });
   }
 }

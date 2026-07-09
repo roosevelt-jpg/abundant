@@ -27,6 +27,7 @@ function generateCode(): string {
 
 export async function createAdminInvite(
   createdBy: string,
+  email: string,
   role: 'admin' | 'super_admin',
   expiresInDays = 7
 ): Promise<AdminInvite> {
@@ -34,6 +35,7 @@ export async function createAdminInvite(
     id: doc(invitesRef()).id,
     code: generateCode(),
     role,
+    email: email.trim().toLowerCase(),
     createdBy,
     createdAt: Date.now(),
     expiresAt: Date.now() + expiresInDays * 24 * 60 * 60 * 1000,
