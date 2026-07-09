@@ -8,9 +8,9 @@ import { LoadState } from '@/components/load-state';
 import { Settings, HeroSlide, HeroSliderConfig, HomePageContent, HomeFeatureCard } from '@/lib/types';
 import { getDefaultHomePage } from '@/lib/home-page';
 import { HOME_FEATURE_ICONS } from '@/lib/home-icons';
-import { useAuth } from '@/context/AuthContext';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { useSearchParams } from 'next/navigation';
+import { maskSettingsSecretsForDisplay } from '@/lib/settings-merge';
 
 type Tab = 'general' | 'branding' | 'integrations' | 'hero' | 'homepage' | 'social';
 
@@ -25,7 +25,6 @@ const TABS: { id: Tab; label: string }[] = [
 
 export default function AdminSettingsEditor() {
   const { settings: liveSettings, loading, error, retry } = useSettings();
-  const { userData } = useAuth();
   const { authFetch } = useApiAuth();
   const searchParams = useSearchParams();
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -42,7 +41,9 @@ export default function AdminSettingsEditor() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (liveSettings && !dirty) setSettings(liveSettings);
+    if (liveSettings && !dirty) {
+      setSettings(maskSettingsSecretsForDisplay(liveSettings));
+    }
   }, [liveSettings, dirty]);
 
   const handleSave = async () => {
@@ -58,7 +59,7 @@ export default function AdminSettingsEditor() {
       if (!res.ok) {
         throw new Error(data.error || 'Failed to save settings');
       }
-      setSettings(data);
+      setSettings(maskSettingsSecretsForDisplay(data));
       setDirty(false);
       setSuccessMessage('Settings saved and synced successfully!');
       setTimeout(() => setSuccessMessage(''), 4000);
@@ -160,9 +161,9 @@ export default function AdminSettingsEditor() {
           {successMessage && (
             <div
               className={`mb-6 p-4 border rounded-lg text-sm ${
-                successMessage.includes('Error')
-                  ? 'bg-destructive/10 border-destructive/20 text-destructive'
-                  : 'bg-green-500/10 border-green-500/20 text-green-600'
+                successMessage.includes('successfully')
+                  ? 'bg-green-500/10 border-green-500/20 text-green-600'
+                  : 'bg-destructive/10 border-destructive/20 text-destructive'
               }`}
             >
               {successMessage}
@@ -255,6 +256,9 @@ export default function AdminSettingsEditor() {
 
             {activeTab === 'integrations' && (
               <div className="space-y-6">
+                <p className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg border border-border">
+                  Credentials are saved securely on the server and synced to Firestore. Password fields can be left blank to keep existing values. Ensure Firebase Admin env vars are set on Vercel for server-side saves to work.
+                </p>
                 <IntegrationBlock
                   title="Firebase Admin SDK"
                   configured={settings.integrations.firebaseAdmin?.configured}
@@ -732,7 +736,10 @@ function IntegrationBlock({
         </span>
       </div>
       <div className="space-y-3">
-        {fields.map((f) => (
+        {fields.map((f) => {
+          const isSecret = f.type === 'password';
+          const hasSavedSecret = isSecret && configured && !!values[f.key];
+          return (
           <div key={f.key}>
             <label className="block text-sm font-medium mb-2">{f.label}</label>
             {f.multiline ? (
@@ -741,6 +748,7 @@ function IntegrationBlock({
                 onChange={(e) => onChange(f.key, e.target.value)}
                 className={cls}
                 rows={4}
+                placeholder={hasSavedSecret ? 'Saved — leave blank to keep current value' : undefined}
               />
             ) : (
               <input
@@ -748,10 +756,11 @@ function IntegrationBlock({
                 value={String(values[f.key] || '')}
                 onChange={(e) => onChange(f.key, e.target.value)}
                 className={cls}
+                placeholder={hasSavedSecret ? 'Saved — leave blank to keep current value' : undefined}
               />
             )}
           </div>
-        ))}
+        );})}
       </div>
     </div>
   );

@@ -63,3 +63,13 @@ export function maskSettingsSecretsForDisplay(settings: Settings): Settings {
 
   return masked;
 }
+
+export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settings>): Settings {
+  return {
+    ...existing,
+    ...updates,
+    integrations: updates.integrations
+      ? mergeSettingsIntegrations(existing.integrations, updates.integrations)
+      : existing.integrations,
+  };
+}

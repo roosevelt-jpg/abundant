@@ -3,10 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Save, Plus, Trash2, EyeOff } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
-import { updateSettings } from '@/lib/db-service';
 import { LoadState } from '@/components/load-state';
 import { ImageUpload } from '@/components/image-upload';
-import { useAuth } from '@/context/AuthContext';
+import { useApiAuth } from '@/hooks/useApiAuth';
 import {
   AboutPageContent,
   SideBySideCard,
@@ -15,7 +14,7 @@ import {
 
 export default function AboutPageBuilder() {
   const { settings: live, loading, error, retry } = useSettings();
-  const { userData } = useAuth();
+  const { authFetch } = useApiAuth();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
@@ -40,7 +39,14 @@ export default function AboutPageBuilder() {
     if (!settings?.aboutContent) return;
     try {
       setSaving(true);
-      await updateSettings({ aboutContent: settings.aboutContent }, userData?.uid || 'admin');
+      const res = await authFetch('/api/admin/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ aboutContent: settings.aboutContent }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to save');
+      }
       setMsg('About page saved!');
       setTimeout(() => setMsg(''), 3000);
     } catch {

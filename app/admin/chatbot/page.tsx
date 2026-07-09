@@ -3,10 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Save, Trash2, Plus } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
-import { updateSettings } from '@/lib/db-service';
 import { LoadState } from '@/components/load-state';
 import { ChatLead, ChatbotConfig, Settings } from '@/lib/types';
-import { useAuth } from '@/context/AuthContext';
 import { useApiAuth } from '@/hooks/useApiAuth';
 
 interface ChatSession {
@@ -32,7 +30,6 @@ const DEFAULT_CHATBOT: ChatbotConfig = {
 
 export default function ChatbotAdminPage() {
   const { settings: liveSettings, loading, error, retry } = useSettings();
-  const { userData } = useAuth();
   const { authFetch } = useApiAuth();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
@@ -94,7 +91,14 @@ export default function ChatbotAdminPage() {
     if (!settings) return;
     try {
       setSaving(true);
-      await updateSettings({ chatbot: settings.chatbot }, userData?.uid || 'admin');
+      const res = await authFetch('/api/admin/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ chatbot: settings.chatbot }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to save');
+      }
       setMessage('Saved!');
       setTimeout(() => setMessage(''), 3000);
     } catch {
