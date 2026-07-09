@@ -102,7 +102,7 @@ export const HeroSlider = ({ fallbackSiteName, fallbackDescription }: HeroSlider
                     {s.badge}
                   </span>
                 )}
-                <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-3 text-foreground leading-tight">
+                <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-3 leading-tight">
                   {s.title}
                 </h1>
                 {(s.description || s.subtitle) && (
@@ -133,7 +133,7 @@ export const HeroSlider = ({ fallbackSiteName, fallbackDescription }: HeroSlider
           </div>
 
           {/* Right: synced image */}
-          <div className="relative aspect-square max-h-[360px] md:max-h-[400px] w-full mx-auto lg:mx-0">
+          <div className="relative aspect-[4/3] sm:aspect-square max-h-[280px] sm:max-h-[360px] md:max-h-[400px] w-full mx-auto lg:mx-0">
             {displaySlides.map((s, idx) => (
               <div
                 key={`img-${s.id}`}

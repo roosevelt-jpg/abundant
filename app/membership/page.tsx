@@ -65,8 +65,8 @@ export default function Membership() {
       <main className="flex-1">
         <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-card/50">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="font-heading text-4xl md:text-5xl font-bold mb-6">{t('membership.title', 'Membership')}</h1>
-            <p className="text-lg text-muted-foreground">{t('membership.subtitle', 'Choose the tier that aligns with your ambitions')}</p>
+            <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6">{t('membership.title', 'Membership')}</h1>
+            <p className="text-base sm:text-lg text-muted-foreground">{t('membership.subtitle', 'Choose the tier that aligns with your ambitions')}</p>
             {freePeriod && (
               <div className="mt-6 inline-block px-4 py-2 bg-green-500/10 text-green-600 rounded-lg text-sm font-medium">
                 {t('membership.free', 'Free full access until August 31!')}
@@ -82,7 +82,7 @@ export default function Membership() {
             ) : plans.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {plans.map((plan, i) => (
-                  <div key={plan.id} className={`relative p-8 rounded-xl border transition-all ${i === 1 ? 'border-accent bg-accent/5 md:scale-105 shadow-xl' : 'border-border hover:border-accent'}`}>
+                  <div key={plan.id} className={`relative p-6 sm:p-8 rounded-xl border transition-all ${i === 1 ? 'border-accent bg-accent/5 md:scale-105 shadow-xl' : 'border-border hover:border-accent'}`}>
                     {i === 1 && (
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-accent text-accent-foreground px-4 py-1 rounded-full text-sm font-semibold">
                         {t('membership.popular', 'Most Popular')}

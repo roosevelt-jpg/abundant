@@ -26,8 +26,8 @@ export default function FaqPage() {
       <main className="flex-1">
         <section className="py-12 md:py-20 px-4 sm:px-6 lg:px-8 bg-card/50">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="font-heading text-4xl md:text-5xl font-bold mb-4">Frequently Asked Questions</h1>
-            <p className="text-lg text-muted-foreground">
+            <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-4">Frequently Asked Questions</h1>
+            <p className="text-base sm:text-lg text-muted-foreground">
               Find answers to common questions about Abundant Global Club
             </p>
           </div>
@@ -47,9 +47,9 @@ export default function FaqPage() {
                     <div key={faq.id} className="bg-card rounded-xl border border-border overflow-hidden">
                       <button
                         onClick={() => setOpenId(isOpen ? null : faq.id)}
-                        className="w-full flex items-center justify-between gap-4 p-5 text-left hover:bg-accent/5 transition-colors"
+                        className="w-full flex items-center justify-between gap-3 p-4 sm:p-5 text-left hover:bg-accent/5 transition-colors"
                       >
-                        <span className="font-semibold">{faq.question}</span>
+                        <span className="font-semibold text-sm sm:text-base text-left break-words">{faq.question}</span>
                         {isOpen ? <ChevronUp className="w-5 h-5 flex-shrink-0 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 flex-shrink-0 text-muted-foreground" />}
                       </button>
                       {isOpen && (

@@ -6,18 +6,23 @@ import {
   Phone,
   Send,
   Music,
-  MessageCircle,
   Globe,
 } from 'lucide-react';
-import Link from 'next/link';
 
 interface SocialLinksProps {
   settings: Settings;
   className?: string;
   iconSize?: number;
+  /** Social keys to omit (e.g. whatsapp shown only on About page) */
+  hideKeys?: string[];
 }
 
-export const SocialLinks = ({ settings, className = 'flex gap-4', iconSize = 24 }: SocialLinksProps) => {
+export const SocialLinks = ({
+  settings,
+  className = 'flex flex-wrap gap-4',
+  iconSize = 24,
+  hideKeys = ['whatsapp'],
+}: SocialLinksProps) => {
   if (!settings.socialLinks) return null;
 
   const socialIcons = [
@@ -30,8 +35,10 @@ export const SocialLinks = ({ settings, className = 'flex gap-4', iconSize = 24 
     {
       key: 'whatsapp',
       label: 'WhatsApp',
-      icon: MessageCircle,
-      href: settings.socialLinks?.whatsapp,
+      icon: Send,
+      href: settings.socialLinks?.whatsapp
+        ? `https://wa.me/${settings.socialLinks.whatsapp.replace(/\D/g, '')}`
+        : undefined,
     },
     {
       key: 'facebook',
@@ -77,13 +84,15 @@ export const SocialLinks = ({ settings, className = 'flex gap-4', iconSize = 24 
     },
   ];
 
-  const activeLinks = socialIcons.filter(social => social.href);
+  const activeLinks = socialIcons.filter(
+    (social) => social.href && !hideKeys.includes(social.key)
+  );
 
   if (activeLinks.length === 0) return null;
 
   return (
     <div className={className}>
-      {activeLinks.map(social => {
+      {activeLinks.map((social) => {
         const Icon = social.icon;
         return (
           <a

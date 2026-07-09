@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
-import { WhatsAppButton } from '@/components/whatsapp-button';
 import { SocialLinks } from '@/components/social-links';
 import { useSettings } from '@/hooks/useSettings';
 import { submitContactForm } from '@/lib/contact-service';
@@ -119,7 +118,7 @@ export default function Contact() {
                 )}
               </div>
 
-              <div className="lg:col-span-3 bg-card rounded-xl border border-border p-5 md:p-6 max-w-lg lg:max-w-none lg:ml-auto w-full">
+              <div className="lg:col-span-3 bg-card rounded-xl border border-border p-5 md:p-6 w-full">
                 {customForm ? (
                   <CustomFormRenderer form={customForm} compact />
                 ) : (
@@ -184,7 +183,6 @@ export default function Contact() {
       </main>
 
       <Footer />
-      {settings && <WhatsAppButton settings={settings} />}
     </div>
   );
 }

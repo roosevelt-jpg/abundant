@@ -161,8 +161,8 @@ function EventsContent() {
       <main className="flex-1">
         <section className="py-12 md:py-20 px-4 sm:px-6 lg:px-8 bg-card/50">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="font-heading text-4xl md:text-5xl font-bold mb-4">{t('events.title', 'Events')}</h1>
-            <p className="text-lg text-muted-foreground">{t('events.subtitle', 'Join us for exclusive networking and learning opportunities')}</p>
+            <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-4">{t('events.title', 'Events')}</h1>
+            <p className="text-base sm:text-lg text-muted-foreground">{t('events.subtitle', 'Join us for exclusive networking and learning opportunities')}</p>
           </div>
         </section>
 
@@ -358,7 +358,7 @@ function EventCard({
             ) : null;
           })}
         </div>
-        <h3 className="font-heading font-bold mb-2">{event.title}</h3>
+        <h3 className="font-heading font-bold mb-2 break-words">{event.title}</h3>
         <div className="space-y-1 text-sm text-muted-foreground">
           <p className="flex items-center gap-2"><Calendar className="w-3 h-3" />{new Date(event.date).toLocaleDateString()}</p>
           <p className="flex items-center gap-2"><MapPin className="w-3 h-3" />{event.location}</p>

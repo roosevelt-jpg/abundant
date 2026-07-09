@@ -36,8 +36,8 @@ export default function About() {
       <main className="flex-1">
         <section className="py-12 md:py-16 px-4 sm:px-6 lg:px-8 bg-card/50">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="font-heading text-4xl md:text-5xl font-bold mb-4">{pageTitle}</h1>
-            {pageSubtitle && <p className="text-lg text-muted-foreground">{pageSubtitle}</p>}
+            <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-4">{pageTitle}</h1>
+            {pageSubtitle && <p className="text-base sm:text-lg text-muted-foreground">{pageSubtitle}</p>}
           </div>
         </section>
 

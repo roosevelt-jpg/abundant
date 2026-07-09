@@ -1,4 +1,5 @@
 import { Settings, HomePageContent } from '@/lib/types';
+import { getDefaultHomePage } from '@/lib/home-page';
 
 const SECRET_FIELD_NAMES = new Set([
   'apiKey',
@@ -237,28 +238,29 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
   }
 
   if (updates.homePage) {
+    const defaultHome = getDefaultHomePage();
+    const baseHome = existing.homePage ?? defaultHome;
     const incomingEvents = updates.homePage.eventsSection ?? {};
     const incomingFeatures = updates.homePage.featuresSection ?? {};
     const incomingCta = updates.homePage.ctaSection ?? {};
 
     result.homePage = {
-      ...existing.homePage,
       eventsSection: mergeShallowPreservingBlank(
-        existing.homePage?.eventsSection as Record<string, unknown> | undefined,
+        baseHome.eventsSection as Record<string, unknown>,
         incomingEvents as Record<string, unknown>
       ) as HomePageContent['eventsSection'],
       featuresSection: {
         ...(mergeShallowPreservingBlank(
-          existing.homePage?.featuresSection as Record<string, unknown> | undefined,
+          baseHome.featuresSection as Record<string, unknown>,
           incomingFeatures as Record<string, unknown>
         ) as HomePageContent['featuresSection']),
         cards:
           incomingFeatures.cards?.length
             ? incomingFeatures.cards
-            : existing.homePage?.featuresSection?.cards ?? [],
+            : baseHome.featuresSection?.cards ?? defaultHome.featuresSection.cards,
       },
       ctaSection: mergeShallowPreservingBlank(
-        existing.homePage?.ctaSection as Record<string, unknown> | undefined,
+        baseHome.ctaSection as Record<string, unknown>,
         incomingCta as Record<string, unknown>
       ) as HomePageContent['ctaSection'],
       updatedAt: updates.homePage.updatedAt ?? Date.now(),

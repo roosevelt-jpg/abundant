@@ -3,9 +3,13 @@ import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/context/AuthContext'
+import { SettingsProvider } from '@/context/SettingsContext'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { LanguageProvider } from '@/context/LanguageContext'
 import { ChatbotWidget } from '@/components/chatbot-widget';
+import { WhatsAppFloating } from '@/components/whatsapp-floating';
+import { getPublicSettings } from '@/lib/settings-server'
+import { getDefaultSettings } from '@/lib/db-service'
 
 const cormorantGaramond = Cormorant_Garamond({ 
   variable: '--font-heading',
@@ -37,22 +41,37 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  let initialSettings = getDefaultSettings();
+  try {
+    initialSettings = await getPublicSettings();
+  } catch (error) {
+    console.error('[layout] Failed to load public settings:', error);
+  }
+
   return (
     <html lang="en" className={`${cormorantGaramond.variable} ${inter.variable} dark`}>
+      <head>
+        {initialSettings.branding?.logoUrl ? (
+          <link rel="preload" as="image" href={initialSettings.branding.logoUrl} />
+        ) : null}
+      </head>
       <body className="font-sans antialiased bg-background text-foreground">
         <AuthProvider>
-          <ThemeProvider>
-            <LanguageProvider>
-              {children}
-              <ChatbotWidget />
-              {process.env.NODE_ENV === 'production' && <Analytics />}
-            </LanguageProvider>
-          </ThemeProvider>
+          <SettingsProvider initialSettings={initialSettings}>
+            <ThemeProvider>
+              <LanguageProvider>
+                {children}
+                <ChatbotWidget />
+                <WhatsAppFloating />
+                {process.env.NODE_ENV === 'production' && <Analytics />}
+              </LanguageProvider>
+            </ThemeProvider>
+          </SettingsProvider>
         </AuthProvider>
       </body>
     </html>

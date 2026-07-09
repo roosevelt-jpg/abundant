@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { MessageCircle, X, Send } from 'lucide-react';
+import { MessageCircle, X, Send, Bot } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { usePathname } from 'next/navigation';
 
@@ -55,6 +55,7 @@ export function ChatbotWidget() {
 
   if (!chatbot?.enabled) return null;
   if (pathname?.startsWith('/admin')) return null;
+  if (pathname === '/about') return null;
 
   const submitLead = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +126,7 @@ export function ChatbotWidget() {
   return (
     <>
       {open && (
-        <div className="fixed bottom-20 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-[380px] max-h-[min(520px,75vh)] bg-card border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="fixed z-[100] bottom-[calc(max(1.25rem,env(safe-area-inset-bottom))+4rem)] right-4 sm:right-6 w-[min(calc(100vw-2rem),380px)] max-h-[min(520px,75dvh)] bg-card border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-accent/5">
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
@@ -209,10 +210,10 @@ export function ChatbotWidget() {
 
       <button
         onClick={() => (open ? setOpen(false) : handleOpen())}
-        className="fixed bottom-5 right-4 sm:right-6 z-50 bg-accent text-accent-foreground rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:scale-105 transition-transform ring-2 ring-accent/30"
+        className="fixed z-[100] bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 sm:right-6 bg-accent text-accent-foreground rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:scale-105 transition-transform ring-2 ring-accent/30"
         aria-label={open ? 'Close chat' : 'Open chat assistant'}
       >
-        {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
+        {open ? <X className="w-6 h-6" /> : <Bot className="w-6 h-6" />}
       </button>
     </>
   );

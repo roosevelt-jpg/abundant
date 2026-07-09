@@ -24,7 +24,7 @@ export const Header = () => {
   const { t } = useLanguage();
   const [cmsPages, setCmsPages] = useState<Page[]>([]);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [expandedMobile, setExpandedMobile] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/public/pages')
@@ -32,6 +32,13 @@ export const Header = () => {
       .then(setCmsPages)
       .catch(() => setCmsPages([]));
   }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileOpen]);
 
   const topLevelCms = cmsPages.filter((p) => p.navPlacement === 'top-level');
   const dropdownPages = (menu: string) =>
@@ -45,29 +52,33 @@ export const Header = () => {
     }
   };
 
-  const navLinkCls = 'text-sm text-white/90 hover:text-[#D4AF87] transition-colors';
+  const navLinkCls = 'text-sm text-white/90 hover:text-[#D4AF87] transition-colors block py-2';
   const accentLinkCls = 'text-sm font-medium text-[#D4AF87] hover:text-white transition-colors';
 
-  const NavLink = ({ href, label }: { href: string; label: string }) => (
-    <Link href={href} className={navLinkCls} onClick={() => setMobileOpen(false)}>
+  const NavLink = ({ href, label, indent = false }: { href: string; label: string; indent?: boolean }) => (
+    <Link
+      href={href}
+      className={`${navLinkCls} ${indent ? 'pl-4 text-white/80' : ''} break-words`}
+      onClick={() => setMobileOpen(false)}
+    >
       {label}
     </Link>
   );
 
   return (
     <header className="sticky top-0 z-40 bg-gradient-to-r from-[#001F3F] from-30% via-[#002850] to-[#B8973A] border-b border-[#B8973A]/30 shadow-md">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-        <Link href="/" className="flex-shrink-0">
-          <SiteLogo variant="header" className="h-10 w-auto" />
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
+        <Link href="/" className="flex-shrink-0 min-w-0">
+          <SiteLogo variant="header" className="h-8 sm:h-10 w-auto max-w-[140px] sm:max-w-none object-contain object-left" />
         </Link>
 
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden lg:flex items-center gap-4 xl:gap-6 flex-wrap justify-end">
           {STATIC_NAV.map((item) => {
             const children = dropdownPages(item.menu);
             if (children.length > 0) {
               return (
                 <div key={item.href} className="relative group">
-                  <button className={`${navLinkCls} flex items-center gap-1`}>
+                  <button type="button" className={`${navLinkCls.replace('block py-2', '')} flex items-center gap-1`}>
                     {t(item.labelKey, item.label)} <ChevronDown className="w-3 h-3" />
                   </button>
                   <div className="absolute top-full left-0 mt-1 bg-[#001F3F]/95 backdrop-blur-md border border-[#B8973A]/20 rounded-lg shadow-xl py-2 min-w-[160px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
@@ -79,61 +90,96 @@ export const Header = () => {
                 </div>
               );
             }
-            return <NavLink key={item.href} href={item.href} label={t(item.labelKey, item.label)} />;
+            return (
+              <Link key={item.href} href={item.href} className={navLinkCls.replace('block py-2', '')}>
+                {t(item.labelKey, item.label)}
+              </Link>
+            );
           })}
           {topLevelCms.map((p) => (
-            <NavLink key={p.id} href={`/${p.slug}`} label={p.title} />
+            <Link key={p.id} href={`/${p.slug}`} className={`${navLinkCls.replace('block py-2', '')} max-w-[120px] truncate`} title={p.title}>
+              {p.title}
+            </Link>
           ))}
         </div>
 
-        <div className="flex items-center gap-3 text-white">
-          <div className="hidden sm:flex items-center gap-2 [&_button]:text-white/90 [&_button]:hover:text-[#D4AF87]">
+        <div className="flex items-center gap-2 sm:gap-3 text-white flex-shrink-0">
+          <div className="hidden md:flex items-center gap-2 [&_button]:text-white/90 [&_button]:hover:text-[#D4AF87]">
             <LanguageSwitcher />
             <ThemeToggle />
           </div>
           {currentUser ? (
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-3">
               <Link href={userData?.role === 'admin' || userData?.role === 'super_admin' ? '/admin/dashboard' : '/dashboard'} className={accentLinkCls}>
                 Dashboard
               </Link>
-              <button onClick={handleLogout} className="text-sm text-white/70 hover:text-white transition-colors">Logout</button>
+              <button type="button" onClick={handleLogout} className="text-sm text-white/70 hover:text-white transition-colors">Logout</button>
             </div>
           ) : (
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-3">
               <Link href="/login" className={accentLinkCls}>Login</Link>
-              <Link href="/signup" className="text-sm font-medium btn-gradient px-4 py-2 rounded-lg">Join</Link>
+              <Link href="/signup" className="text-sm font-medium btn-gradient px-3 sm:px-4 py-2 rounded-lg whitespace-nowrap">Join</Link>
             </div>
           )}
-          <button className="md:hidden p-2 text-white" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu">
+          <button type="button" className="lg:hidden p-2 text-white" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu" aria-expanded={mobileOpen}>
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </nav>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-[#B8973A]/20 px-4 py-4 space-y-3 bg-[#001F3F]/95 backdrop-blur-md">
-          {STATIC_NAV.map((item) => (
-            <NavLink key={item.href} href={item.href} label={t(item.labelKey, item.label)} />
-          ))}
-          {topLevelCms.map((p) => (
-            <NavLink key={p.id} href={`/${p.slug}`} label={p.title} />
-          ))}
-          <div className="flex items-center gap-2 pt-2 border-t border-white/10 [&_button]:text-white/90">
-            <LanguageSwitcher />
-            <ThemeToggle />
+        <>
+          <div className="fixed inset-0 top-[57px] bg-black/40 lg:hidden z-40" onClick={() => setMobileOpen(false)} aria-hidden />
+          <div className="lg:hidden relative z-50 border-t border-[#B8973A]/20 bg-[#001F3F]/98 backdrop-blur-md max-h-[calc(100dvh-3.5rem)] overflow-y-auto overscroll-contain">
+            <div className="px-4 py-4 space-y-1">
+              {STATIC_NAV.map((item) => {
+                const children = dropdownPages(item.menu);
+                if (children.length > 0) {
+                  const expanded = expandedMobile === item.menu;
+                  return (
+                    <div key={item.href}>
+                      <button
+                        type="button"
+                        className={`${navLinkCls} w-full flex items-center justify-between`}
+                        onClick={() => setExpandedMobile(expanded ? null : item.menu)}
+                      >
+                        {t(item.labelKey, item.label)}
+                        <ChevronDown className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+                      </button>
+                      {expanded && (
+                        <div className="pb-2">
+                          <NavLink href={item.href} label={t(item.labelKey, item.label)} indent />
+                          {children.map((p) => (
+                            <NavLink key={p.id} href={`/${p.slug}`} label={p.title} indent />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                return <NavLink key={item.href} href={item.href} label={t(item.labelKey, item.label)} />;
+              })}
+              {topLevelCms.map((p) => (
+                <NavLink key={p.id} href={`/${p.slug}`} label={p.title} />
+              ))}
+              <div className="flex items-center gap-2 pt-3 border-t border-white/10 [&_button]:text-white/90">
+                <LanguageSwitcher />
+                <ThemeToggle />
+              </div>
+              {currentUser ? (
+                <div className="pt-2 space-y-2 border-t border-white/10">
+                  <Link href={userData?.role === 'admin' || userData?.role === 'super_admin' ? '/admin/dashboard' : '/dashboard'} className={`block ${accentLinkCls}`} onClick={() => setMobileOpen(false)}>Dashboard</Link>
+                  <button type="button" onClick={handleLogout} className="text-sm text-white/70 hover:text-white">Logout</button>
+                </div>
+              ) : (
+                <div className="pt-2 space-y-2 border-t border-white/10">
+                  <Link href="/login" className={`block ${accentLinkCls}`} onClick={() => setMobileOpen(false)}>Login</Link>
+                  <Link href="/signup" className="block text-sm btn-gradient px-4 py-2.5 rounded-lg text-center" onClick={() => setMobileOpen(false)}>Join</Link>
+                </div>
+              )}
+            </div>
           </div>
-          {currentUser ? (
-            <>
-              <Link href="/dashboard" className={`block ${accentLinkCls}`} onClick={() => setMobileOpen(false)}>Dashboard</Link>
-              <button onClick={handleLogout} className="text-sm text-white/70 hover:text-white">Logout</button>
-            </>
-          ) : (
-            <>
-              <Link href="/login" className={`block ${accentLinkCls}`} onClick={() => setMobileOpen(false)}>Login</Link>
-              <Link href="/signup" className="block text-sm btn-gradient px-4 py-2 rounded-lg text-center" onClick={() => setMobileOpen(false)}>Join</Link>
-            </>
-          )}
-        </div>
+        </>
       )}
     </header>
   );

@@ -8,10 +8,10 @@ export function HighlightCardsGrid({ cards }: { cards: AboutHighlightCard[] }) {
   if (sorted.length === 0) return null;
 
   return (
-    <div className={`grid grid-cols-1 gap-8 ${sorted.length >= 3 ? 'md:grid-cols-3' : sorted.length === 2 ? 'md:grid-cols-2' : ''}`}>
+    <div className={`grid grid-cols-1 gap-6 sm:gap-8 ${sorted.length >= 3 ? 'md:grid-cols-3' : sorted.length === 2 ? 'md:grid-cols-2' : ''}`}>
       {sorted.map((card) => (
-        <div key={card.id} className="text-center p-6">
-          <h3 className="font-heading text-2xl font-bold mb-4">{card.title}</h3>
+        <div key={card.id} className="text-center p-4 sm:p-6">
+          <h3 className="font-heading text-xl sm:text-2xl font-bold mb-3 sm:mb-4">{card.title}</h3>
           <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{card.text}</p>
         </div>
       ))}
@@ -29,14 +29,14 @@ export function SideBySideSection({ card }: { card: SideBySideCard }) {
   );
 
   const textEl = (
-    <div>
-      <h2 className="font-heading text-3xl font-bold mb-4">{card.title}</h2>
-      <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{card.text}</p>
+    <div className="min-w-0">
+      <h2 className="font-heading text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">{card.title}</h2>
+      <p className="text-muted-foreground leading-relaxed whitespace-pre-line text-sm sm:text-base">{card.text}</p>
     </div>
   );
 
   return (
-    <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 items-center ${card.imagePosition === 'right' ? '' : ''}`}>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center">
       {card.imagePosition === 'left' ? (
         <>{imageEl}{textEl}</>
       ) : (
