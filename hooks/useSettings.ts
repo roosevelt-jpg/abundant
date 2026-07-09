@@ -54,7 +54,10 @@ export function useSettings(): UseSettingsResult {
         const isAdmin = canAccessAdmin(userData);
 
         if (isAdmin) {
-          if (!currentUser) return;
+          if (!currentUser) {
+            if (!cancelled) setLoading(false);
+            return;
+          }
           const token = await currentUser.getIdToken();
           const adminSettings = await fetchAdminSettings(token);
           if (!cancelled) {

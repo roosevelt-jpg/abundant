@@ -1,20 +1,32 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { getFirebaseServices } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { isAdminRole } from '@/lib/auth-utils';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import Link from 'next/link';
 import { Mail, Lock } from 'lucide-react';
 
 export default function Login() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+function LoginContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,9 +36,26 @@ export default function Login() {
 
     try {
       await signIn(email, password);
+
+      const redirect = searchParams.get('redirect');
+      if (redirect?.startsWith('/admin')) {
+        router.push(redirect);
+        return;
+      }
+
+      const { auth, db } = getFirebaseServices();
+      if (auth?.currentUser && db) {
+        const snap = await getDoc(doc(db, 'users', auth.currentUser.uid));
+        const role = snap.data()?.role;
+        if (isAdminRole(role) || email === 'admin@abundantglobalclub.com') {
+          router.push('/admin/dashboard');
+          return;
+        }
+      }
+
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign in');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to sign in');
     } finally {
       setLoading(false);
     }

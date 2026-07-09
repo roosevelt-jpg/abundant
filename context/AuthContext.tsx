@@ -175,7 +175,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { auth } = getFirebaseServices();
     if (!auth) throw new Error('Firebase not initialized');
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      await syncSessionCookie(result.user);
     } catch (error) {
       console.error('Sign in error:', error);
       throw error;
