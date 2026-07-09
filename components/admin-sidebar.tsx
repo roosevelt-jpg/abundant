@@ -22,6 +22,7 @@ import { useState } from 'react';
 import { canManageInvites, hasPermission } from '@/lib/auth-utils';
 import { useAuth } from '@/context/AuthContext';
 import { AdminPermission } from '@/lib/types';
+import { SiteLogo } from '@/components/site-logo';
 
 type MenuItem = {
   icon: typeof Home;
@@ -63,12 +64,12 @@ export const AdminSidebar = () => {
     <aside
       className={`${isCollapsed ? 'w-20' : 'w-64'} bg-card border-r border-border transition-all duration-300 flex flex-col h-screen fixed left-0 top-0 z-30`}
     >
-      <div className="p-6 border-b border-border">
-        <Link href="/admin" className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
-            <span className="text-accent-foreground font-bold text-sm">A</span>
-          </div>
-          {!isCollapsed && <span className="font-heading font-bold text-accent">ADMIN</span>}
+      <div className="p-4 sm:p-6 border-b border-border">
+        <Link href="/admin/dashboard" className="flex items-center gap-2 min-w-0">
+          <SiteLogo
+            variant="header"
+            className={`object-contain object-left ${isCollapsed ? 'h-8' : 'h-10'} w-auto max-w-full`}
+          />
         </Link>
       </div>
 
