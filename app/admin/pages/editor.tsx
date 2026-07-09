@@ -62,7 +62,9 @@ export default function AdminPagesEditor() {
         slug: 'new-page',
         content: '',
         isPublished: false,
-        createdBy: 'admin'
+        footerPlacement: 'none',
+        navPlacement: 'none',
+        createdBy: 'admin',
       });
       await loadPages();
       setIsCreating(false);
@@ -122,6 +124,37 @@ export default function AdminPagesEditor() {
                     className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent resize-none"
                     rows={6}
                   />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Footer Placement</label>
+                    <select
+                      value={editingData.footerPlacement || 'none'}
+                      onChange={(e) => setEditingData({ ...editingData, footerPlacement: e.target.value as Page['footerPlacement'] })}
+                      className="w-full px-4 py-2 bg-input border border-border rounded-lg"
+                    >
+                      <option value="none">None</option>
+                      <option value="platform">Platform</option>
+                      <option value="company">Company</option>
+                      <option value="connect">Connect</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Navbar Placement</label>
+                    <select
+                      value={editingData.navPlacement || 'none'}
+                      onChange={(e) => setEditingData({ ...editingData, navPlacement: e.target.value as Page['navPlacement'] })}
+                      className="w-full px-4 py-2 bg-input border border-border rounded-lg"
+                    >
+                      <option value="none">None</option>
+                      <option value="top-level">Top-level nav item</option>
+                      <option value="home">Under Home</option>
+                      <option value="about">Under About</option>
+                      <option value="events">Under Events</option>
+                      <option value="membership">Under Membership</option>
+                      <option value="contact">Under Contact</option>
+                    </select>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <input

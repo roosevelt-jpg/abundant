@@ -2,15 +2,30 @@
 
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
-import { LogOut, Settings, Users, FileText, Calendar, MessageSquare, Home } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import {
+  LogOut,
+  Settings,
+  Users,
+  FileText,
+  Calendar,
+  MessageSquare,
+  Home,
+  CreditCard,
+  Mail,
+  UserPlus,
+  Bot,
+  Image,
+} from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { ThemeToggle } from './theme-toggle';
 import { LanguageSwitcher } from './language-switcher';
+import { canManageInvites } from '@/lib/auth-utils';
 
 export const AdminSidebar = () => {
-  const { logout } = useAuth();
+  const { logout, userData } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -20,7 +35,7 @@ export const AdminSidebar = () => {
       await logout();
       router.push('/login');
     } catch (error) {
-      console.error('[v0] Logout failed:', error);
+      console.error('Logout failed:', error);
       setIsLoggingOut(false);
     }
   };
@@ -30,12 +45,21 @@ export const AdminSidebar = () => {
     { icon: Users, label: 'Members', href: '/admin/members' },
     { icon: Calendar, label: 'Events', href: '/admin/events' },
     { icon: MessageSquare, label: 'Testimonials', href: '/admin/testimonials' },
+    { icon: CreditCard, label: 'Membership Plans', href: '/admin/billing' },
     { icon: FileText, label: 'Pages', href: '/admin/pages' },
+    { icon: Image, label: 'Hero Slider', href: '/admin/settings?tab=hero' },
+    { icon: Mail, label: 'Contact Submissions', href: '/admin/contact' },
+    { icon: Bot, label: 'Chatbot', href: '/admin/chatbot' },
+    ...(canManageInvites(userData?.role)
+      ? [{ icon: UserPlus, label: 'Invite Admins', href: '/admin/invites' }]
+      : []),
     { icon: Settings, label: 'Settings', href: '/admin/settings' },
   ];
 
   return (
-    <aside className={`${isCollapsed ? 'w-20' : 'w-64'} bg-card border-r border-border transition-all duration-300 flex flex-col h-screen fixed left-0 top-0`}>
+    <aside
+      className={`${isCollapsed ? 'w-20' : 'w-64'} bg-card border-r border-border transition-all duration-300 flex flex-col h-screen fixed left-0 top-0 z-30`}
+    >
       <div className="p-6 border-b border-border">
         <Link href="/admin" className="flex items-center gap-3">
           <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
@@ -45,17 +69,22 @@ export const AdminSidebar = () => {
         </Link>
       </div>
 
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon;
+          const active = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent/10 text-muted-foreground hover:text-accent transition-colors"
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium ${
+                active
+                  ? 'bg-accent/10 text-accent'
+                  : 'text-muted-foreground hover:bg-accent/10 hover:text-accent'
+              }`}
             >
-              <Icon className="w-5 h-5" />
-              {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
+              <Icon className="w-5 h-5 flex-shrink-0" />
+              {!isCollapsed && <span>{item.label}</span>}
             </Link>
           );
         })}

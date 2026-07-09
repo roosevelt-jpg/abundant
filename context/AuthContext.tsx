@@ -3,15 +3,17 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
+import { getFirebaseServices } from '@/lib/firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { User } from '@/lib/types';
+import { User, UserRole } from '@/lib/types';
+import { isAdminRole } from '@/lib/auth-utils';
+import { validateInviteCode, markInviteUsed } from '@/lib/invites-service';
 
 interface AuthContextType {
   currentUser: FirebaseUser | null;
   userData: User | null;
   loading: boolean;
-  signUp: (email: string, password: string, displayName: string) => Promise<void>;
+  signUp: (email: string, password: string, displayName: string, inviteCode?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
@@ -27,6 +29,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let isMounted = true;
     
+    const { auth, db } = getFirebaseServices();
+    if (!auth || !db) {
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!isMounted) return;
       
@@ -44,12 +52,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const userData = userSnap.data() as User;
             
             // If this is the admin email and role isn't set to admin, update it
-            const isAdmin = user.email === 'admin@abundantglobalclub.com';
-            if (isAdmin && userData.role !== 'admin') {
-              updateDoc(userRef, { role: 'admin', updatedAt: Date.now() }).catch(err => {
-                console.error('[v0] Failed to update admin role:', err);
-              });
-              userData.role = 'admin';
+            const isAdminEmail = user.email === 'admin@abundantglobalclub.com';
+            if (isAdminEmail && !isAdminRole(userData.role)) {
+              updateDoc(userRef, { role: 'super_admin' as UserRole, updatedAt: Date.now() }).catch(console.error);
+              userData.role = 'super_admin';
             }
             
             setUserData(userData);
@@ -107,25 +113,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  const signUp = async (email: string, password: string, displayName: string) => {
+  const signUp = async (email: string, password: string, displayName: string, inviteCode?: string) => {
+    const { auth, db } = getFirebaseServices();
+    if (!auth || !db) throw new Error('Firebase not initialized');
     try {
+      let role: UserRole = 'member';
+      let inviteId: string | undefined;
+
+      if (inviteCode) {
+        const invite = await validateInviteCode(inviteCode);
+        if (!invite) throw new Error('Invalid or expired invite code');
+        role = invite.role;
+        inviteId = invite.id;
+      }
+
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(result.user, { displayName });
-      
-      // Create user document
+
       const newUser: User = {
         uid: result.user.uid,
         email,
         displayName,
-        role: 'member',
+        role,
         membershipTier: 'member',
         joinedAt: Date.now(),
         status: 'active',
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
-      
+
       await setDoc(doc(db, 'users', result.user.uid), newUser);
+
+      if (inviteId) {
+        await markInviteUsed(inviteId, result.user.uid);
+      }
     } catch (error) {
       console.error('Sign up error:', error);
       throw error;
@@ -133,6 +154,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
+    const { auth } = getFirebaseServices();
+    if (!auth) throw new Error('Firebase not initialized');
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
@@ -142,6 +165,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = async () => {
+    const { auth } = getFirebaseServices();
+    if (!auth) throw new Error('Firebase not initialized');
     try {
       await signOut(auth);
     } catch (error) {
@@ -152,6 +177,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const updateUserProfile = async (updates: Partial<User>) => {
     if (!currentUser) throw new Error('No user logged in');
+    const { db } = getFirebaseServices();
+    if (!db) throw new Error('Firebase not initialized');
     
     try {
       const userRef = doc(db, 'users', currentUser.uid);

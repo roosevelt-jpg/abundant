@@ -6,6 +6,8 @@ import { Footer } from '@/components/footer';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { isWithinFreePeriod } from '@/lib/constants';
+import { isAdminRole } from '@/lib/auth-utils';
 
 export default function Dashboard() {
   const { currentUser, userData, loading } = useAuth();
@@ -22,11 +24,12 @@ export default function Dashboard() {
 
   // If admin, redirect to admin dashboard
   useEffect(() => {
-    if (!loading && currentUser && userData?.role === 'admin') {
-      console.log('[v0] Admin user detected, redirecting to /admin/dashboard');
+    if (!loading && currentUser && isAdminRole(userData?.role)) {
       router.push('/admin/dashboard');
     }
   }, [currentUser, userData, loading, router]);
+
+  const showUpgradeBanner = !loading && userData && !isWithinFreePeriod() && userData.subscriptionStatus !== 'active' && userData.subscriptionStatus !== 'trialing';
 
   // Show timeout message if loading takes too long
   useEffect(() => {
@@ -78,6 +81,18 @@ export default function Dashboard() {
       
       <main className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {showUpgradeBanner && (
+            <div className="mb-8 p-4 bg-accent/10 border border-accent/20 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <p className="font-semibold">Your free access period has ended</p>
+                <p className="text-sm text-muted-foreground">Upgrade to continue enjoying full member benefits.</p>
+              </div>
+              <Link href="/membership" className="px-4 py-2 bg-accent text-accent-foreground rounded-lg text-sm font-semibold whitespace-nowrap">
+                View Plans
+              </Link>
+            </div>
+          )}
+
           <div className="mb-8">
             <h1 className="font-heading text-4xl font-bold mb-2">Welcome, {displayName}!</h1>
             <p className="text-muted-foreground">Member since {joinedDate}</p>

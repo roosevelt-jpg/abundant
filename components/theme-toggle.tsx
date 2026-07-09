@@ -16,15 +16,15 @@ export const ThemeToggle = () => {
     );
   }
 
-  const { theme, setTheme } = context;
+  const { resolvedTheme, setTheme } = context;
 
   return (
     <button
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
       className="p-2 rounded-lg hover:bg-accent/20 transition-colors"
       aria-label="Toggle theme"
     >
-      {theme === 'dark' ? (
+      {resolvedTheme === 'dark' ? (
         <Sun className="w-5 h-5 text-accent" />
       ) : (
         <Moon className="w-5 h-5 text-accent" />

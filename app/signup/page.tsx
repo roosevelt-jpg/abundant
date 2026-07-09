@@ -13,6 +13,7 @@ export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -24,8 +25,8 @@ export default function SignUp() {
     setLoading(true);
 
     try {
-      await signUp(email, password, displayName);
-      router.push('/dashboard');
+      await signUp(email, password, displayName, inviteCode || undefined);
+      router.push(inviteCode ? '/admin/dashboard' : '/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to sign up');
     } finally {
@@ -94,6 +95,17 @@ export default function SignUp() {
                   required
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Admin Invite Code (optional)</label>
+              <input
+                type="text"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent font-mono"
+                placeholder="ABCD1234"
+              />
             </div>
 
             <button

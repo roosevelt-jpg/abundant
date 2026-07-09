@@ -2,49 +2,81 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSettings } from '@/hooks/useSettings';
+import { getPublishedPages } from '@/lib/db-service';
+import { Page, FooterPlacement } from '@/lib/types';
+import { SocialLinks } from './social-links';
+import { useEffect, useState } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
+
+const COLUMN_LABELS: Record<FooterPlacement, string> = {
+  platform: 'Platform',
+  company: 'Company',
+  connect: 'Connect',
+  none: '',
+};
+
+const DEFAULT_LINKS: Record<FooterPlacement, { href: string; label: string }[]> = {
+  platform: [
+    { href: '/membership', label: 'Membership' },
+    { href: '/events', label: 'Events' },
+  ],
+  company: [
+    { href: '/about', label: 'About' },
+    { href: '/contact', label: 'Contact' },
+  ],
+  connect: [],
+  none: [],
+};
 
 export const Footer = () => {
+  const { settings } = useSettings();
+  const { t } = useLanguage();
+  const [cmsPages, setCmsPages] = useState<Page[]>([]);
+
+  useEffect(() => {
+    getPublishedPages().then(setCmsPages).catch(console.error);
+  }, []);
+
+  const getColumnLinks = (column: FooterPlacement) => {
+    const cms = cmsPages
+      .filter((p) => p.footerPlacement === column)
+      .map((p) => ({ href: `/${p.slug}`, label: p.title }));
+    return [...DEFAULT_LINKS[column], ...cms];
+  };
+
   return (
     <footer className="footer-bg border-t border-border mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           <div>
-            <Image 
-              src="/logo-text.png" 
-              alt="Abundant Global Club Logo"
-              width={160}
-              height={60}
-              className="mb-4"
-            />
-            <p className="text-sm text-gray-300">A global network of success</p>
+            <Image src="/logo-text.png" alt={settings?.siteName || 'Abundant Global Club'} width={160} height={60} className="mb-4" />
+            <p className="text-sm text-gray-300">{settings?.description || 'A global network of success'}</p>
           </div>
 
-          <div>
-            <h3 className="font-heading font-bold mb-4 text-[#B8973A]">Platform</h3>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/membership" className="text-gray-300 hover:text-white transition-colors">Membership</Link></li>
-              <li><Link href="/events" className="text-gray-300 hover:text-white transition-colors">Events</Link></li>
-              <li><Link href="/opportunities" className="text-gray-300 hover:text-white transition-colors">Opportunities</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-heading font-bold mb-4 text-[#B8973A]">Company</h3>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/about" className="text-gray-300 hover:text-white transition-colors">About</Link></li>
-              <li><Link href="/contact" className="text-gray-300 hover:text-white transition-colors">Contact</Link></li>
-              <li><Link href="/privacy" className="text-gray-300 hover:text-white transition-colors">Privacy</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-heading font-bold mb-4 text-[#B8973A]">Connect</h3>
-            <p className="text-sm text-gray-400">Follow us on social media</p>
-          </div>
+          {(['platform', 'company', 'connect'] as FooterPlacement[]).map((col) => (
+            <div key={col}>
+              <h3 className="font-heading font-bold mb-4 text-[#B8973A]">{COLUMN_LABELS[col]}</h3>
+              {col === 'connect' ? (
+                settings ? <SocialLinks settings={settings} /> : <p className="text-sm text-gray-400">Follow us on social media</p>
+              ) : (
+                <ul className="space-y-2 text-sm">
+                  {getColumnLinks(col).map((link) => (
+                    <li key={link.href}>
+                      <Link href={link.href} className="text-gray-300 hover:text-white transition-colors">{link.label}</Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
         </div>
 
-        <div className="border-t border-gray-700 pt-8 flex items-center justify-between">
-          <p className="text-sm text-gray-400">© 2026 Abundant Global Club. All rights reserved.</p>
+        <div className="border-t border-gray-700 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-gray-400">{t('footer.copyright', `© ${new Date().getFullYear()} Abundant Global Club. All rights reserved.`)}</p>
+          {settings?.contactEmail && (
+            <a href={`mailto:${settings.contactEmail}`} className="text-sm text-gray-400 hover:text-white">{settings.contactEmail}</a>
+          )}
         </div>
       </div>
     </footer>

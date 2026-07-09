@@ -1,4 +1,8 @@
-import { db } from '@/lib/firebase';
+import { getDb } from '@/lib/firebase';
+
+function db() {
+  return getDb();
+}
 import {
   collection,
   doc,
@@ -15,13 +19,13 @@ import {
 } from 'firebase/firestore';
 import { Event, EventRegistration } from '@/lib/types';
 
-export const eventsRef = collection(db, 'events');
-export const registrationsRef = collection(db, 'eventRegistrations');
+export const eventsRef = () => collection(db(), 'events');
+export const registrationsRef = () => collection(db(), 'eventRegistrations');
 
 // Event CRUD Operations
 export async function getEvent(id: string): Promise<Event | null> {
   try {
-    const docSnap = await getDoc(doc(eventsRef, id));
+    const docSnap = await getDoc(doc(eventsRef(), id));
     return docSnap.exists() ? (docSnap.data() as Event) : null;
   } catch (error) {
     console.error('Error getting event:', error);
@@ -31,7 +35,7 @@ export async function getEvent(id: string): Promise<Event | null> {
 
 export async function getAllEvents(): Promise<Event[]> {
   try {
-    const q = query(eventsRef, orderBy('date', 'asc'));
+    const q = query(eventsRef(), orderBy('date', 'asc'));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => doc.data() as Event);
   } catch (error) {
@@ -44,7 +48,7 @@ export async function getUpcomingEvents(count: number = 10): Promise<Event[]> {
   try {
     const now = Date.now();
     const q = query(
-      eventsRef,
+      eventsRef(),
       where('date', '>=', now),
       where('isPublic', '==', true),
       orderBy('date', 'asc'),
@@ -62,12 +66,12 @@ export async function createEvent(event: Omit<Event, 'id' | 'createdAt' | 'updat
   try {
     const newEvent: Event = {
       ...event,
-      id: doc(eventsRef).id,
+      id: doc(eventsRef()).id,
       registered: 0,
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
-    await setDoc(doc(eventsRef, newEvent.id), newEvent);
+    await setDoc(doc(eventsRef(), newEvent.id), newEvent);
     return newEvent.id;
   } catch (error) {
     console.error('Error creating event:', error);
@@ -77,7 +81,7 @@ export async function createEvent(event: Omit<Event, 'id' | 'createdAt' | 'updat
 
 export async function updateEvent(id: string, updates: Partial<Event>): Promise<void> {
   try {
-    await updateDoc(doc(eventsRef, id), {
+    await updateDoc(doc(eventsRef(), id), {
       ...updates,
       updatedAt: Date.now()
     });
@@ -89,7 +93,7 @@ export async function updateEvent(id: string, updates: Partial<Event>): Promise<
 
 export async function deleteEvent(id: string): Promise<void> {
   try {
-    await deleteDoc(doc(eventsRef, id));
+    await deleteDoc(doc(eventsRef(), id));
   } catch (error) {
     console.error('Error deleting event:', error);
     throw error;
@@ -101,10 +105,10 @@ export async function registerForEvent(registration: Omit<EventRegistration, 'id
   try {
     const newReg: EventRegistration = {
       ...registration,
-      id: doc(registrationsRef).id,
+      id: doc(registrationsRef()).id,
       registeredAt: Date.now()
     };
-    await setDoc(doc(registrationsRef, newReg.id), newReg);
+    await setDoc(doc(registrationsRef(), newReg.id), newReg);
     
     // Update event registration count
     const event = await getEvent(registration.eventId);
@@ -123,7 +127,7 @@ export async function registerForEvent(registration: Omit<EventRegistration, 'id
 
 export async function getEventRegistrations(eventId: string): Promise<EventRegistration[]> {
   try {
-    const q = query(registrationsRef, where('eventId', '==', eventId));
+    const q = query(registrationsRef(), where('eventId', '==', eventId));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => doc.data() as EventRegistration);
   } catch (error) {
@@ -134,7 +138,7 @@ export async function getEventRegistrations(eventId: string): Promise<EventRegis
 
 export async function getUserEventRegistrations(userId: string): Promise<EventRegistration[]> {
   try {
-    const q = query(registrationsRef, where('userId', '==', userId));
+    const q = query(registrationsRef(), where('userId', '==', userId));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => doc.data() as EventRegistration);
   } catch (error) {
@@ -145,7 +149,7 @@ export async function getUserEventRegistrations(userId: string): Promise<EventRe
 
 export async function checkInAttendee(registrationId: string): Promise<void> {
   try {
-    await updateDoc(doc(registrationsRef, registrationId), {
+    await updateDoc(doc(registrationsRef(), registrationId), {
       status: 'attended',
       checkInTime: Date.now()
     });
@@ -157,7 +161,7 @@ export async function checkInAttendee(registrationId: string): Promise<void> {
 
 export async function cancelEventRegistration(registrationId: string, eventId: string): Promise<void> {
   try {
-    await updateDoc(doc(registrationsRef, registrationId), {
+    await updateDoc(doc(registrationsRef(), registrationId), {
       status: 'cancelled'
     });
     

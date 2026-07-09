@@ -5,6 +5,7 @@ import './globals.css'
 import { AuthProvider } from '@/context/AuthContext'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { LanguageProvider } from '@/context/LanguageContext'
+import { ChatbotWidget } from '@/components/chatbot-widget';
 
 const cormorantGaramond = Cormorant_Garamond({ 
   variable: '--font-heading',
@@ -48,6 +49,7 @@ export default function RootLayout({
           <ThemeProvider>
             <LanguageProvider>
               {children}
+              <ChatbotWidget />
               {process.env.NODE_ENV === 'production' && <Analytics />}
             </LanguageProvider>
           </ThemeProvider>

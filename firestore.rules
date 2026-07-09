@@ -7,19 +7,30 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function userRole() {
+      return userDoc().data.role;
+    }
+
     function isAdmin() {
       return isSignedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        && userRole() in ['admin', 'super_admin'];
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && userRole() == 'super_admin';
     }
 
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Site-wide config (hero slider, social links, theme, etc.)
-    // Public read: homepage components load this for unauthenticated visitors.
-    // Write: admin only.
     match /settings/{docId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
@@ -30,6 +41,12 @@ service cloud.firestore {
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
+    }
+
+    match /adminInvites/{inviteId} {
+      allow read: if isSuperAdmin()
+        || (isSignedIn() && resource.data.status == 'pending');
+      allow create, update, delete: if isSuperAdmin();
     }
 
     match /pages/{pageId} {
@@ -51,11 +68,36 @@ service cloud.firestore {
         || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
+    match /membershipPlans/{planId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
     match /testimonials/{testimonialId} {
       allow read: if resource.data.isPublished == true || isAdmin()
         || (isSignedIn() && resource.data.get('authorId', '') == request.auth.uid);
       allow create: if isSignedIn();
       allow update, delete: if isAdmin();
+    }
+
+    match /contactSubmissions/{submissionId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /formSubmissions/{submissionId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /customForms/{formId} {
+      allow read: if isAdmin() || resource.data.active == true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /chatLogs/{logId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
     }
   }
 }

@@ -1,4 +1,8 @@
-import { db } from '@/lib/firebase';
+import { getDb } from '@/lib/firebase';
+
+function db() {
+  return getDb();
+}
 import {
   collection,
   doc,
@@ -13,12 +17,12 @@ import {
 } from 'firebase/firestore';
 import { Testimonial } from '@/lib/types';
 
-export const testimonialsRef = collection(db, 'testimonials');
+export const testimonialsRef = () => collection(db(), 'testimonials');
 
 // Get all testimonials
 export async function getAllTestimonials(): Promise<Testimonial[]> {
   try {
-    const q = query(testimonialsRef, orderBy('createdAt', 'desc'));
+    const q = query(testimonialsRef(), orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => doc.data() as Testimonial);
   } catch (error) {
@@ -31,7 +35,7 @@ export async function getAllTestimonials(): Promise<Testimonial[]> {
 export async function getPublishedTestimonials(): Promise<Testimonial[]> {
   try {
     const q = query(
-      testimonialsRef,
+      testimonialsRef(),
       where('isPublished', '==', true),
       orderBy('createdAt', 'desc')
     );
@@ -47,7 +51,7 @@ export async function getPublishedTestimonials(): Promise<Testimonial[]> {
 export async function getEventTestimonials(eventId: string): Promise<Testimonial[]> {
   try {
     const q = query(
-      testimonialsRef,
+      testimonialsRef(),
       where('eventId', '==', eventId),
       where('isPublished', '==', true),
       orderBy('createdAt', 'desc')
@@ -63,7 +67,7 @@ export async function getEventTestimonials(eventId: string): Promise<Testimonial
 // Get single testimonial
 export async function getTestimonial(id: string): Promise<Testimonial | null> {
   try {
-    const docSnap = await getDoc(doc(testimonialsRef, id));
+    const docSnap = await getDoc(doc(testimonialsRef(), id));
     return docSnap.exists() ? (docSnap.data() as Testimonial) : null;
   } catch (error) {
     console.error('Error getting testimonial:', error);
@@ -76,11 +80,11 @@ export async function createTestimonial(testimonial: Omit<Testimonial, 'id' | 'c
   try {
     const newTestimonial: Testimonial = {
       ...testimonial,
-      id: doc(testimonialsRef).id,
+      id: doc(testimonialsRef()).id,
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
-    await setDoc(doc(testimonialsRef, newTestimonial.id), newTestimonial);
+    await setDoc(doc(testimonialsRef(), newTestimonial.id), newTestimonial);
     return newTestimonial.id;
   } catch (error) {
     console.error('Error creating testimonial:', error);
@@ -91,7 +95,7 @@ export async function createTestimonial(testimonial: Omit<Testimonial, 'id' | 'c
 // Update testimonial
 export async function updateTestimonial(id: string, updates: Partial<Testimonial>): Promise<void> {
   try {
-    await updateDoc(doc(testimonialsRef, id), {
+    await updateDoc(doc(testimonialsRef(), id), {
       ...updates,
       updatedAt: Date.now()
     });
@@ -104,7 +108,7 @@ export async function updateTestimonial(id: string, updates: Partial<Testimonial
 // Delete testimonial
 export async function deleteTestimonial(id: string): Promise<void> {
   try {
-    await deleteDoc(doc(testimonialsRef, id));
+    await deleteDoc(doc(testimonialsRef(), id));
   } catch (error) {
     console.error('Error deleting testimonial:', error);
     throw error;

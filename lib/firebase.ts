@@ -1,43 +1,40 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getAuth, Auth, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyDummyKeyForBuild1234567890',
-  authDomain: 'abundantglobalclub.firebaseapp.com',
-  projectId: 'abundantglobalclub',
-  storageBucket: 'abundantglobalclub.firebasestorage.app',
-  messagingSenderId: '1007344596781',
-  appId: '1:1007344596781:web:7c172ebfa441699b8f05a4',
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-let app: any = null;
-let auth: any = null;
-let db: any = null;
-let storage: any = null;
+let app: FirebaseApp | null = null;
+let auth: Auth | null = null;
+let db: Firestore | null = null;
+let storage: FirebaseStorage | null = null;
 
 function initializeFirebase() {
+  if (typeof window === 'undefined') return;
   if (app) return;
-  
+
   try {
-    app = initializeApp(firebaseConfig);
+    app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
     storage = getStorage(app);
-    
-    // Enable persistence for auth state
-    setPersistence(auth, browserLocalPersistence).catch(error => {
+
+    setPersistence(auth, browserLocalPersistence).catch((error) => {
       console.warn('[Firebase] Persistence setup failed:', error);
     });
   } catch (error) {
-    if (typeof window !== 'undefined') {
-      console.warn('[Firebase] Client-side initialization:', error);
-    }
+    console.warn('[Firebase] Client-side initialization failed:', error);
   }
 }
 
-// Only initialize on client-side
 if (typeof window !== 'undefined') {
   initializeFirebase();
 }
@@ -47,6 +44,12 @@ export function getFirebaseServices() {
     initializeFirebase();
   }
   return { app, auth, db, storage };
+}
+
+export function getDb(): Firestore {
+  if (!db) initializeFirebase();
+  if (!db) throw new Error('Firestore is not available');
+  return db;
 }
 
 export { auth, db, storage };

@@ -1,151 +1,132 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Plus, Edit, Trash2, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Plus, Edit, Trash2, X, Eye } from 'lucide-react';
+import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { getDb } from '@/lib/firebase';
+import { User } from '@/lib/types';
 
 export default function AdminMembers() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [members, setMembers] = useState([
-    {
-      id: '1',
-      name: 'John Doe',
-      email: 'john@example.com',
-      tier: 'Elite',
-      status: 'Approved',
-      joinDate: '2024-01-15'
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      tier: 'Member',
-      status: 'Pending',
-      joinDate: '2024-06-10'
-    },
-    {
-      id: '3',
-      name: 'Mike Johnson',
-      email: 'mike@example.com',
-      tier: 'Inner Circle',
-      status: 'Approved',
-      joinDate: '2023-11-20'
-    }
-  ]);
+  const [members, setMembers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [newMember, setNewMember] = useState({ name: '', email: '', tier: 'Member' });
+  const [selected, setSelected] = useState<User | null>(null);
+  const [newMember, setNewMember] = useState({ email: '', displayName: '', phone: '' });
 
-  const filteredMembers = members.filter(m => 
-    m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    m.email.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    loadMembers();
+  }, []);
+
+  const loadMembers = async () => {
+    try {
+      setLoading(true);
+      const q = query(collection(getDb(), 'users'), where('role', '==', 'member'));
+      const snap = await getDocs(q);
+      setMembers(snap.docs.map((d) => d.data() as User));
+    } catch (err) {
+      console.error('Error loading members:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredMembers = members.filter(
+    (m) =>
+      (m.displayName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      m.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddMember = () => {
-    if (!newMember.name || !newMember.email) {
-      alert('Please fill in all fields');
+  const handleAddMember = async () => {
+    if (!newMember.email || !newMember.displayName) {
+      alert('Please fill in name and email');
       return;
     }
-
-    const member = {
-      id: String(members.length + 1),
-      name: newMember.name,
+    const id = doc(collection(getDb(), 'users')).id;
+    const member: User = {
+      uid: id,
       email: newMember.email,
-      tier: newMember.tier,
-      status: 'Pending',
-      joinDate: new Date().toISOString().split('T')[0]
+      displayName: newMember.displayName,
+      phone: newMember.phone,
+      role: 'member',
+      membershipTier: 'member',
+      joinedAt: Date.now(),
+      status: 'active',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
     };
-
-    setMembers([...members, member]);
-    setNewMember({ name: '', email: '', tier: 'Member' });
+    await setDoc(doc(getDb(), 'users', id), member);
+    setNewMember({ email: '', displayName: '', phone: '' });
     setShowModal(false);
+    await loadMembers();
   };
 
-  const handleDeleteMember = (id: string) => {
-    if (confirm('Are you sure you want to delete this member?')) {
-      setMembers(members.filter(m => m.id !== id));
-    }
+  const handleSuspend = async (member: User) => {
+    const status = member.status === 'suspended' ? 'active' : 'suspended';
+    await updateDoc(doc(getDb(), 'users', member.uid), { status, updatedAt: Date.now() });
+    await loadMembers();
   };
+
+  const handleDelete = async (uid: string) => {
+    if (!confirm('Delete this member record?')) return;
+    await deleteDoc(doc(getDb(), 'users', uid));
+    await loadMembers();
+  };
+
+  if (loading) return <div className="text-center py-12">Loading members...</div>;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="font-heading text-3xl font-bold mb-2">Members</h1>
-          <p className="text-muted-foreground">Manage and review member accounts</p>
+          <p className="text-muted-foreground">Manage member accounts from Firestore</p>
         </div>
-        <button 
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg font-semibold hover:bg-accent/90 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          Add Member
+        <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg font-semibold">
+          <Plus className="w-5 h-5" /> Add Member
         </button>
       </div>
 
-      {/* Add Member Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg border border-border max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-heading font-bold text-lg">Add New Member</h2>
-              <button onClick={() => setShowModal(false)} className="p-1 hover:bg-background rounded">
-                <X className="w-5 h-5" />
-              </button>
+            <div className="flex justify-between mb-4">
+              <h2 className="font-heading font-bold">Add Member</h2>
+              <button onClick={() => setShowModal(false)}><X className="w-5 h-5" /></button>
             </div>
-
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Name</label>
-                <input
-                  type="text"
-                  value={newMember.name}
-                  onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-                  placeholder="Member name"
-                  className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Email</label>
-                <input
-                  type="email"
-                  value={newMember.email}
-                  onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
-                  placeholder="member@example.com"
-                  className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Tier</label>
-                <select
-                  value={newMember.tier}
-                  onChange={(e) => setNewMember({ ...newMember, tier: e.target.value })}
-                  className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                >
-                  <option>Member</option>
-                  <option>Elite</option>
-                  <option>Inner Circle</option>
-                </select>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-background transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAddMember}
-                  className="flex-1 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-semibold"
-                >
-                  Add Member
-                </button>
+              <input placeholder="Name" value={newMember.displayName} onChange={(e) => setNewMember({ ...newMember, displayName: e.target.value })} className="w-full px-4 py-2 bg-input border border-border rounded-lg" />
+              <input placeholder="Email" type="email" value={newMember.email} onChange={(e) => setNewMember({ ...newMember, email: e.target.value })} className="w-full px-4 py-2 bg-input border border-border rounded-lg" />
+              <input placeholder="Phone" value={newMember.phone} onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })} className="w-full px-4 py-2 bg-input border border-border rounded-lg" />
+              <div className="flex gap-3">
+                <button onClick={() => setShowModal(false)} className="flex-1 py-2 border border-border rounded-lg">Cancel</button>
+                <button onClick={handleAddMember} className="flex-1 py-2 bg-accent text-accent-foreground rounded-lg font-semibold">Add</button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Search */}
+      {selected && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg border border-border max-w-md w-full p-6">
+            <div className="flex justify-between mb-4">
+              <h2 className="font-heading font-bold">Member Profile</h2>
+              <button onClick={() => setSelected(null)}><X className="w-5 h-5" /></button>
+            </div>
+            <div className="space-y-2 text-sm">
+              <p><strong>Name:</strong> {selected.displayName}</p>
+              <p><strong>Email:</strong> {selected.email}</p>
+              <p><strong>Phone:</strong> {selected.phone || '—'}</p>
+              <p><strong>Tier:</strong> {selected.membershipTier}</p>
+              <p><strong>Status:</strong> {selected.status}</p>
+              <p><strong>Subscription:</strong> {selected.subscriptionStatus || 'none'}</p>
+              <p><strong>Joined:</strong> {new Date(selected.joinedAt).toLocaleDateString()}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6 relative">
         <Search className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
         <input
@@ -157,56 +138,44 @@ export default function AdminMembers() {
         />
       </div>
 
-      {/* Members Table */}
-      <div className="bg-card rounded-xl border border-border overflow-hidden">
-        <table className="w-full">
+      <div className="bg-card rounded-xl border border-border overflow-x-auto">
+        <table className="w-full min-w-[700px]">
           <thead className="bg-background/50 border-b border-border">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold">Name</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold">Email</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold">Tier</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold">Join Date</th>
-              <th className="px-6 py-3 text-right text-sm font-semibold">Actions</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold">Name</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold">Email</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold">Tier</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold">Status</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold">Joined</th>
+              <th className="px-4 py-3 text-right text-sm font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredMembers.map((member) => (
-              <tr key={member.id} className="border-t border-border hover:bg-background/50 transition-colors">
-                <td className="px-6 py-4 text-sm font-medium">{member.name}</td>
-                <td className="px-6 py-4 text-sm text-muted-foreground">{member.email}</td>
-                <td className="px-6 py-4 text-sm">
-                  <span className="inline-block px-2 py-1 bg-accent/10 text-accent text-xs font-semibold rounded">
-                    {member.tier}
-                  </span>
+              <tr key={member.uid} className="border-t border-border hover:bg-background/50">
+                <td className="px-4 py-3 text-sm font-medium">{member.displayName || '—'}</td>
+                <td className="px-4 py-3 text-sm text-muted-foreground">{member.email}</td>
+                <td className="px-4 py-3 text-sm capitalize">{member.membershipTier}</td>
+                <td className="px-4 py-3">
+                  <span className={`px-2 py-0.5 text-xs font-semibold rounded capitalize ${
+                    member.status === 'active' ? 'bg-green-500/10 text-green-600' :
+                    member.status === 'suspended' ? 'bg-destructive/10 text-destructive' :
+                    'bg-yellow-500/10 text-yellow-600'
+                  }`}>{member.status}</span>
                 </td>
-                <td className="px-6 py-4 text-sm">
-                  <span className={`inline-block px-2 py-1 text-xs font-semibold rounded ${
-                    member.status === 'Approved'
-                      ? 'bg-green-500/10 text-green-600'
-                      : 'bg-yellow-500/10 text-yellow-600'
-                  }`}>
-                    {member.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm text-muted-foreground">{member.joinDate}</td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <button className="p-2 hover:bg-accent/10 rounded-lg transition-colors">
-                      <Edit className="w-4 h-4 text-accent" />
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteMember(member.id)}
-                      className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </button>
+                <td className="px-4 py-3 text-sm text-muted-foreground">{new Date(member.joinedAt).toLocaleDateString()}</td>
+                <td className="px-4 py-3 text-right">
+                  <div className="flex justify-end gap-1">
+                    <button onClick={() => setSelected(member)} className="p-2 hover:bg-accent/10 rounded"><Eye className="w-4 h-4 text-accent" /></button>
+                    <button onClick={() => handleSuspend(member)} className="p-2 hover:bg-accent/10 rounded text-xs">{member.status === 'suspended' ? 'Activate' : 'Suspend'}</button>
+                    <button onClick={() => handleDelete(member.uid)} className="p-2 hover:bg-destructive/10 rounded"><Trash2 className="w-4 h-4 text-destructive" /></button>
                   </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        {filteredMembers.length === 0 && <p className="text-center py-8 text-muted-foreground">No members found</p>}
       </div>
     </div>
   );
