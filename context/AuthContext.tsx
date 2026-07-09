@@ -6,10 +6,8 @@ import { onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWith
 import { getFirebaseServices } from '@/lib/firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { User, UserRole, MemberProfile } from '@/lib/types';
-import { isAdminRole } from '@/lib/auth-utils';
 import { ALL_ADMIN_PERMISSIONS } from '@/lib/permissions';
-
-const PRIMARY_ADMIN_EMAIL = 'admin@abundantglobalclub.com';
+import { PRIMARY_ADMIN_EMAIL } from '@/lib/constants';
 
 interface AuthContextType {
   currentUser: FirebaseUser | null;
@@ -71,8 +69,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (userSnap.exists()) {
             const userData = userSnap.data() as User;
             
-            const isAdminEmail = user.email === PRIMARY_ADMIN_EMAIL;
-            if (isAdminEmail && !isAdminRole(userData.role)) {
+            const isAdminEmail = user.email?.toLowerCase() === PRIMARY_ADMIN_EMAIL.toLowerCase();
+            if (isAdminEmail && userData.role !== 'super_admin') {
               updateDoc(userRef, {
                 role: 'super_admin' as UserRole,
                 permissions: ALL_ADMIN_PERMISSIONS,
@@ -85,7 +83,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUserData(userData);
           } else {
             // Create user document if it doesn't exist
-            const isAdmin = user.email === PRIMARY_ADMIN_EMAIL;
+            const isAdmin = user.email?.toLowerCase() === PRIMARY_ADMIN_EMAIL.toLowerCase();
             const newUser: User = {
               uid: user.uid,
               email: user.email || '',
@@ -107,7 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (error) {
           console.error('[v0] Error fetching user data:', error);
           // Continue even if Firestore fails - set user data with basic info
-          const isAdmin = user.email === PRIMARY_ADMIN_EMAIL;
+          const isAdmin = user.email?.toLowerCase() === PRIMARY_ADMIN_EMAIL.toLowerCase();
           if (isMounted) {
             setUserData({
               uid: user.uid,

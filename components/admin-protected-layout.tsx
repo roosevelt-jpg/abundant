@@ -5,8 +5,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 import { canAccessAdmin, hasPermission } from '@/lib/auth-utils';
 import { getPermissionForPath, ROUTE_PERMISSIONS } from '@/lib/permissions';
-
-const PRIMARY_ADMIN_EMAIL = 'admin@abundantglobalclub.com';
+import { PRIMARY_ADMIN_EMAIL } from '@/lib/constants';
 
 function getFirstAllowedAdminPath(
   user: { role: import('@/lib/types').UserRole; permissions?: import('@/lib/types').AdminPermission[] } | null
@@ -33,7 +32,7 @@ export function AdminProtectedLayout({ children }: { children: React.ReactNode }
     return pathname;
   }, [pathname, tab]);
 
-  const isPrimaryAdmin = currentUser?.email === PRIMARY_ADMIN_EMAIL;
+  const isPrimaryAdmin = currentUser?.email?.toLowerCase() === PRIMARY_ADMIN_EMAIL.toLowerCase();
 
   useEffect(() => {
     if (loading) return;

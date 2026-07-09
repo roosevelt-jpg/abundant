@@ -3,17 +3,10 @@ import { randomUUID } from 'crypto';
 import { getStorage } from 'firebase-admin/storage';
 import { requireAdmin } from '@/lib/api-auth';
 import { getAdminApp } from '@/lib/firebase-admin';
+import { getStorageBucketCandidates, isBucketNotFoundError } from '@/lib/storage-bucket';
 
 const MAX_BYTES = 8 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
-
-function getBucketName(): string {
-  return (
-    process.env.FIREBASE_STORAGE_BUCKET ||
-    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
-    ''
-  );
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,9 +28,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Image must be under 8MB' }, { status: 400 });
     }
 
-    const bucketName = getBucketName();
-    if (!bucketName) {
-      return NextResponse.json({ error: 'Storage bucket is not configured' }, { status: 500 });
+    const bucketCandidates = await getStorageBucketCandidates();
+    if (bucketCandidates.length === 0) {
+      return NextResponse.json(
+        { error: 'Storage bucket is not configured. Set it under Settings → Integrations → Firebase Client SDK.' },
+        { status: 500 }
+      );
     }
 
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
@@ -46,30 +42,47 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const token = randomUUID();
 
-    const bucket = getStorage(getAdminApp()).bucket(bucketName);
-    const fileRef = bucket.file(path);
+    let lastError: Error | null = null;
 
-    await fileRef.save(buffer, {
-      metadata: {
-        contentType: file.type,
-        metadata: { firebaseStorageDownloadTokens: token },
+    for (const bucketName of bucketCandidates) {
+      try {
+        const bucket = getStorage(getAdminApp()).bucket(bucketName);
+        const fileRef = bucket.file(path);
+
+        await fileRef.save(buffer, {
+          metadata: {
+            contentType: file.type,
+            metadata: { firebaseStorageDownloadTokens: token },
+          },
+          resumable: false,
+        });
+
+        const encodedPath = encodeURIComponent(path);
+        const url = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodedPath}?alt=media&token=${token}`;
+
+        return NextResponse.json({ url, bucket: bucketName });
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        if (isBucketNotFoundError(error)) continue;
+        throw error;
+      }
+    }
+
+    console.error('[api/admin/upload] bucket candidates failed:', bucketCandidates, lastError);
+    return NextResponse.json(
+      {
+        error:
+          'Firebase Storage bucket not found. Enable Storage in Firebase Console and verify the Storage Bucket in Settings → Integrations matches your project (e.g. abundantglobalclub.firebasestorage.app).',
       },
-      resumable: false,
-    });
-
-    const encodedPath = encodeURIComponent(path);
-    const url = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodedPath}?alt=media&token=${token}`;
-
-    return NextResponse.json({ url });
+      { status: 500 }
+    );
   } catch (error) {
     console.error('[api/admin/upload]', error);
     const message = error instanceof Error ? error.message : 'Upload failed';
     const status =
       message === 'Unauthorized' || message === 'Forbidden'
         ? 401
-        : message.includes('not configured')
-          ? 500
-          : 500;
+        : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }

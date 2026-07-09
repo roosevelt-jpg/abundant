@@ -31,7 +31,7 @@ type MenuItem = {
 };
 
 export const AdminSidebar = () => {
-  const { userData } = useAuth();
+  const { userData, currentUser } = useAuth();
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -48,13 +48,16 @@ export const AdminSidebar = () => {
     { icon: HelpCircle, label: 'FAQ', href: '/admin/faq', permission: 'faq' },
     { icon: Mail, label: 'Contact Submissions', href: '/admin/contact', permission: 'contact' },
     { icon: Bot, label: 'Chatbot', href: '/admin/chatbot', permission: 'chatbot' },
-    ...(canManageInvites(userData?.role)
-      ? [{ icon: UserPlus, label: 'Invite Admins', href: '/admin/invites', permission: 'invites' as AdminPermission }]
-      : []),
+    { icon: UserPlus, label: 'Invite Admins', href: '/admin/invites', permission: 'invites' },
     { icon: Settings, label: 'Settings', href: '/admin/settings', permission: 'settings' },
   ];
 
-  const menuItems = allMenuItems.filter((item) => hasPermission(userData, item.permission));
+  const menuItems = allMenuItems.filter((item) => {
+    if (item.permission === 'invites') {
+      return canManageInvites(userData?.role, currentUser?.email);
+    }
+    return hasPermission(userData, item.permission);
+  });
 
   return (
     <aside

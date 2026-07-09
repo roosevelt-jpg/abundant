@@ -13,6 +13,9 @@ export function isWithinFreePeriod(now: Date = new Date()): boolean {
 
 export const SETTINGS_DOC_ID = 'main';
 
+/** Primary platform owner — always super admin */
+export const PRIMARY_ADMIN_EMAIL = 'admin@abundantglobalclub.com';
+
 /** Hardcoded footer credit — not editable in admin */
 export const FOOTER_CREDIT_NAME = 'FLYN.AI';
 export const FOOTER_CREDIT_URL = 'https://myflynai.com/';

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin';
 import { UserRole } from '@/lib/types';
-import { isAdminRole } from '@/lib/auth-utils';
+import { isAdminRole, isPrimaryAdmin } from '@/lib/auth-utils';
 
 export interface AuthUser {
   uid: string;
@@ -44,6 +44,6 @@ export async function requireAdmin(req: NextRequest): Promise<AuthUser> {
 
 export async function requireSuperAdmin(req: NextRequest): Promise<AuthUser> {
   const user = await requireAuth(req);
-  if (user.role !== 'super_admin') throw new Error('Forbidden');
+  if (user.role !== 'super_admin' && !isPrimaryAdmin(user.email)) throw new Error('Forbidden');
   return user;
 }

@@ -13,7 +13,7 @@ import { ADMIN_PERMISSION_DEFS } from '@/lib/permissions';
 const ASSIGNABLE_PERMISSIONS = ADMIN_PERMISSION_DEFS.filter((p) => p.id !== 'invites');
 
 export default function AdminInvitesPage() {
-  const { userData } = useAuth();
+  const { userData, currentUser } = useAuth();
   const { authFetch } = useApiAuth();
   const router = useRouter();
   const [invites, setInvites] = useState<AdminInvite[]>([]);
@@ -27,12 +27,12 @@ export default function AdminInvitesPage() {
   const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
-    if (userData && !canManageInvites(userData.role)) {
+    if (userData && !canManageInvites(userData.role, currentUser?.email)) {
       router.push('/admin/dashboard');
       return;
     }
     loadInvites();
-  }, [userData, router]);
+  }, [userData, currentUser?.email, router]);
 
   const loadInvites = async () => {
     try {
@@ -92,7 +92,7 @@ export default function AdminInvitesPage() {
     setTimeout(() => setCopied(null), 2000);
   };
 
-  if (!canManageInvites(userData?.role)) {
+  if (!canManageInvites(userData?.role, currentUser?.email)) {
     return <div className="text-center py-12 text-muted-foreground">Super admin access required</div>;
   }
 
