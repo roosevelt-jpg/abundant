@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSettings } from '@/hooks/useSettings';
-import { getPublishedPages } from '@/lib/db-service';
 import { Page, FooterPlacement } from '@/lib/types';
 import { SocialLinks } from './social-links';
 import { useEffect, useState } from 'react';
@@ -35,7 +34,10 @@ export const Footer = () => {
   const [cmsPages, setCmsPages] = useState<Page[]>([]);
 
   useEffect(() => {
-    getPublishedPages().then(setCmsPages).catch(console.error);
+    fetch('/api/public/pages')
+      .then((r) => r.json())
+      .then(setCmsPages)
+      .catch(() => setCmsPages([]));
   }, []);
 
   const getColumnLinks = (column: FooterPlacement) => {

@@ -81,8 +81,11 @@ export default function AdminSettingsEditor() {
     const slide: HeroSlide = {
       id: `slide-${Date.now()}`,
       image: '',
-      title: 'New Slide',
-      subtitle: '',
+      badge: 'Welcome to Abundant',
+      title: 'New Slide Title',
+      description: 'Craft the text that appears on the left when this slide is active.',
+      cta: { text: 'Join Now', link: '/signup' },
+      secondaryCta: { text: 'Learn More', link: '/about' },
       order: sliderConfig.slides.length,
     };
     updateSliderConfig({ slides: [...sliderConfig.slides, slide] });
@@ -258,6 +261,10 @@ export default function AdminSettingsEditor() {
 
             {activeTab === 'hero' && (
               <div className="space-y-6">
+                <div className="p-4 bg-accent/5 border border-accent/20 rounded-lg text-sm text-muted-foreground">
+                  Each slide pairs <strong>left-side content</strong> (badge, title, description, buttons) with a <strong>right-side image</strong>. When the slider advances, both update together.
+                </div>
+
                 <div className="p-6 bg-card rounded-xl border border-border space-y-4">
                   <h2 className="font-heading font-bold text-lg">Slider Behavior</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -308,7 +315,7 @@ export default function AdminSettingsEditor() {
                 </div>
 
                 {sliderConfig.slides.map((slide, index) => (
-                  <div key={slide.id} className="p-6 bg-card rounded-xl border border-border space-y-3">
+                  <div key={slide.id} className="p-6 bg-card rounded-xl border border-border space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <GripVertical className="w-4 h-4 text-muted-foreground" />
@@ -322,12 +329,29 @@ export default function AdminSettingsEditor() {
                         </button>
                       </div>
                     </div>
-                    <ImageUpload value={slide.image} onChange={(v) => updateSlide(slide.id, { image: v })} folder="hero" label="Slide Image" />
-                    <Field label="Title" value={slide.title} onChange={(v) => updateSlide(slide.id, { title: v })} />
-                    <Field label="Subtitle" value={slide.subtitle || ''} onChange={(v) => updateSlide(slide.id, { subtitle: v })} />
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field label="CTA Text" value={slide.cta?.text || ''} onChange={(v) => updateSlide(slide.id, { cta: { text: v, link: slide.cta?.link || '/' } })} />
-                      <Field label="CTA Link" value={slide.cta?.link || ''} onChange={(v) => updateSlide(slide.id, { cta: { text: slide.cta?.text || 'Learn More', link: v } })} />
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-accent">Left — Text Content</p>
+                        <Field label="Badge" value={slide.badge || ''} onChange={(v) => updateSlide(slide.id, { badge: v })} />
+                        <Field label="Title" value={slide.title} onChange={(v) => updateSlide(slide.id, { title: v })} />
+                        <Field label="Description" value={slide.description || slide.subtitle || ''} onChange={(v) => updateSlide(slide.id, { description: v })} multiline />
+                        <div className="grid grid-cols-2 gap-3">
+                          <Field label="Primary CTA Text" value={slide.cta?.text || ''} onChange={(v) => updateSlide(slide.id, { cta: { text: v, link: slide.cta?.link || '/' } })} />
+                          <Field label="Primary CTA Link" value={slide.cta?.link || ''} onChange={(v) => updateSlide(slide.id, { cta: { text: slide.cta?.text || 'Join Now', link: v } })} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <Field label="Secondary CTA Text" value={slide.secondaryCta?.text || ''} onChange={(v) => updateSlide(slide.id, { secondaryCta: { text: v, link: slide.secondaryCta?.link || '/' } })} />
+                          <Field label="Secondary CTA Link" value={slide.secondaryCta?.link || ''} onChange={(v) => updateSlide(slide.id, { secondaryCta: { text: slide.secondaryCta?.text || 'Learn More', link: v } })} />
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-accent">Right — Image</p>
+                        <ImageUpload value={slide.image} onChange={(v) => updateSlide(slide.id, { image: v })} folder="hero" label="Slide Image" />
+                        {slide.image && (
+                          <img src={slide.image} alt="Preview" className="w-full aspect-square object-cover rounded-lg border border-border" />
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

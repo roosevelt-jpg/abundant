@@ -6,7 +6,6 @@ import { useLanguage } from '@/context/LanguageContext';
 import { ThemeToggle } from './theme-toggle';
 import { LanguageSwitcher } from './language-switcher';
 import { useSettings } from '@/hooks/useSettings';
-import { getPublishedPages } from '@/lib/db-service';
 import { Page } from '@/lib/types';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -29,7 +28,10 @@ export const Header = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   useEffect(() => {
-    getPublishedPages().then(setCmsPages).catch(console.error);
+    fetch('/api/public/pages')
+      .then((r) => r.json())
+      .then(setCmsPages)
+      .catch(() => setCmsPages([]));
   }, []);
 
   const topLevelCms = cmsPages.filter((p) => p.navPlacement === 'top-level');

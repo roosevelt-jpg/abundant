@@ -2,19 +2,24 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Settings } from '@/lib/types';
-import {
-  getDefaultSettings,
-  initializeSettings,
-  subscribeToSettings,
-} from '@/lib/db-service';
+import { getDefaultSettings } from '@/lib/db-service';
 import { useAuth } from '@/context/AuthContext';
 import { canAccessAdmin } from '@/lib/auth-utils';
+import { getDb } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { SETTINGS_DOC_ID } from '@/lib/constants';
 
 interface UseSettingsResult {
   settings: Settings | null;
   loading: boolean;
   error: string | null;
   retry: () => void;
+}
+
+async function fetchSettingsFromApi(): Promise<Settings> {
+  const res = await fetch('/api/public/settings');
+  if (!res.ok) return getDefaultSettings();
+  return res.json();
 }
 
 export function useSettings(): UseSettingsResult {
@@ -39,42 +44,37 @@ export function useSettings(): UseSettingsResult {
         setLoading(true);
         setError(null);
 
-        // Admins can auto-create missing settings doc
-        if (canAccessAdmin(userData)) {
-          await initializeSettings(userData?.uid || 'admin');
+        // Load via API first (bypasses client Firestore rules)
+        const apiSettings = await fetchSettingsFromApi();
+        if (!cancelled) {
+          setSettings(apiSettings);
+          setLoading(false);
         }
 
-        let received = false;
-
-        unsub = subscribeToSettings(
-          (data) => {
-            if (!cancelled) {
-              received = true;
-              setSettings(data);
-              setLoading(false);
-              setError(null);
-            }
-          },
-          (err) => {
-            if (!cancelled) {
-              console.error('[useSettings] Firestore error:', err);
-              setError('Failed to load settings');
-              setLoading(false);
-            }
+        // Admins: also subscribe to Firestore for live updates
+        if (canAccessAdmin(userData)) {
+          try {
+            const { initializeSettings } = await import('@/lib/db-service');
+            await initializeSettings(userData?.uid || 'admin');
+            const db = getDb();
+            unsub = onSnapshot(
+              doc(db, 'settings', SETTINGS_DOC_ID),
+              (snap) => {
+                if (!cancelled && snap.exists()) {
+                  setSettings(snap.data() as Settings);
+                }
+              },
+              () => {
+                // Silent — API data already loaded
+              }
+            );
+          } catch {
+            // Admin live sync optional
           }
-        );
-
-        // Public visitors: fall back to defaults if doc missing
-        setTimeout(() => {
-          if (!cancelled && !received) {
-            setSettings(getDefaultSettings());
-            setLoading(false);
-          }
-        }, 1500);
-      } catch (err) {
+        }
+      } catch {
         if (!cancelled) {
-          console.error('[useSettings] Setup error:', err);
-          setError('Failed to load settings');
+          setSettings(getDefaultSettings());
           setLoading(false);
         }
       }

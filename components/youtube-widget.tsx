@@ -31,11 +31,9 @@ export const YouTubeWidget = ({ settings: initialSettings }: YouTubeWidgetProps)
     // Load settings on client side if not provided
     const loadSettings = async () => {
       try {
-        const { getSettings } = await import('@/lib/db-service');
-        const data = await getSettings();
-        setSettings(data);
-      } catch (error) {
-        console.error('[v0] Error loading settings:', error);
+        const res = await fetch('/api/public/settings');
+        if (res.ok) setSettings(await res.json());
+      } catch {
         setLoading(false);
       }
     };
@@ -48,38 +46,18 @@ export const YouTubeWidget = ({ settings: initialSettings }: YouTubeWidgetProps)
         setLoading(true);
         setError(null);
 
-        const apiKey = settings?.integrations?.youtube?.apiKey;
-        const channelId = settings?.integrations?.youtube?.channelId;
-
-        if (!apiKey || !channelId) {
-          setError('YouTube configuration not set');
+        if (!settings?.youtubeSection?.enabled) {
           setLoading(false);
           return;
         }
 
-        const response = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=3&order=date&type=video&key=${apiKey}`
-        );
+        const response = await fetch('/api/public/youtube');
+        if (!response.ok) throw new Error('Failed to fetch YouTube videos');
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch YouTube videos');
-        }
-
-        const data = await response.json();
-
-        const formattedVideos: YouTubeVideo[] = data.items.map(
-          (item: any) => ({
-            id: item.id.videoId,
-            title: item.snippet.title,
-            thumbnail: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url,
-            channelTitle: item.snippet.channelTitle,
-            publishedAt: item.snippet.publishedAt,
-          })
-        );
-
+        const formattedVideos = await response.json();
         setVideos(formattedVideos);
       } catch (err) {
-        console.error('[v0] YouTube fetch error:', err);
+        console.error('YouTube fetch error:', err);
         setError('Failed to load YouTube videos');
       } finally {
         setLoading(false);
@@ -89,7 +67,7 @@ export const YouTubeWidget = ({ settings: initialSettings }: YouTubeWidgetProps)
     if (settings?.youtubeSection?.enabled) {
       fetchYouTubeVideos();
     }
-  }, [settings?.integrations?.youtube, settings?.youtubeSection?.enabled]);
+  }, [settings?.youtubeSection?.enabled]);
 
   if (!settings?.youtubeSection?.enabled) {
     return (

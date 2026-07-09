@@ -7,7 +7,6 @@ import { YouTubeWidget } from '@/components/youtube-widget';
 import Link from 'next/link';
 import { ArrowRight, Users, Calendar, Zap, Globe } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { getUpcomingEvents } from '@/lib/events-service';
 import { Event } from '@/lib/types';
 import { useSettings } from '@/hooks/useSettings';
 
@@ -18,7 +17,10 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true);
-    getUpcomingEvents(3).then(setUpcomingEvents).catch(console.error);
+    fetch('/api/public/events?limit=3')
+      .then((r) => r.json())
+      .then(setUpcomingEvents)
+      .catch(() => setUpcomingEvents([]));
   }, []);
 
   if (!mounted) {
@@ -30,45 +32,13 @@ export default function Home() {
       <Header />
 
       <main className="flex-1">
-        <HeroSlider />
-
-        <section className="relative overflow-hidden py-20 md:py-32 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div>
-                <span className="inline-block px-4 py-2 bg-accent/10 text-accent rounded-full text-sm font-medium mb-4">
-                  Welcome to Abundant
-                </span>
-                <h1 className="font-heading text-5xl md:text-6xl font-bold mb-6 text-foreground leading-tight">
-                  {settings?.siteName || 'A Global Network of Success'}
-                </h1>
-                <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                  {settings?.description || 'Join an exclusive community of high-achievers, entrepreneurs, and visionaries committed to abundant living and collective success.'}
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Link href="/signup" className="btn-gradient inline-flex items-center justify-center gap-2">
-                    Join Now <ArrowRight className="w-5 h-5" />
-                  </Link>
-                  <Link href="/about" className="inline-flex items-center justify-center px-6 py-3 border border-border hover:bg-card transition-colors rounded-lg font-semibold">
-                    Learn More
-                  </Link>
-                </div>
-              </div>
-              <div className="hidden lg:block">
-                <div className="bg-gradient-to-br from-accent/20 to-accent/5 rounded-2xl p-12 aspect-square flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-6xl font-bold text-accent opacity-50 mb-4">∞</div>
-                    <p className="text-muted-foreground">Unlimited Possibilities</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <HeroSlider
+          fallbackSiteName={settings?.siteName}
+          fallbackDescription={settings?.description}
+        />
 
         <YouTubeWidget settings={settings} />
 
-        {/* Upcoming Events */}
         <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-12">

@@ -251,9 +251,12 @@ export interface ContactSubmission {
 export interface HeroSlide {
   id: string;
   image: string;
+  badge?: string;
   title: string;
   subtitle?: string;
+  description?: string;
   cta?: { text: string; link: string };
+  secondaryCta?: { text: string; link: string };
   order: number;
 }
 
