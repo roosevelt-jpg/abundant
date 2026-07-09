@@ -360,11 +360,46 @@ export interface HeroSliderConfig {
 }
 
 // Chatbot
+export interface ChatbotWhatsAppGroup {
+  id: string;
+  name: string;
+  link: string;
+  description?: string;
+}
+
+export interface ChatbotResource {
+  id: string;
+  title: string;
+  content: string;
+  order: number;
+}
+
 export interface ChatbotConfig {
   enabled: boolean;
+  assistantName?: string;
+  greetingMessage: string;
   systemPrompt: string;
   persona: string;
   knowledgeSnippets: { id: string; question: string; answer: string }[];
+  whatsappGroups: ChatbotWhatsAppGroup[];
+  resources: ChatbotResource[];
+  sharePhone?: string;
+  shareEmail?: string;
+  shareAddress?: string;
+  collectLeadInfo: boolean;
+  leadPromptMessage?: string;
+  updatedAt: number;
+}
+
+export interface ChatLead {
+  id: string;
+  sessionId: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  source: 'chatbot';
+  createdAt: number;
   updatedAt: number;
 }
 
@@ -374,6 +409,39 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+}
+
+// Homepage content
+export type HomeFeatureIcon = 'globe' | 'calendar' | 'users' | 'zap' | 'star' | 'heart' | 'shield' | 'target';
+
+export interface HomeFeatureCard {
+  id: string;
+  icon: HomeFeatureIcon;
+  title: string;
+  description: string;
+  order: number;
+}
+
+export interface HomePageContent {
+  eventsSection: {
+    title: string;
+    subtitle: string;
+    linkText: string;
+    emptyMessage: string;
+  };
+  featuresSection: {
+    title: string;
+    subtitle: string;
+    cards: HomeFeatureCard[];
+  };
+  ctaSection: {
+    enabled: boolean;
+    title: string;
+    subtitle: string;
+    buttonText: string;
+    buttonLink: string;
+  };
+  updatedAt: number;
 }
 
 // Settings type
@@ -458,6 +526,7 @@ export interface Settings {
   };
   chatbot?: ChatbotConfig;
   aboutContent?: AboutPageContent;
+  homePage?: HomePageContent;
   branding?: BrandingConfig;
   updatedAt: number;
   updatedBy: string;

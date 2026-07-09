@@ -1,96 +1,218 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { MessageCircle, X, Send } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
+import { usePathname } from 'next/navigation';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
 
+const DEFAULT_GREETING =
+  "Hello! Welcome to Abundant Global Club. I'm here to help you learn about our community, events, and membership.";
+
 export function ChatbotWidget() {
   const { settings } = useSettings();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [leadComplete, setLeadComplete] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState('');
+  const [leadForm, setLeadForm] = useState({ name: '', email: '', phone: '', address: '' });
+  const [leadSaving, setLeadSaving] = useState(false);
+  const [leadError, setLeadError] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const chatbot = settings?.chatbot;
+  const assistantName = chatbot?.assistantName || settings?.siteName || 'Abundant Assistant';
+  const greeting = chatbot?.greetingMessage || DEFAULT_GREETING;
+  const collectLead = chatbot?.collectLeadInfo !== false;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, open, leadComplete]);
 
-  if (!settings?.chatbot?.enabled) return null;
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const sid = sessionStorage.getItem('chatSessionId');
+    const leadDone = sessionStorage.getItem('chatLeadComplete') === 'true';
+    if (sid) setSessionId(sid);
+    if (leadDone) setLeadComplete(true);
+  }, []);
+
+  const startChatSession = useCallback(() => {
+    const sid = sessionId || `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    setSessionId(sid);
+    sessionStorage.setItem('chatSessionId', sid);
+    if (messages.length === 0) {
+      setMessages([{ role: 'assistant', content: greeting }]);
+    }
+  }, [sessionId, greeting, messages.length]);
+
+  if (!chatbot?.enabled) return null;
+  if (pathname?.startsWith('/admin')) return null;
+
+  const submitLead = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLeadError('');
+    if (!leadForm.email.trim() || !leadForm.phone.trim() || !leadForm.address.trim()) {
+      setLeadError('Please provide your email, phone, and address.');
+      return;
+    }
+    setLeadSaving(true);
+    const sid = sessionId || `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    setSessionId(sid);
+    sessionStorage.setItem('chatSessionId', sid);
+    try {
+      const res = await fetch('/api/chat/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: sid, ...leadForm }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to save');
+      }
+      setLeadComplete(true);
+      sessionStorage.setItem('chatLeadComplete', 'true');
+      setMessages([{ role: 'assistant', content: greeting }]);
+    } catch (err) {
+      setLeadError(err instanceof Error ? err.message : 'Could not save your details');
+    } finally {
+      setLeadSaving(false);
+    }
+  };
 
   const send = async () => {
     if (!input.trim() || loading) return;
     const userMsg = input.trim();
     setInput('');
-    setMessages((prev) => [...prev, { role: 'user', content: userMsg }]);
+    const nextMessages = [...messages, { role: 'user' as const, content: userMsg }];
+    setMessages(nextMessages);
     setLoading(true);
 
     try {
+      const history = nextMessages.slice(0, -1).map((m) => ({ role: m.role, content: m.content }));
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg, sessionId }),
+        body: JSON.stringify({ message: userMsg, sessionId, history }),
       });
       const data = await res.json();
-      if (data.sessionId) setSessionId(data.sessionId);
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.reply || data.error || 'Error' }]);
+      if (data.sessionId) {
+        setSessionId(data.sessionId);
+        sessionStorage.setItem('chatSessionId', data.sessionId);
+      }
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.reply || data.error || 'Sorry, something went wrong.' }]);
     } catch {
-      setMessages((prev) => [...prev, { role: 'assistant', content: 'Sorry, something went wrong.' }]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' }]);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleOpen = () => {
+    setOpen(true);
+    if (!collectLead || leadComplete) startChatSession();
+  };
+
+  const inputCls = 'w-full px-3 py-1.5 text-sm bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent';
+
   return (
     <>
       {open && (
-        <div className="fixed bottom-24 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-96 max-h-[70vh] bg-card border border-border rounded-xl shadow-2xl flex flex-col">
-          <div className="flex items-center justify-between p-4 border-b border-border">
-            <h3 className="font-heading font-bold">Abundant Assistant</h3>
-            <button onClick={() => setOpen(false)} className="p-1 hover:bg-accent/10 rounded">
+        <div className="fixed bottom-20 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-[380px] max-h-[min(520px,75vh)] bg-card border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-accent/5">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+                <MessageCircle className="w-4 h-4 text-accent" />
+              </div>
+              <h3 className="font-heading font-bold text-sm truncate">{assistantName}</h3>
+            </div>
+            <button onClick={() => setOpen(false)} className="p-1 hover:bg-accent/10 rounded flex-shrink-0" aria-label="Close chat">
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[200px]">
-            {messages.length === 0 && (
-              <p className="text-sm text-muted-foreground">Hi! Ask me anything about Abundant Global Club.</p>
-            )}
-            {messages.map((m, i) => (
-              <div key={i} className={`text-sm p-3 rounded-lg max-w-[85%] ${
-                m.role === 'user' ? 'bg-accent text-accent-foreground ml-auto' : 'bg-background border border-border'
-              }`}>
-                {m.content}
+
+          {collectLead && !leadComplete ? (
+            <div className="flex-1 overflow-y-auto p-4">
+              <p className="text-sm text-muted-foreground mb-4">
+                {chatbot.leadPromptMessage ||
+                  "Welcome! Before we chat, please share your contact details so our team can follow up with you."}
+              </p>
+              {leadError && <p className="text-xs text-destructive mb-3">{leadError}</p>}
+              <form onSubmit={submitLead} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium mb-1">Name (optional)</label>
+                  <input value={leadForm.name} onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })} className={inputCls} placeholder="Your name" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1">Email</label>
+                  <input type="email" required value={leadForm.email} onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })} className={inputCls} placeholder="you@example.com" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1">Phone</label>
+                  <input type="tel" required value={leadForm.phone} onChange={(e) => setLeadForm({ ...leadForm, phone: e.target.value })} className={inputCls} placeholder="+1 234 567 8900" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1">Address</label>
+                  <input required value={leadForm.address} onChange={(e) => setLeadForm({ ...leadForm, address: e.target.value })} className={inputCls} placeholder="Street, City, Country" />
+                </div>
+                <button type="submit" disabled={leadSaving} className="w-full py-2 text-sm bg-accent text-accent-foreground rounded-lg font-semibold disabled:opacity-50">
+                  {leadSaving ? 'Saving...' : 'Start Chat'}
+                </button>
+              </form>
+            </div>
+          ) : (
+            <>
+              <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-[180px]">
+                {messages.map((m, i) => (
+                  <div
+                    key={i}
+                    className={`text-sm p-2.5 rounded-lg max-w-[90%] whitespace-pre-wrap ${
+                      m.role === 'user'
+                        ? 'bg-accent text-accent-foreground ml-auto'
+                        : 'bg-background border border-border'
+                    }`}
+                  >
+                    {m.content}
+                  </div>
+                ))}
+                {loading && (
+                  <div className="text-xs text-muted-foreground flex items-center gap-2">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                    Typing...
+                  </div>
+                )}
+                <div ref={bottomRef} />
               </div>
-            ))}
-            {loading && <p className="text-xs text-muted-foreground">Thinking...</p>}
-            <div ref={bottomRef} />
-          </div>
-          <div className="p-3 border-t border-border flex gap-2">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && send()}
-              placeholder="Type a message..."
-              className="flex-1 px-3 py-2 bg-input border border-border rounded-lg text-sm"
-            />
-            <button onClick={send} disabled={loading} className="p-2 bg-accent text-accent-foreground rounded-lg disabled:opacity-50">
-              <Send className="w-4 h-4" />
-            </button>
-          </div>
+              <div className="p-2.5 border-t border-border flex gap-2">
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
+                  placeholder="Ask about events, membership..."
+                  className="flex-1 px-3 py-2 bg-input border border-border rounded-lg text-sm"
+                />
+                <button onClick={send} disabled={loading || !input.trim()} className="p-2 bg-accent text-accent-foreground rounded-lg disabled:opacity-50 flex-shrink-0">
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
+
       <button
-        onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-4 sm:right-6 z-50 bg-accent text-accent-foreground rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
-        aria-label="Open chat"
+        onClick={() => (open ? setOpen(false) : handleOpen())}
+        className="fixed bottom-5 right-4 sm:right-6 z-50 bg-accent text-accent-foreground rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:scale-105 transition-transform ring-2 ring-accent/30"
+        aria-label={open ? 'Close chat' : 'Open chat assistant'}
       >
-        <MessageCircle className="w-6 h-6" />
+        {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
       </button>
     </>
   );

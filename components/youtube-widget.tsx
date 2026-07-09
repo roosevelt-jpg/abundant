@@ -85,41 +85,41 @@ export const YouTubeWidget = ({ settings: initialSettings }: YouTubeWidgetProps)
   const gridClass = getGridCols(videoCount);
 
   return (
-    <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="font-heading text-3xl md:text-4xl font-bold mb-4">
+    <section className="py-8 md:py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-6">
+          <h2 className="font-heading text-2xl md:text-3xl font-bold mb-2">
             {settings.youtubeSection.title || 'Featured Videos'}
           </h2>
           {settings.youtubeSection.description && (
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-sm text-muted-foreground max-w-xl mx-auto">
               {settings.youtubeSection.description}
             </p>
           )}
         </div>
 
         {loading && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading videos...</p>
+          <div className="text-center py-6">
+            <p className="text-sm text-muted-foreground">Loading videos...</p>
           </div>
         )}
 
         {error && (
-          <div className="text-center py-12">
-            <div className="inline-block px-6 py-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-700">{error}</p>
+          <div className="text-center py-6">
+            <div className="inline-block px-4 py-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700">{error}</p>
             </div>
           </div>
         )}
 
         {!loading && !error && videos.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No videos found</p>
+          <div className="text-center py-6">
+            <p className="text-sm text-muted-foreground">No videos found</p>
           </div>
         )}
 
         {!loading && !error && videos.length > 0 && (
-          <div className={`grid ${gridClass} gap-6`}>
+          <div className={`grid ${gridClass} gap-4`}>
             {videos.map((video) => (
               <a
                 key={video.id}
@@ -138,8 +138,8 @@ export const YouTubeWidget = ({ settings: initialSettings }: YouTubeWidgetProps)
                     <Play className="w-16 h-16 text-white fill-white opacity-80 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-semibold line-clamp-2 mb-2 group-hover:text-accent transition-colors">
+                <div className="p-3">
+                  <h3 className="text-sm font-semibold line-clamp-2 mb-1 group-hover:text-accent transition-colors">
                     {video.title}
                   </h3>
                   <p className="text-sm text-muted-foreground">{video.channelTitle}</p>

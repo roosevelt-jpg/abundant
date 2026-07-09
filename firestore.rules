@@ -119,5 +119,10 @@ service cloud.firestore {
       allow read: if resource.data.isPublished == true || isAdmin();
       allow create, update, delete: if isAdmin();
     }
+
+    match /chatLeads/{leadId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
   }
 }

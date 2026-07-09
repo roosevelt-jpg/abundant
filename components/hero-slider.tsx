@@ -81,14 +81,13 @@ export const HeroSlider = ({ fallbackSiteName, fallbackDescription }: HeroSlider
 
   return (
     <section
-      className="relative overflow-hidden py-16 md:py-24 lg:py-28 px-4 sm:px-6 lg:px-8"
+      className="relative overflow-hidden py-8 md:py-12 lg:py-14 px-4 sm:px-6 lg:px-8"
       onMouseEnter={() => config.pauseOnHover && setPaused(true)}
       onMouseLeave={() => config.pauseOnHover && setPaused(false)}
     >
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
-          {/* Left: synced text content */}
-          <div className="relative min-h-[280px] md:min-h-[320px]">
+      <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center">
+          <div className="relative min-h-[220px] md:min-h-[260px]">
             {displaySlides.map((s, idx) => (
               <div
                 key={s.id}
@@ -99,31 +98,31 @@ export const HeroSlider = ({ fallbackSiteName, fallbackDescription }: HeroSlider
                 }`}
               >
                 {s.badge && (
-                  <span className="inline-block px-4 py-2 bg-accent/10 text-accent rounded-full text-sm font-medium mb-4">
+                  <span className="inline-block px-3 py-1 bg-accent/10 text-accent rounded-full text-xs font-medium mb-3">
                     {s.badge}
                   </span>
                 )}
-                <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl font-bold mb-4 text-foreground leading-tight">
+                <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-3 text-foreground leading-tight">
                   {s.title}
                 </h1>
                 {(s.description || s.subtitle) && (
-                  <p className="text-lg text-muted-foreground mb-8 leading-relaxed max-w-xl">
+                  <p className="text-base text-muted-foreground mb-5 leading-relaxed max-w-xl">
                     {s.description || s.subtitle}
                   </p>
                 )}
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col sm:flex-row gap-3">
                   {s.cta && (
                     <Link
                       href={s.cta.link}
-                      className="btn-gradient inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold"
+                      className="btn-gradient inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm"
                     >
-                      {s.cta.text} <ArrowRight className="w-5 h-5" />
+                      {s.cta.text} <ArrowRight className="w-4 h-4" />
                     </Link>
                   )}
                   {s.secondaryCta && (
                     <Link
                       href={s.secondaryCta.link}
-                      className="inline-flex items-center justify-center px-6 py-3 border border-border hover:bg-card transition-colors rounded-lg font-semibold"
+                      className="inline-flex items-center justify-center px-5 py-2.5 border border-border hover:bg-card transition-colors rounded-lg font-semibold text-sm"
                     >
                       {s.secondaryCta.text}
                     </Link>
@@ -134,7 +133,7 @@ export const HeroSlider = ({ fallbackSiteName, fallbackDescription }: HeroSlider
           </div>
 
           {/* Right: synced image */}
-          <div className="relative aspect-square max-h-[480px] w-full mx-auto lg:mx-0">
+          <div className="relative aspect-square max-h-[360px] md:max-h-[400px] w-full mx-auto lg:mx-0">
             {displaySlides.map((s, idx) => (
               <div
                 key={`img-${s.id}`}
@@ -189,7 +188,7 @@ export const HeroSlider = ({ fallbackSiteName, fallbackDescription }: HeroSlider
         </div>
 
         {showControls && (
-          <div className="flex justify-center gap-2 mt-8">
+          <div className="flex justify-center gap-2 mt-5">
             {displaySlides.map((_, idx) => (
               <button
                 key={idx}

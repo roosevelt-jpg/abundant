@@ -5,9 +5,6 @@ import { Settings } from '@/lib/types';
 import { getDefaultSettings } from '@/lib/db-service';
 import { useAuth } from '@/context/AuthContext';
 import { canAccessAdmin } from '@/lib/auth-utils';
-import { getDb } from '@/lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { SETTINGS_DOC_ID } from '@/lib/constants';
 
 interface UseSettingsResult {
   settings: Settings | null;
@@ -16,14 +13,25 @@ interface UseSettingsResult {
   retry: () => void;
 }
 
-async function fetchSettingsFromApi(): Promise<Settings> {
+async function fetchPublicSettings(): Promise<Settings> {
   const res = await fetch('/api/public/settings');
   if (!res.ok) return getDefaultSettings();
   return res.json();
 }
 
+async function fetchAdminSettings(token: string): Promise<Settings> {
+  const res = await fetch('/api/admin/settings', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed to load admin settings');
+  }
+  return res.json();
+}
+
 export function useSettings(): UseSettingsResult {
-  const { userData } = useAuth();
+  const { userData, currentUser } = useAuth();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,57 +44,47 @@ export function useSettings(): UseSettingsResult {
   }, []);
 
   useEffect(() => {
-    let unsub: (() => void) | undefined;
     let cancelled = false;
 
-    async function setup() {
+    async function load() {
       try {
         setLoading(true);
         setError(null);
 
-        // Load via API first (bypasses client Firestore rules)
-        const apiSettings = await fetchSettingsFromApi();
-        if (!cancelled) {
-          setSettings(apiSettings);
-          setLoading(false);
+        const isAdmin = canAccessAdmin(userData);
+
+        if (isAdmin) {
+          if (!currentUser) return;
+          const token = await currentUser.getIdToken();
+          const adminSettings = await fetchAdminSettings(token);
+          if (!cancelled) {
+            setSettings(adminSettings);
+            setLoading(false);
+          }
+          return;
         }
 
-        // Admins: also subscribe to Firestore for live updates
-        if (canAccessAdmin(userData)) {
-          try {
-            const { initializeSettings } = await import('@/lib/db-service');
-            await initializeSettings(userData?.uid || 'admin');
-            const db = getDb();
-            unsub = onSnapshot(
-              doc(db, 'settings', SETTINGS_DOC_ID),
-              (snap) => {
-                if (!cancelled && snap.exists()) {
-                  setSettings(snap.data() as Settings);
-                }
-              },
-              () => {
-                // Silent — API data already loaded
-              }
-            );
-          } catch {
-            // Admin live sync optional
-          }
-        }
-      } catch {
+        const publicSettings = await fetchPublicSettings();
         if (!cancelled) {
+          setSettings(publicSettings);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error('[useSettings]', err);
+          setError(err instanceof Error ? err.message : 'Failed to load settings');
           setSettings(getDefaultSettings());
           setLoading(false);
         }
       }
     }
 
-    setup();
+    load();
 
     return () => {
       cancelled = true;
-      unsub?.();
     };
-  }, [userData, retryCount]);
+  }, [userData, currentUser, retryCount]);
 
   return { settings, loading, error, retry };
 }

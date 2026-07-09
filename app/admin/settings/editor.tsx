@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react';
 import { Save, Plus, Trash2, GripVertical } from 'lucide-react';
 import { ImageUpload } from '@/components/image-upload';
 import { useSettings } from '@/hooks/useSettings';
-import { updateSettings } from '@/lib/db-service';
 import { LoadState } from '@/components/load-state';
-import { Settings, HeroSlide, HeroSliderConfig } from '@/lib/types';
+import { Settings, HeroSlide, HeroSliderConfig, HomePageContent, HomeFeatureCard } from '@/lib/types';
+import { getDefaultHomePage } from '@/lib/home-page';
+import { HOME_FEATURE_ICONS } from '@/lib/home-icons';
 import { useAuth } from '@/context/AuthContext';
+import { useApiAuth } from '@/hooks/useApiAuth';
 import { useSearchParams } from 'next/navigation';
 
-type Tab = 'general' | 'branding' | 'integrations' | 'hero' | 'social';
+type Tab = 'general' | 'branding' | 'integrations' | 'hero' | 'homepage' | 'social';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'general', label: 'General' },
@@ -18,48 +20,63 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'social', label: 'Contact & Social' },
   { id: 'integrations', label: 'Integrations' },
   { id: 'hero', label: 'Hero Slider' },
+  { id: 'homepage', label: 'Homepage' },
 ];
 
 export default function AdminSettingsEditor() {
   const { settings: liveSettings, loading, error, retry } = useSettings();
   const { userData } = useAuth();
+  const { authFetch } = useApiAuth();
   const searchParams = useSearchParams();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('general');
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     const tab = searchParams.get('tab') as Tab | null;
-    if (tab && ['general', 'branding', 'social', 'integrations', 'hero'].includes(tab)) {
+    if (tab && ['general', 'branding', 'social', 'integrations', 'hero', 'homepage'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [searchParams]);
 
   useEffect(() => {
-    if (liveSettings) setSettings(liveSettings);
-  }, [liveSettings]);
+    if (liveSettings && !dirty) setSettings(liveSettings);
+  }, [liveSettings, dirty]);
 
   const handleSave = async () => {
     if (!settings) return;
     try {
       setSaving(true);
-      await updateSettings(settings, userData?.uid || 'admin');
-      setSuccessMessage('Settings saved successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      setSuccessMessage('');
+      const res = await authFetch('/api/admin/settings', {
+        method: 'PATCH',
+        body: JSON.stringify(settings),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to save settings');
+      }
+      setSettings(data);
+      setDirty(false);
+      setSuccessMessage('Settings saved and synced successfully!');
+      setTimeout(() => setSuccessMessage(''), 4000);
     } catch (err) {
       console.error('Error saving settings:', err);
-      setSuccessMessage('Error saving settings');
+      setSuccessMessage(err instanceof Error ? err.message : 'Error saving settings');
     } finally {
       setSaving(false);
     }
   };
 
   const update = (partial: Partial<Settings>) => {
+    setDirty(true);
     setSettings((prev) => (prev ? { ...prev, ...partial } : prev));
   };
 
   const updateIntegrations = (key: string, value: Record<string, unknown>) => {
+    setDirty(true);
     setSettings((prev) =>
       prev
         ? {
@@ -117,6 +134,18 @@ export default function AdminSettingsEditor() {
     if (target < 0 || target >= slides.length) return;
     [slides[index], slides[target]] = [slides[target], slides[index]];
     updateSliderConfig({ slides: slides.map((s, i) => ({ ...s, order: i })) });
+  };
+
+  const homePage: HomePageContent = settings?.homePage ?? getDefaultHomePage();
+
+  const updateHomePage = (partial: Partial<HomePageContent>) => {
+    update({ homePage: { ...homePage, ...partial, updatedAt: Date.now() } });
+  };
+
+  const updateFeatureCard = (index: number, partial: Partial<HomeFeatureCard>) => {
+    const cards = [...homePage.featuresSection.cards];
+    cards[index] = { ...cards[index], ...partial };
+    updateHomePage({ featuresSection: { ...homePage.featuresSection, cards } });
   };
 
   return (
@@ -364,7 +393,7 @@ export default function AdminSettingsEditor() {
                   Enable Places API and Maps JavaScript API in Google Cloud Console. Used for event locations and member signup address autocomplete.
                 </p>
                 <IntegrationBlock
-                  title="Anthropic API"
+                  title="Chatbot AI"
                   configured={settings.integrations.anthropic?.configured}
                   fields={[{ label: 'API Key (server only)', key: 'apiKey', type: 'password' }]}
                   values={settings.integrations.anthropic || {}}
@@ -372,6 +401,9 @@ export default function AdminSettingsEditor() {
                     updateIntegrations('anthropic', { [key]: val, configured: !!val });
                   }}
                 />
+                <p className="text-xs text-muted-foreground -mt-4 px-2">
+                  Powers the site chatbot. Configure chatbot behavior under Admin → Chatbot.
+                </p>
                 <IntegrationBlock
                   title="SendGrid"
                   configured={settings.integrations.sendgrid?.configured}
@@ -543,6 +575,95 @@ export default function AdminSettingsEditor() {
                 {sliderConfig.slides.length === 0 && (
                   <p className="text-center text-muted-foreground py-8">No slides yet. Add one to show the hero slider on the homepage.</p>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'homepage' && (
+              <div className="space-y-6">
+                <section className="p-5 bg-card rounded-xl border border-border space-y-3">
+                  <h2 className="font-heading font-bold text-lg">Events Section</h2>
+                  <Field label="Section Title" value={homePage.eventsSection.title} onChange={(v) => updateHomePage({ eventsSection: { ...homePage.eventsSection, title: v } })} />
+                  <Field label="Subtitle" value={homePage.eventsSection.subtitle} onChange={(v) => updateHomePage({ eventsSection: { ...homePage.eventsSection, subtitle: v } })} />
+                  <Field label="Link Text" value={homePage.eventsSection.linkText} onChange={(v) => updateHomePage({ eventsSection: { ...homePage.eventsSection, linkText: v } })} />
+                  <Field label="Empty State Message" value={homePage.eventsSection.emptyMessage} onChange={(v) => updateHomePage({ eventsSection: { ...homePage.eventsSection, emptyMessage: v } })} />
+                </section>
+
+                <section className="p-5 bg-card rounded-xl border border-border space-y-3">
+                  <div className="flex justify-between items-center">
+                    <h2 className="font-heading font-bold text-lg">Why Join / Feature Cards</h2>
+                    <button
+                      onClick={() =>
+                        updateHomePage({
+                          featuresSection: {
+                            ...homePage.featuresSection,
+                            cards: [
+                              ...homePage.featuresSection.cards,
+                              { id: `fc-${Date.now()}`, icon: 'star', title: '', description: '', order: homePage.featuresSection.cards.length },
+                            ],
+                          },
+                        })
+                      }
+                      className="text-sm text-accent flex items-center gap-1"
+                    >
+                      <Plus className="w-4 h-4" /> Add Card
+                    </button>
+                  </div>
+                  <Field label="Section Title" value={homePage.featuresSection.title} onChange={(v) => updateHomePage({ featuresSection: { ...homePage.featuresSection, title: v } })} />
+                  <Field label="Subtitle" value={homePage.featuresSection.subtitle} onChange={(v) => updateHomePage({ featuresSection: { ...homePage.featuresSection, subtitle: v } })} />
+                  {homePage.featuresSection.cards.map((card, i) => (
+                    <div key={card.id} className="p-4 bg-background rounded-lg border border-border space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">Card {i + 1}</span>
+                        <button
+                          onClick={() =>
+                            updateHomePage({
+                              featuresSection: {
+                                ...homePage.featuresSection,
+                                cards: homePage.featuresSection.cards.filter((c) => c.id !== card.id),
+                              },
+                            })
+                          }
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </button>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Icon</label>
+                        <select
+                          value={card.icon}
+                          onChange={(e) => updateFeatureCard(i, { icon: e.target.value as HomeFeatureCard['icon'] })}
+                          className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm"
+                        >
+                          {HOME_FEATURE_ICONS.map((ic) => (
+                            <option key={ic.id} value={ic.id}>{ic.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <input value={card.title} onChange={(e) => updateFeatureCard(i, { title: e.target.value })} placeholder="Title" className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm" />
+                      <textarea value={card.description} onChange={(e) => updateFeatureCard(i, { description: e.target.value })} placeholder="Description" rows={2} className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm" />
+                    </div>
+                  ))}
+                </section>
+
+                <section className="p-5 bg-card rounded-xl border border-border space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-heading font-bold text-lg">Call to Action Banner</h2>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={homePage.ctaSection.enabled}
+                        onChange={(e) => updateHomePage({ ctaSection: { ...homePage.ctaSection, enabled: e.target.checked } })}
+                      />
+                      Show on homepage
+                    </label>
+                  </div>
+                  <Field label="Title" value={homePage.ctaSection.title} onChange={(v) => updateHomePage({ ctaSection: { ...homePage.ctaSection, title: v } })} />
+                  <Field label="Subtitle" value={homePage.ctaSection.subtitle} onChange={(v) => updateHomePage({ ctaSection: { ...homePage.ctaSection, subtitle: v } })} multiline />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Field label="Button Text" value={homePage.ctaSection.buttonText} onChange={(v) => updateHomePage({ ctaSection: { ...homePage.ctaSection, buttonText: v } })} />
+                    <Field label="Button Link" value={homePage.ctaSection.buttonLink} onChange={(v) => updateHomePage({ ctaSection: { ...homePage.ctaSection, buttonLink: v } })} />
+                  </div>
+                </section>
               </div>
             )}
 
