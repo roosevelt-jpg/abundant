@@ -7,6 +7,9 @@ import { getFirebaseServices } from '@/lib/firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { User, UserRole, MemberProfile } from '@/lib/types';
 import { isAdminRole } from '@/lib/auth-utils';
+import { ALL_ADMIN_PERMISSIONS } from '@/lib/permissions';
+
+const PRIMARY_ADMIN_EMAIL = 'admin@abundantglobalclub.com';
 
 interface AuthContextType {
   currentUser: FirebaseUser | null;
@@ -68,23 +71,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (userSnap.exists()) {
             const userData = userSnap.data() as User;
             
-            // If this is the admin email and role isn't set to admin, update it
-            const isAdminEmail = user.email === 'admin@abundantglobalclub.com';
+            const isAdminEmail = user.email === PRIMARY_ADMIN_EMAIL;
             if (isAdminEmail && !isAdminRole(userData.role)) {
-              updateDoc(userRef, { role: 'super_admin' as UserRole, updatedAt: Date.now() }).catch(console.error);
+              updateDoc(userRef, {
+                role: 'super_admin' as UserRole,
+                permissions: ALL_ADMIN_PERMISSIONS,
+                updatedAt: Date.now(),
+              }).catch(console.error);
               userData.role = 'super_admin';
+              userData.permissions = ALL_ADMIN_PERMISSIONS;
             }
             
             setUserData(userData);
           } else {
             // Create user document if it doesn't exist
-            const isAdmin = user.email === 'admin@abundantglobalclub.com';
+            const isAdmin = user.email === PRIMARY_ADMIN_EMAIL;
             const newUser: User = {
               uid: user.uid,
               email: user.email || '',
               displayName: user.displayName || 'User',
               photoURL: user.photoURL || '',
-              role: isAdmin ? 'admin' : 'member',
+              role: isAdmin ? 'super_admin' : 'member',
+              permissions: isAdmin ? ALL_ADMIN_PERMISSIONS : undefined,
               membershipTier: 'member',
               joinedAt: Date.now(),
               status: 'active',
@@ -99,14 +107,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (error) {
           console.error('[v0] Error fetching user data:', error);
           // Continue even if Firestore fails - set user data with basic info
-          const isAdmin = user.email === 'admin@abundantglobalclub.com';
+          const isAdmin = user.email === PRIMARY_ADMIN_EMAIL;
           if (isMounted) {
             setUserData({
               uid: user.uid,
               email: user.email || '',
               displayName: user.displayName || 'User',
               photoURL: user.photoURL || '',
-              role: isAdmin ? 'admin' : 'member',
+              role: isAdmin ? 'super_admin' : 'member',
+              permissions: isAdmin ? ALL_ADMIN_PERMISSIONS : undefined,
               membershipTier: 'member',
               joinedAt: Date.now(),
               status: 'active',

@@ -56,7 +56,11 @@ export function hasPermission(
   if (!user) return false;
   if (user.role === 'super_admin') return true;
   if (user.role !== 'admin') return false;
-  return user.permissions?.includes(permission) ?? false;
+  // Legacy admins created before permissions — full access except invites
+  if (!user.permissions || user.permissions.length === 0) {
+    return permission !== 'invites';
+  }
+  return user.permissions.includes(permission);
 }
 
 export function getPermissionLabel(id: AdminPermission): string {

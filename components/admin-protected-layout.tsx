@@ -6,14 +6,16 @@ import { useEffect, useState, useMemo } from 'react';
 import { canAccessAdmin, hasPermission } from '@/lib/auth-utils';
 import { getPermissionForPath, ROUTE_PERMISSIONS } from '@/lib/permissions';
 
+const PRIMARY_ADMIN_EMAIL = 'admin@abundantglobalclub.com';
+
 function getFirstAllowedAdminPath(
   user: { role: import('@/lib/types').UserRole; permissions?: import('@/lib/types').AdminPermission[] } | null
-): string {
-  if (!user) return '/';
+): string | null {
+  if (!user) return null;
   for (const [path, permission] of Object.entries(ROUTE_PERMISSIONS)) {
     if (hasPermission(user, permission)) return path;
   }
-  return '/';
+  return null;
 }
 
 export function AdminProtectedLayout({ children }: { children: React.ReactNode }) {
@@ -31,37 +33,49 @@ export function AdminProtectedLayout({ children }: { children: React.ReactNode }
     return pathname;
   }, [pathname, tab]);
 
+  const isPrimaryAdmin = currentUser?.email === PRIMARY_ADMIN_EMAIL;
+
   useEffect(() => {
     if (loading) return;
 
     if (!currentUser) {
-      const redirect = encodeURIComponent(pathname);
-      router.replace(`/login?redirect=${redirect}`);
+      router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
       setIsAuthorized(false);
       return;
     }
 
-    const isAdmin =
-      currentUser.email === 'admin@abundantglobalclub.com' || canAccessAdmin(userData);
+    // Wait for Firestore profile before denying access (except known primary admin)
+    if (!userData && !isPrimaryAdmin) {
+      setIsAuthorized(null);
+      return;
+    }
 
+    const isAdmin = isPrimaryAdmin || canAccessAdmin(userData);
     if (!isAdmin) {
       router.replace('/');
       setIsAuthorized(false);
       return;
     }
 
+    if (isPrimaryAdmin || userData?.role === 'super_admin') {
+      setIsAuthorized(true);
+      return;
+    }
+
     const requiredPermission = getPermissionForPath(pathWithQuery);
     if (requiredPermission && userData && !hasPermission(userData, requiredPermission)) {
       const fallback = getFirstAllowedAdminPath(userData);
-      if (fallback !== pathname) {
+      if (fallback && fallback !== pathname) {
         router.replace(fallback);
+      } else if (!fallback) {
+        router.replace('/');
       }
       setIsAuthorized(false);
       return;
     }
 
     setIsAuthorized(true);
-  }, [currentUser, userData, loading, router, pathname, pathWithQuery]);
+  }, [currentUser, userData, loading, router, pathname, pathWithQuery, isPrimaryAdmin]);
 
   if (loading || isAuthorized === null) {
     return (
