@@ -2,15 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
-import { createPage, getAllPages, updatePage, deletePage } from '@/lib/db-service';
+import { getAllPages, updatePage, deletePage } from '@/lib/db-service';
 import { Page } from '@/lib/types';
+import { useApiAuth } from '@/hooks/useApiAuth';
 
 export default function AdminPagesEditor() {
+  const { authFetch } = useApiAuth();
   const [pages, setPages] = useState<Page[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<Partial<Page>>({});
-  const [isCreating, setIsCreating] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadPages();
@@ -19,10 +22,12 @@ export default function AdminPagesEditor() {
   const loadPages = async () => {
     try {
       setLoading(true);
+      setError(null);
       const allPages = await getAllPages();
       setPages(allPages);
-    } catch (error) {
-      console.error('Error loading pages:', error);
+    } catch (err) {
+      console.error('Error loading pages:', err);
+      setError('Failed to load pages');
     } finally {
       setLoading(false);
     }
@@ -36,40 +41,50 @@ export default function AdminPagesEditor() {
   const handleSave = async () => {
     if (!editingId) return;
     try {
+      setError(null);
       await updatePage(editingId, editingData);
       await loadPages();
       setEditingId(null);
       setEditingData({});
-    } catch (error) {
-      console.error('Error saving page:', error);
+    } catch (err) {
+      console.error('Error saving page:', err);
+      setError('Failed to save page');
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this page?')) return;
     try {
+      setError(null);
       await deletePage(id);
       await loadPages();
-    } catch (error) {
-      console.error('Error deleting page:', error);
+    } catch (err) {
+      console.error('Error deleting page:', err);
+      setError('Failed to delete page');
     }
   };
 
   const handleCreate = async () => {
     try {
-      await createPage({
-        title: 'New Page',
-        slug: 'new-page',
-        content: '',
-        isPublished: false,
-        footerPlacement: 'none',
-        navPlacement: 'none',
-        createdBy: 'admin',
+      setCreating(true);
+      setError(null);
+      const res = await authFetch('/api/admin/pages', {
+        method: 'POST',
+        body: JSON.stringify({ title: 'New Page', slug: `page-${Date.now()}` }),
       });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to create page');
+      }
+      const page: Page = await res.json();
       await loadPages();
-      setIsCreating(false);
-    } catch (error) {
-      console.error('Error creating page:', error);
+      setEditingId(page.id);
+      setEditingData(page);
+    } catch (err) {
+      console.error('Error creating page:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create page');
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -79,19 +94,26 @@ export default function AdminPagesEditor() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="font-heading text-3xl font-bold mb-2">Pages Management</h1>
           <p className="text-muted-foreground">Create and manage website pages with live Firestore sync</p>
         </div>
         <button
           onClick={handleCreate}
-          className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg font-semibold hover:bg-accent/90 transition-colors"
+          disabled={creating}
+          className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg font-semibold hover:bg-accent/90 transition-colors disabled:opacity-50"
         >
           <Plus className="w-5 h-5" />
-          Create Page
+          {creating ? 'Creating...' : 'Create Page'}
         </button>
       </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
+          {error}
+        </div>
+      )}
 
       <div className="space-y-6">
         {pages.map((page) => (
@@ -186,7 +208,7 @@ export default function AdminPagesEditor() {
                 </div>
               </div>
             ) : (
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <h3 className="font-heading font-bold text-lg mb-2">{page.title}</h3>
                   <p className="text-sm text-muted-foreground mb-2">/{page.slug}</p>
@@ -222,7 +244,7 @@ export default function AdminPagesEditor() {
 
         {pages.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
-            No pages yet. Create your first page to get started.
+            No pages yet. Click &quot;Create Page&quot; to get started.
           </div>
         )}
       </div>

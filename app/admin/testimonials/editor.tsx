@@ -1,86 +1,108 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Trash2, Eye, EyeOff, X } from 'lucide-react';
-
-const DEFAULT_TESTIMONIALS = [
-  {
-    id: '1',
-    author: 'Sarah Johnson',
-    role: 'Entrepreneur',
-    content: 'Abundant Global Club transformed my business network and opened doors I never knew existed.',
-    status: 'published',
-    createdAt: Date.now()
-  },
-  {
-    id: '2',
-    author: 'Ahmed Al-Mansouri',
-    role: 'Business Owner',
-    content: 'The exclusive events and networking opportunities have been invaluable for my growth.',
-    status: 'pending',
-    createdAt: Date.now()
-  },
-  {
-    id: '3',
-    author: 'Maria Garcia',
-    role: 'Executive',
-    content: 'Being part of this elite community has accelerated my professional development significantly.',
-    status: 'published',
-    createdAt: Date.now()
-  }
-];
+import { useApiAuth } from '@/hooks/useApiAuth';
+import { Testimonial } from '@/lib/types';
 
 export default function AdminTestimonialsEditor() {
-  const [testimonials, setTestimonials] = useState(DEFAULT_TESTIMONIALS);
+  const { authFetch } = useApiAuth();
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [newTestimonial, setNewTestimonial] = useState({
-    author: '',
-    role: '',
-    content: ''
+    authorName: '',
+    authorTitle: '',
+    content: '',
   });
 
-  const handleAddTestimonial = () => {
-    if (!newTestimonial.author || !newTestimonial.content) {
-      alert('Please fill in author name and content');
+  const loadTestimonials = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const { getAllTestimonials } = await import('@/lib/testimonials-service');
+      const data = await getAllTestimonials();
+      setTestimonials(data);
+    } catch (err) {
+      console.error('Error loading testimonials:', err);
+      setError('Failed to load testimonials');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTestimonials();
+  }, []);
+
+  const handleAddTestimonial = async () => {
+    if (!newTestimonial.authorName || !newTestimonial.content) {
+      setError('Please fill in author name and content');
       return;
     }
-
-    const testimonial = {
-      id: String(testimonials.length + 1),
-      ...newTestimonial,
-      status: 'pending',
-      createdAt: Date.now()
-    };
-
-    setTestimonials([...testimonials, testimonial]);
-    setNewTestimonial({ author: '', role: '', content: '' });
-    setShowModal(false);
-  };
-
-  const handlePublish = (id: string) => {
-    setTestimonials(testimonials.map(t => 
-      t.id === id ? { ...t, status: t.status === 'published' ? 'pending' : 'published' } : t
-    ));
-  };
-
-  const handleDeleteTestimonial = (id: string) => {
-    if (confirm('Are you sure you want to delete this testimonial?')) {
-      setTestimonials(testimonials.filter(t => t.id !== id));
+    try {
+      setSaving(true);
+      setError(null);
+      const res = await authFetch('/api/admin/testimonials', {
+        method: 'POST',
+        body: JSON.stringify(newTestimonial),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to add testimonial');
+      }
+      setNewTestimonial({ authorName: '', authorTitle: '', content: '' });
+      setShowModal(false);
+      await loadTestimonials();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add testimonial');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const published = testimonials.filter(t => t.status === 'published').length;
-  const pending = testimonials.filter(t => t.status === 'pending').length;
+  const handlePublish = async (id: string, isPublished: boolean) => {
+    try {
+      setError(null);
+      const res = await authFetch('/api/admin/testimonials', {
+        method: 'PATCH',
+        body: JSON.stringify({ id, isPublished: !isPublished }),
+      });
+      if (!res.ok) throw new Error('Failed to update testimonial');
+      await loadTestimonials();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update testimonial');
+    }
+  };
+
+  const handleDeleteTestimonial = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this testimonial?')) return;
+    try {
+      setError(null);
+      const res = await authFetch(`/api/admin/testimonials?id=${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete testimonial');
+      await loadTestimonials();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete testimonial');
+    }
+  };
+
+  const published = testimonials.filter((t) => t.isPublished).length;
+  const pending = testimonials.filter((t) => !t.isPublished).length;
+
+  if (loading) return <div className="text-center py-12">Loading testimonials...</div>;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="font-heading text-3xl font-bold mb-2">Testimonials</h1>
           <p className="text-muted-foreground">Manage member testimonials and reviews</p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => { setShowModal(true); setError(null); }}
           className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg font-semibold hover:bg-accent/90 transition-colors"
         >
           <Plus className="w-5 h-5" />
@@ -88,7 +110,12 @@ export default function AdminTestimonialsEditor() {
         </button>
       </div>
 
-      {/* Stats */}
+      {error && (
+        <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
+          {error}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4 mb-8">
         <div className="p-4 bg-card rounded-lg border border-border">
           <p className="text-sm text-muted-foreground mb-1">Published</p>
@@ -100,7 +127,6 @@ export default function AdminTestimonialsEditor() {
         </div>
       </div>
 
-      {/* Add Testimonial Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg border border-border max-w-md w-full p-6">
@@ -116,8 +142,8 @@ export default function AdminTestimonialsEditor() {
                 <label className="block text-sm font-medium mb-2">Author Name</label>
                 <input
                   type="text"
-                  value={newTestimonial.author}
-                  onChange={(e) => setNewTestimonial({ ...newTestimonial, author: e.target.value })}
+                  value={newTestimonial.authorName}
+                  onChange={(e) => setNewTestimonial({ ...newTestimonial, authorName: e.target.value })}
                   placeholder="Author name"
                   className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
                 />
@@ -126,8 +152,8 @@ export default function AdminTestimonialsEditor() {
                 <label className="block text-sm font-medium mb-2">Role/Title</label>
                 <input
                   type="text"
-                  value={newTestimonial.role}
-                  onChange={(e) => setNewTestimonial({ ...newTestimonial, role: e.target.value })}
+                  value={newTestimonial.authorTitle}
+                  onChange={(e) => setNewTestimonial({ ...newTestimonial, authorTitle: e.target.value })}
                   placeholder="e.g., Entrepreneur"
                   className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
                 />
@@ -152,9 +178,10 @@ export default function AdminTestimonialsEditor() {
                 </button>
                 <button
                   onClick={handleAddTestimonial}
-                  className="flex-1 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-semibold"
+                  disabled={saving}
+                  className="flex-1 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-semibold disabled:opacity-50"
                 >
-                  Add Testimonial
+                  {saving ? 'Saving...' : 'Add Testimonial'}
                 </button>
               </div>
             </div>
@@ -162,48 +189,43 @@ export default function AdminTestimonialsEditor() {
         </div>
       )}
 
-      {/* Testimonials List */}
       <div className="space-y-4">
         {testimonials.map((testimonial) => (
           <div
             key={testimonial.id}
             className={`p-6 bg-card rounded-lg border transition-colors ${
-              testimonial.status === 'published'
+              testimonial.isPublished
                 ? 'border-green-500/20 bg-green-500/5'
                 : 'border-yellow-500/20 bg-yellow-500/5'
             }`}
           >
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="font-semibold text-lg">{testimonial.author}</h3>
-                <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                <h3 className="font-semibold text-lg">{testimonial.authorName}</h3>
+                {testimonial.authorTitle && (
+                  <p className="text-sm text-muted-foreground">{testimonial.authorTitle}</p>
+                )}
               </div>
               <span className={`px-2 py-1 text-xs font-semibold rounded ${
-                testimonial.status === 'published'
+                testimonial.isPublished
                   ? 'bg-green-500/10 text-green-600'
                   : 'bg-yellow-500/10 text-yellow-600'
               }`}>
-                {testimonial.status === 'published' ? 'Published' : 'Pending'}
+                {testimonial.isPublished ? 'Published' : 'Pending'}
               </span>
             </div>
 
-            <p className="text-sm mb-4 italic text-muted-foreground">"{testimonial.content}"</p>
+            <p className="text-sm mb-4 italic text-muted-foreground">&ldquo;{testimonial.content}&rdquo;</p>
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => handlePublish(testimonial.id)}
+                onClick={() => handlePublish(testimonial.id, testimonial.isPublished)}
                 className="flex-1 flex items-center justify-center gap-2 p-2 border border-border rounded-lg hover:bg-accent/10 transition-colors text-sm font-medium"
               >
-                {testimonial.status === 'published' ? (
-                  <>
-                    <EyeOff className="w-4 h-4" />
-                    Unpublish
-                  </>
+                {testimonial.isPublished ? (
+                  <><EyeOff className="w-4 h-4" /> Unpublish</>
                 ) : (
-                  <>
-                    <Eye className="w-4 h-4" />
-                    Publish
-                  </>
+                  <><Eye className="w-4 h-4" /> Publish</>
                 )}
               </button>
               <button
@@ -216,6 +238,10 @@ export default function AdminTestimonialsEditor() {
             </div>
           </div>
         ))}
+
+        {testimonials.length === 0 && (
+          <p className="text-center py-12 text-muted-foreground">No testimonials yet. Click &quot;Add Testimonial&quot; to create one.</p>
+        )}
       </div>
     </div>
   );

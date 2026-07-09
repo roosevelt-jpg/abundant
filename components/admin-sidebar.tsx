@@ -1,9 +1,7 @@
 'use client';
 
-import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import {
-  LogOut,
   Settings,
   Users,
   FileText,
@@ -18,29 +16,15 @@ import {
   Info,
   FormInput,
 } from 'lucide-react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { ThemeToggle } from './theme-toggle';
-import { LanguageSwitcher } from './language-switcher';
 import { canManageInvites } from '@/lib/auth-utils';
+import { useAuth } from '@/context/AuthContext';
 
 export const AdminSidebar = () => {
-  const { logout, userData } = useAuth();
-  const router = useRouter();
+  const { userData } = useAuth();
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-      await logout();
-      router.push('/login');
-    } catch (error) {
-      console.error('Logout failed:', error);
-      setIsLoggingOut(false);
-    }
-  };
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', href: '/admin/dashboard' },
@@ -76,7 +60,8 @@ export const AdminSidebar = () => {
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const active = pathname === item.href || pathname.startsWith(item.href + '/');
+          const hrefPath = item.href.split('?')[0];
+          const active = pathname === hrefPath || pathname.startsWith(hrefPath + '/');
           return (
             <Link
               key={item.href}
@@ -93,21 +78,6 @@ export const AdminSidebar = () => {
           );
         })}
       </nav>
-
-      <div className="border-t border-border p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <LanguageSwitcher />
-        </div>
-        <button
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors text-sm font-medium disabled:opacity-50"
-        >
-          <LogOut className="w-5 h-5" />
-          {!isCollapsed && (isLoggingOut ? 'Logging out...' : 'Logout')}
-        </button>
-      </div>
 
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}

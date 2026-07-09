@@ -235,6 +235,17 @@ export interface FormSubmission {
 }
 
 // Contact submissions
+export interface ActivityLog {
+  id: string;
+  type: 'create' | 'update' | 'delete';
+  entity: 'member' | 'event' | 'page' | 'plan' | 'testimonial' | 'form' | 'contact' | 'settings' | 'invite';
+  entityId?: string;
+  description: string;
+  actorId: string;
+  actorName: string;
+  createdAt: number;
+}
+
 export interface ContactSubmission {
   id: string;
   name: string;

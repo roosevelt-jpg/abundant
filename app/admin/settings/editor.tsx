@@ -8,6 +8,7 @@ import { updateSettings } from '@/lib/db-service';
 import { LoadState } from '@/components/load-state';
 import { Settings, HeroSlide, HeroSliderConfig } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
+import { useSearchParams } from 'next/navigation';
 
 type Tab = 'general' | 'integrations' | 'hero' | 'social';
 
@@ -21,10 +22,18 @@ const TABS: { id: Tab; label: string }[] = [
 export default function AdminSettingsEditor() {
   const { settings: liveSettings, loading, error, retry } = useSettings();
   const { userData } = useAuth();
+  const searchParams = useSearchParams();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('general');
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+
+  useEffect(() => {
+    const tab = searchParams.get('tab') as Tab | null;
+    if (tab && ['general', 'social', 'integrations', 'hero'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (liveSettings) setSettings(liveSettings);

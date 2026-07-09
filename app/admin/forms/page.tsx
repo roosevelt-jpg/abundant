@@ -2,39 +2,57 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Save, X } from 'lucide-react';
-import { getAllForms, createForm, updateForm, deleteForm, getFormSubmissions } from '@/lib/forms-service';
+import { getAllForms, updateForm, deleteForm, getFormSubmissions } from '@/lib/forms-service';
 import { CustomForm, FormField, FormSubmission } from '@/lib/types';
-import Link from 'next/link';
+import { useApiAuth } from '@/hooks/useApiAuth';
 
 const FIELD_TYPES = ['text', 'email', 'phone', 'textarea', 'select', 'checkbox'] as const;
 const PLACEMENTS = ['contact', 'membership', 'events', 'about', 'home', 'custom'];
 
 export default function FormsAdminPage() {
+  const { authFetch } = useApiAuth();
   const [forms, setForms] = useState<CustomForm[]>([]);
   const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
   const [tab, setTab] = useState<'forms' | 'submissions'>('forms');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<Partial<CustomForm>>({});
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => { load(); }, []);
 
   const load = async () => {
     setLoading(true);
-    const [f, s] = await Promise.all([getAllForms(), getFormSubmissions()]);
-    setForms(f);
-    setSubmissions(s);
-    setLoading(false);
+    try {
+      const [f, s] = await Promise.all([getAllForms(), getFormSubmissions()]);
+      setForms(f);
+      setSubmissions(s);
+    } catch (err) {
+      setError('Failed to load forms');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCreate = async () => {
-    await createForm({
-      name: 'New Form',
-      fields: [],
-      placement: 'contact',
-      active: false,
-    });
-    await load();
+    try {
+      setCreating(true);
+      setError(null);
+      const res = await authFetch('/api/admin/forms', { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to create form');
+      }
+      const form: CustomForm = await res.json();
+      await load();
+      setEditingId(form.id);
+      setEditingData(form);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create form');
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleSave = async () => {
@@ -74,8 +92,17 @@ export default function FormsAdminPage() {
 
       {tab === 'forms' ? (
         <>
-          <button onClick={handleCreate} className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg font-semibold mb-6">
-            <Plus className="w-4 h-4" /> Create Form
+          {error && (
+            <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
+              {error}
+            </div>
+          )}
+          <button
+            onClick={handleCreate}
+            disabled={creating}
+            className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg font-semibold mb-6 disabled:opacity-50"
+          >
+            <Plus className="w-4 h-4" /> {creating ? 'Creating...' : 'Create Form'}
           </button>
           <div className="space-y-6">
             {forms.map((form) => (
@@ -144,6 +171,9 @@ export default function FormsAdminPage() {
                 )}
               </div>
             ))}
+            {forms.length === 0 && (
+              <p className="text-center py-12 text-muted-foreground">No forms yet. Click &quot;Create Form&quot; to get started.</p>
+            )}
           </div>
         </>
       ) : (
