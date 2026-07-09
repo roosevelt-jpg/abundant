@@ -7,8 +7,6 @@ import { EventCalendar } from '@/components/event-calendar';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useApiAuth } from '@/hooks/useApiAuth';
-import { getAllEvents } from '@/lib/events-service';
-import { getAllEventTags } from '@/lib/event-tags-service';
 import { Event, EventTag } from '@/lib/types';
 import { canUserRegisterForEvent, getAudienceGenderLabel } from '@/lib/event-eligibility';
 import { Calendar, MapPin, Users, X, Download, ExternalLink, Tag, Percent } from 'lucide-react';
@@ -45,10 +43,13 @@ function EventsContent() {
   const [validatingDiscount, setValidatingDiscount] = useState(false);
 
   useEffect(() => {
-    Promise.all([getAllEvents(), getAllEventTags()])
+    Promise.all([
+      fetch('/api/public/events?limit=all').then((r) => r.json()),
+      fetch('/api/public/event-tags').then((r) => r.json()),
+    ])
       .then(([data, tagData]) => {
-        setEvents(data.filter((e) => e.isPublic && e.status !== 'cancelled' && e.status !== 'draft'));
-        setTags(tagData.filter((tg) => tg.active));
+        setEvents(Array.isArray(data) ? data : []);
+        setTags(Array.isArray(tagData) ? tagData : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));

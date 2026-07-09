@@ -33,6 +33,17 @@ export async function getEvent(id: string): Promise<Event | null> {
   }
 }
 
+export async function getPublicEvents(): Promise<Event[]> {
+  try {
+    const q = query(eventsRef(), where('isPublic', '==', true), orderBy('date', 'asc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map((doc) => doc.data() as Event);
+  } catch (error) {
+    console.error('Error getting public events:', error);
+    return [];
+  }
+}
+
 export async function getAllEvents(): Promise<Event[]> {
   try {
     const q = query(eventsRef(), orderBy('date', 'asc'));
