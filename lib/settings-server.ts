@@ -1,7 +1,7 @@
 import { getAdminDb } from '@/lib/firebase-admin';
 import { SETTINGS_DOC_ID } from '@/lib/constants';
 import { getDefaultSettings } from '@/lib/db-service';
-import { mergeSettingsIntegrations } from '@/lib/settings-merge';
+import { mergeSettingsUpdates } from '@/lib/settings-merge';
 import { Settings } from '@/lib/types';
 
 export async function getAdminSettings(): Promise<Settings> {
@@ -16,11 +16,7 @@ export async function saveAdminSettings(updates: Partial<Settings>, updatedBy: s
   const existing = existingSnap.exists ? (existingSnap.data() as Settings) : getDefaultSettings();
 
   const merged: Settings = {
-    ...existing,
-    ...updates,
-    integrations: updates.integrations
-      ? mergeSettingsIntegrations(existing.integrations, updates.integrations)
-      : existing.integrations,
+    ...mergeSettingsUpdates(existing, updates),
     id: SETTINGS_DOC_ID,
     updatedAt: Date.now(),
     updatedBy,

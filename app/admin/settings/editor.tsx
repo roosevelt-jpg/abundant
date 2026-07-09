@@ -9,7 +9,7 @@ import { Settings, HeroSlide, HeroSliderConfig, HomePageContent, HomeFeatureCard
 import { getDefaultHomePage } from '@/lib/home-page';
 import { HOME_FEATURE_ICONS } from '@/lib/home-icons';
 import { useApiAuth } from '@/hooks/useApiAuth';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { maskSettingsSecretsForDisplay } from '@/lib/settings-merge';
 
 type Tab = 'general' | 'branding' | 'integrations' | 'hero' | 'homepage' | 'social';
@@ -27,6 +27,7 @@ export default function AdminSettingsEditor() {
   const { settings: liveSettings, loading, error, retry } = useSettings();
   const { authFetch } = useApiAuth();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('general');
   const [saving, setSaving] = useState(false);
@@ -46,6 +47,11 @@ export default function AdminSettingsEditor() {
     }
   }, [liveSettings, dirty]);
 
+  const selectTab = (tab: Tab) => {
+    setActiveTab(tab);
+    router.replace(`/admin/settings?tab=${tab}`, { scroll: false });
+  };
+
   const handleSave = async () => {
     if (!settings) return;
     try {
@@ -61,7 +67,8 @@ export default function AdminSettingsEditor() {
       }
       setSettings(maskSettingsSecretsForDisplay(data));
       setDirty(false);
-      setSuccessMessage('Settings saved and synced successfully!');
+      retry();
+      setSuccessMessage('Settings saved successfully!');
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (err) {
       console.error('Error saving settings:', err);
@@ -161,7 +168,7 @@ export default function AdminSettingsEditor() {
           {successMessage && (
             <div
               className={`mb-6 p-4 border rounded-lg text-sm ${
-                successMessage.includes('successfully')
+                successMessage.includes('saved') || successMessage.includes('successfully')
                   ? 'bg-green-500/10 border-green-500/20 text-green-600'
                   : 'bg-destructive/10 border-destructive/20 text-destructive'
               }`}
@@ -174,7 +181,7 @@ export default function AdminSettingsEditor() {
             {TABS.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => selectTab(tab.id)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   activeTab === tab.id
                     ? 'bg-accent text-accent-foreground'
