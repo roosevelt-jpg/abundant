@@ -34,6 +34,7 @@ export default function ChatbotAdminPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [dirty, setDirty] = useState(false);
   const [tab, setTab] = useState<'config' | 'leads' | 'logs'>('config');
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [leads, setLeads] = useState<ChatLead[]>([]);
@@ -41,8 +42,8 @@ export default function ChatbotAdminPage() {
   const [leadsLoading, setLeadsLoading] = useState(false);
 
   useEffect(() => {
-    if (liveSettings) setSettings(liveSettings);
-  }, [liveSettings]);
+    if (liveSettings && !dirty) setSettings(liveSettings);
+  }, [liveSettings, dirty]);
 
   useEffect(() => {
     if (tab === 'logs') loadLogs();
@@ -82,6 +83,7 @@ export default function ChatbotAdminPage() {
   };
 
   const updateChatbot = (partial: Partial<ChatbotConfig>) => {
+    setDirty(true);
     setSettings((prev) =>
       prev ? { ...prev, chatbot: { ...chatbot, ...partial, updatedAt: Date.now() } } : prev
     );
@@ -95,10 +97,13 @@ export default function ChatbotAdminPage() {
         method: 'PATCH',
         body: JSON.stringify({ chatbot: settings.chatbot }),
       });
+      const data = await res.json();
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || 'Failed to save');
       }
+      setSettings((prev) => (prev ? { ...prev, chatbot: data.chatbot } : prev));
+      setDirty(false);
+      retry();
       setMessage('Saved!');
       setTimeout(() => setMessage(''), 3000);
     } catch {

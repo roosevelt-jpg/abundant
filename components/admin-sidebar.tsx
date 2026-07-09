@@ -17,7 +17,7 @@ import {
   FormInput,
   HelpCircle,
 } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { canManageInvites, hasPermission } from '@/lib/auth-utils';
 import { useAuth } from '@/context/AuthContext';
@@ -34,7 +34,19 @@ type MenuItem = {
 export const AdminSidebar = () => {
   const { userData, currentUser } = useAuth();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const isMenuItemActive = (href: string) => {
+    if (href === '/admin/settings?tab=hero') {
+      return pathname === '/admin/settings' && searchParams.get('tab') === 'hero';
+    }
+    if (href === '/admin/settings') {
+      return pathname === '/admin/settings' && searchParams.get('tab') !== 'hero';
+    }
+    const hrefPath = href.split('?')[0];
+    return pathname === hrefPath || pathname.startsWith(`${hrefPath}/`);
+  };
 
   const allMenuItems: MenuItem[] = [
     { icon: Home, label: 'Dashboard', href: '/admin/dashboard', permission: 'dashboard' },
@@ -76,8 +88,7 @@ export const AdminSidebar = () => {
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const hrefPath = item.href.split('?')[0];
-          const active = pathname === hrefPath || pathname.startsWith(hrefPath + '/');
+          const active = isMenuItemActive(item.href);
           return (
             <Link
               key={item.href}

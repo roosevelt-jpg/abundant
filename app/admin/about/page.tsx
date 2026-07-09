@@ -18,10 +18,11 @@ export default function AboutPageBuilder() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
-    if (live) setSettings(live);
-  }, [live]);
+    if (live && !dirty) setSettings(live);
+  }, [live, dirty]);
 
   const content: AboutPageContent = settings?.aboutContent ?? {
     coreValues: [],
@@ -30,6 +31,7 @@ export default function AboutPageBuilder() {
   };
 
   const updateContent = (partial: Partial<AboutPageContent>) => {
+    setDirty(true);
     setSettings((prev) =>
       prev ? { ...prev, aboutContent: { ...content, ...partial, updatedAt: Date.now() } } : prev
     );
@@ -43,10 +45,13 @@ export default function AboutPageBuilder() {
         method: 'PATCH',
         body: JSON.stringify({ aboutContent: settings.aboutContent }),
       });
+      const data = await res.json();
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || 'Failed to save');
       }
+      setSettings((prev) => (prev ? { ...prev, aboutContent: data.aboutContent } : prev));
+      setDirty(false);
+      retry();
       setMsg('About page saved!');
       setTimeout(() => setMsg(''), 3000);
     } catch {

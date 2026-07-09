@@ -1,4 +1,4 @@
-import { Settings } from '@/lib/types';
+import { Settings, HomePageContent } from '@/lib/types';
 
 const SECRET_FIELD_NAMES = new Set([
   'apiKey',
@@ -38,6 +38,21 @@ function mergeShallowPreservingBlank<T extends Record<string, unknown>>(
     merged[key as keyof T] = value as T[keyof T];
   }
   return merged;
+}
+
+/** Fill blank stored values from defaults (for display after accidental wipes). */
+function fillRecordFromDefaults<T extends Record<string, unknown>>(
+  existing: T | undefined,
+  defaults: T | undefined
+): T | undefined {
+  if (!defaults) return existing;
+  const merged = { ...defaults };
+  if (!existing) return merged as T;
+
+  for (const [key, value] of Object.entries(existing)) {
+    if (!isBlank(value)) merged[key as keyof T] = value as T[keyof T];
+  }
+  return merged as T;
 }
 
 /** Recompute configured flag from merged integration fields (never trust client-sent configured). */
@@ -126,6 +141,30 @@ export function maskSettingsSecretsForDisplay(settings: Settings): Settings {
   return masked;
 }
 
+/** Restore blank top-level fields from defaults when reading wiped settings. */
+export function fillBlankSettingsFromDefaults(settings: Settings, defaults: Settings): Settings {
+  return {
+    ...settings,
+    siteName: isBlank(settings.siteName) ? defaults.siteName : settings.siteName,
+    description: isBlank(settings.description) ? defaults.description : settings.description,
+    contactEmail: isBlank(settings.contactEmail) ? defaults.contactEmail : settings.contactEmail,
+    phone: isBlank(settings.phone) ? defaults.phone : settings.phone,
+    address: isBlank(settings.address) ? defaults.address : settings.address,
+    socialLinks: fillRecordFromDefaults(
+      settings.socialLinks as Record<string, unknown> | undefined,
+      defaults.socialLinks as Record<string, unknown> | undefined
+    ) as Settings['socialLinks'],
+    branding: fillRecordFromDefaults(
+      settings.branding as Record<string, unknown> | undefined,
+      defaults.branding as Record<string, unknown> | undefined
+    ) as Settings['branding'],
+    colors: fillRecordFromDefaults(
+      settings.colors as Record<string, unknown> | undefined,
+      defaults.colors as Record<string, unknown> | undefined
+    ) as Settings['colors'],
+  };
+}
+
 export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settings>): Settings {
   const result: Settings = { ...existing };
 
@@ -166,21 +205,33 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
 
   if (updates.youtubeSection) {
     result.youtubeSection = {
-      ...existing.youtubeSection,
-      ...updates.youtubeSection,
+      ...(mergeShallowPreservingBlank(
+        existing.youtubeSection as Record<string, unknown> | undefined,
+        updates.youtubeSection as unknown as Record<string, unknown>
+      ) ?? existing.youtubeSection),
       enabled: updates.youtubeSection.enabled ?? existing.youtubeSection?.enabled ?? false,
-    };
+    } as Settings['youtubeSection'];
   }
 
   if (updates.heroSliderConfig) {
     const incomingSlides = updates.heroSliderConfig.slides;
     const keepExistingSlides = !incomingSlides || incomingSlides.length === 0;
+    const base = existing.heroSliderConfig ?? {
+      slides: existing.heroSlider ?? [],
+      speed: 5000,
+      transition: 'fade' as const,
+      autoplay: true,
+      loop: true,
+      pauseOnHover: true,
+    };
+
     result.heroSliderConfig = {
-      ...existing.heroSliderConfig,
-      ...updates.heroSliderConfig,
-      slides: keepExistingSlides
-        ? existing.heroSliderConfig?.slides ?? existing.heroSlider ?? []
-        : incomingSlides,
+      speed: updates.heroSliderConfig.speed ?? base.speed,
+      transition: updates.heroSliderConfig.transition ?? base.transition,
+      autoplay: updates.heroSliderConfig.autoplay ?? base.autoplay,
+      loop: updates.heroSliderConfig.loop ?? base.loop,
+      pauseOnHover: updates.heroSliderConfig.pauseOnHover ?? base.pauseOnHover,
+      slides: keepExistingSlides ? base.slides : incomingSlides,
     };
     result.heroSlider = result.heroSliderConfig.slides;
   }
@@ -192,31 +243,36 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
 
     result.homePage = {
       ...existing.homePage,
-      ...updates.homePage,
-      eventsSection: {
-        ...existing.homePage?.eventsSection,
-        ...incomingEvents,
-      },
+      eventsSection: mergeShallowPreservingBlank(
+        existing.homePage?.eventsSection as Record<string, unknown> | undefined,
+        incomingEvents as Record<string, unknown>
+      ) as HomePageContent['eventsSection'],
       featuresSection: {
-        ...existing.homePage?.featuresSection,
-        ...incomingFeatures,
+        ...(mergeShallowPreservingBlank(
+          existing.homePage?.featuresSection as Record<string, unknown> | undefined,
+          incomingFeatures as Record<string, unknown>
+        ) as HomePageContent['featuresSection']),
         cards:
           incomingFeatures.cards?.length
             ? incomingFeatures.cards
             : existing.homePage?.featuresSection?.cards ?? [],
       },
-      ctaSection: {
-        ...existing.homePage?.ctaSection,
-        ...incomingCta,
-      },
+      ctaSection: mergeShallowPreservingBlank(
+        existing.homePage?.ctaSection as Record<string, unknown> | undefined,
+        incomingCta as Record<string, unknown>
+      ) as HomePageContent['ctaSection'],
       updatedAt: updates.homePage.updatedAt ?? Date.now(),
     };
   }
 
   if (updates.chatbot) {
+    const mergedScalars = mergeShallowPreservingBlank(
+      existing.chatbot as Record<string, unknown> | undefined,
+      updates.chatbot as unknown as Record<string, unknown>
+    );
+
     result.chatbot = {
-      ...existing.chatbot,
-      ...updates.chatbot,
+      ...mergedScalars,
       knowledgeSnippets:
         updates.chatbot.knowledgeSnippets?.length
           ? updates.chatbot.knowledgeSnippets
@@ -232,10 +288,30 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
   }
 
   if (updates.aboutContent) {
+    const incoming = updates.aboutContent;
     result.aboutContent = {
-      ...existing.aboutContent,
-      ...updates.aboutContent,
-      updatedAt: updates.aboutContent.updatedAt ?? Date.now(),
+      ...mergeShallowPreservingBlank(
+        existing.aboutContent as Record<string, unknown> | undefined,
+        incoming as unknown as Record<string, unknown>
+      ),
+      foundersMessage: incoming.foundersMessage
+        ? (mergeShallowPreservingBlank(
+            existing.aboutContent?.foundersMessage as Record<string, unknown> | undefined,
+            incoming.foundersMessage as unknown as Record<string, unknown>
+          ) as NonNullable<Settings['aboutContent']>['foundersMessage'])
+        : existing.aboutContent?.foundersMessage,
+      missionVision: incoming.missionVision
+        ? (mergeShallowPreservingBlank(
+            existing.aboutContent?.missionVision as Record<string, unknown> | undefined,
+            incoming.missionVision as unknown as Record<string, unknown>
+          ) as NonNullable<Settings['aboutContent']>['missionVision'])
+        : existing.aboutContent?.missionVision,
+      coreValues: incoming.coreValues?.length ? incoming.coreValues : existing.aboutContent?.coreValues ?? [],
+      teamMembers: incoming.teamMembers?.length ? incoming.teamMembers : existing.aboutContent?.teamMembers ?? [],
+      highlightCards: incoming.highlightCards?.length
+        ? incoming.highlightCards
+        : existing.aboutContent?.highlightCards ?? [],
+      updatedAt: incoming.updatedAt ?? Date.now(),
     };
   }
 
