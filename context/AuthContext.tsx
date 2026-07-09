@@ -21,6 +21,23 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+async function syncSessionCookie(user: FirebaseUser | null) {
+  try {
+    if (user) {
+      const idToken = await user.getIdToken();
+      await fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+    } else {
+      await fetch('/api/auth/session', { method: 'DELETE' });
+    }
+  } catch (err) {
+    console.error('Session sync failed:', err);
+  }
+}
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [userData, setUserData] = useState<User | null>(null);
@@ -41,6 +58,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setCurrentUser(user);
       
       if (user) {
+        syncSessionCookie(user);
         try {
           // Fetch user data from Firestore with error handling
           const userRef = doc(db, 'users', user.uid);
@@ -99,6 +117,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
       } else {
+        syncSessionCookie(null);
         setUserData(null);
       }
       
@@ -179,6 +198,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { auth } = getFirebaseServices();
     if (!auth) throw new Error('Firebase not initialized');
     try {
+      await fetch('/api/auth/session', { method: 'DELETE' });
       await signOut(auth);
     } catch (error) {
       console.error('Logout error:', error);

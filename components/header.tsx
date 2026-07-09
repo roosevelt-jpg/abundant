@@ -7,7 +7,7 @@ import { ThemeToggle } from './theme-toggle';
 import { LanguageSwitcher } from './language-switcher';
 import { useSettings } from '@/hooks/useSettings';
 import { Page } from '@/lib/types';
-import Image from 'next/image';
+import { SiteLogo } from './site-logo';
 import { useEffect, useState } from 'react';
 import { Menu, X, ChevronDown } from 'lucide-react';
 
@@ -56,7 +56,7 @@ export const Header = () => {
     <header className="sticky top-0 z-40 bg-card border-b border-border">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
         <Link href="/" className="flex-shrink-0">
-          <Image src="/logo-text.png" alt={settings?.siteName || 'Abundant Global Club'} width={120} height={40} className="h-10 w-auto" />
+          <SiteLogo variant="header" className="h-10 w-auto" />
         </Link>
 
         <div className="hidden md:flex items-center gap-6">

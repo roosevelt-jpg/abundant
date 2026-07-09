@@ -298,6 +298,15 @@ export interface ChatMessage {
 }
 
 // Settings type
+export interface BrandingConfig {
+  logoUrl?: string;
+  logoUrlDark?: string;
+  footerTagline?: string;
+  copyrightText?: string;
+  creditName?: string;
+  creditUrl?: string;
+}
+
 export interface Settings {
   id: string;
   siteName: string;
@@ -342,6 +351,7 @@ export interface Settings {
   };
   chatbot?: ChatbotConfig;
   aboutContent?: AboutPageContent;
+  branding?: BrandingConfig;
   updatedAt: number;
   updatedBy: string;
 }

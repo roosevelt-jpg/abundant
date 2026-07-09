@@ -10,10 +10,11 @@ import { Settings, HeroSlide, HeroSliderConfig } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams } from 'next/navigation';
 
-type Tab = 'general' | 'integrations' | 'hero' | 'social';
+type Tab = 'general' | 'branding' | 'integrations' | 'hero' | 'social';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'general', label: 'General' },
+  { id: 'branding', label: 'Branding' },
   { id: 'social', label: 'Contact & Social' },
   { id: 'integrations', label: 'Integrations' },
   { id: 'hero', label: 'Hero Slider' },
@@ -30,7 +31,7 @@ export default function AdminSettingsEditor() {
 
   useEffect(() => {
     const tab = searchParams.get('tab') as Tab | null;
-    if (tab && ['general', 'social', 'integrations', 'hero'].includes(tab)) {
+    if (tab && ['general', 'branding', 'social', 'integrations', 'hero'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -167,6 +168,48 @@ export default function AdminSettingsEditor() {
               </div>
             )}
 
+            {activeTab === 'branding' && (
+              <div className="p-6 bg-card rounded-xl border border-border space-y-4">
+                <h2 className="font-heading font-bold text-lg">Branding</h2>
+                <p className="text-sm text-muted-foreground">Logo, footer tagline, and copyright — used site-wide in header and footer</p>
+                <ImageUpload
+                  value={settings.branding?.logoUrl || ''}
+                  onChange={(v) => update({ branding: { ...settings.branding, logoUrl: v } })}
+                  folder="branding"
+                  label="Site Logo (light backgrounds)"
+                />
+                <ImageUpload
+                  value={settings.branding?.logoUrlDark || ''}
+                  onChange={(v) => update({ branding: { ...settings.branding, logoUrlDark: v } })}
+                  folder="branding"
+                  label="Site Logo (dark backgrounds, optional)"
+                />
+                <Field
+                  label="Footer Tagline"
+                  value={settings.branding?.footerTagline || ''}
+                  onChange={(v) => update({ branding: { ...settings.branding, footerTagline: v } })}
+                  multiline
+                />
+                <Field
+                  label="Copyright Line"
+                  value={settings.branding?.copyrightText || ''}
+                  onChange={(v) => update({ branding: { ...settings.branding, copyrightText: v } })}
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field
+                    label="Credit Name (e.g. FLYN.AI)"
+                    value={settings.branding?.creditName || ''}
+                    onChange={(v) => update({ branding: { ...settings.branding, creditName: v } })}
+                  />
+                  <Field
+                    label="Credit Link URL"
+                    value={settings.branding?.creditUrl || ''}
+                    onChange={(v) => update({ branding: { ...settings.branding, creditUrl: v } })}
+                  />
+                </div>
+              </div>
+            )}
+
             {activeTab === 'social' && (
               <div className="p-6 bg-card rounded-xl border border-border space-y-4">
                 <h2 className="font-heading font-bold text-lg">Social Links</h2>
@@ -264,6 +307,33 @@ export default function AdminSettingsEditor() {
                       update({ youtubeSection: { ...settings.youtubeSection!, title: v, enabled: settings.youtubeSection?.enabled ?? false } })
                     }
                   />
+                  <Field
+                    label="Section Description"
+                    value={settings.youtubeSection?.description || ''}
+                    onChange={(v) =>
+                      update({ youtubeSection: { ...settings.youtubeSection!, description: v, enabled: settings.youtubeSection?.enabled ?? false } })
+                    }
+                    multiline
+                  />
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Videos to Display</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={12}
+                      value={settings.youtubeSection?.videosPerPage ?? 3}
+                      onChange={(e) =>
+                        update({
+                          youtubeSection: {
+                            ...settings.youtubeSection!,
+                            videosPerPage: Math.max(1, Math.min(12, parseInt(e.target.value) || 3)),
+                            enabled: settings.youtubeSection?.enabled ?? false,
+                          },
+                        })
+                      }
+                      className="w-full px-4 py-2 bg-input border border-border rounded-lg"
+                    />
+                  </div>
                 </div>
               </div>
             )}

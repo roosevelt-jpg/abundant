@@ -3,14 +3,18 @@
 import { useState, useEffect } from 'react';
 import { getContactSubmissions, updateContactSubmission } from '@/lib/contact-service';
 import { ContactSubmission } from '@/lib/types';
-import { Mail, Archive, MessageSquare } from 'lucide-react';
+import { Mail, Archive } from 'lucide-react';
+import { useApiAuth } from '@/hooks/useApiAuth';
 
 export default function ContactSubmissionsPage() {
+  const { authFetch } = useApiAuth();
   const [submissions, setSubmissions] = useState<ContactSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'new' | 'responded' | 'archived'>('all');
   const [selected, setSelected] = useState<ContactSubmission | null>(null);
   const [reply, setReply] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadSubmissions();
@@ -32,18 +36,30 @@ export default function ContactSubmissionsPage() {
 
   const handleReply = async () => {
     if (!selected || !reply.trim()) return;
-    const replies = [
-      ...(selected.replies || []),
-      { message: reply, sentAt: Date.now(), sentBy: 'admin' },
-    ];
-    await updateContactSubmission(selected.id, { status: 'responded', replies });
-    setReply('');
-    setSelected(null);
-    await loadSubmissions();
+    try {
+      setSending(true);
+      setError(null);
+      const res = await authFetch('/api/admin/contact/reply', {
+        method: 'POST',
+        body: JSON.stringify({ submissionId: selected.id, message: reply }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to send reply');
+      }
+      setReply('');
+      setSelected(null);
+      await loadSubmissions();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send reply');
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleArchive = async (id: string) => {
     await updateContactSubmission(id, { status: 'archived' });
+    setSelected(null);
     await loadSubmissions();
   };
 
@@ -51,8 +67,14 @@ export default function ContactSubmissionsPage() {
     <div>
       <div className="mb-8">
         <h1 className="font-heading text-3xl font-bold mb-2">Contact Submissions</h1>
-        <p className="text-muted-foreground">View and respond to contact form messages</p>
+        <p className="text-muted-foreground">View and respond to contact form messages via email</p>
       </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
+          {error}
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2 mb-6">
         {(['all', 'new', 'responded', 'archived'] as const).map((f) => (
@@ -76,7 +98,7 @@ export default function ContactSubmissionsPage() {
             {filtered.map((sub) => (
               <button
                 key={sub.id}
-                onClick={() => setSelected(sub)}
+                onClick={() => { setSelected(sub); setError(null); }}
                 className={`w-full text-left p-4 bg-card rounded-xl border transition-colors ${
                   selected?.id === sub.id ? 'border-accent' : 'border-border hover:border-accent/50'
                 }`}
@@ -97,7 +119,7 @@ export default function ContactSubmissionsPage() {
           </div>
 
           {selected && (
-            <div className="p-6 bg-card rounded-xl border border-border sticky top-4">
+            <div className="p-6 bg-card rounded-xl border border-border lg:sticky lg:top-4">
               <h3 className="font-heading font-bold text-lg mb-4">{selected.subject}</h3>
               <div className="space-y-2 text-sm mb-4">
                 <p><strong>From:</strong> {selected.name} ({selected.email})</p>
@@ -107,7 +129,9 @@ export default function ContactSubmissionsPage() {
 
               {selected.replies?.map((r, i) => (
                 <div key={i} className="p-3 bg-background rounded-lg mb-2 text-sm">
-                  <p className="text-xs text-muted-foreground mb-1">{new Date(r.sentAt).toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    {new Date(r.sentAt).toLocaleString()} — {r.sentBy}
+                  </p>
                   {r.message}
                 </div>
               ))}
@@ -115,16 +139,17 @@ export default function ContactSubmissionsPage() {
               <textarea
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
-                placeholder="Type your reply..."
+                placeholder="Type your reply (sent via email)..."
                 rows={4}
                 className="w-full px-4 py-2 bg-input border border-border rounded-lg mb-3"
               />
               <div className="flex gap-2">
                 <button
                   onClick={handleReply}
-                  className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg text-sm font-semibold"
+                  disabled={sending || !reply.trim()}
+                  className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg text-sm font-semibold disabled:opacity-50"
                 >
-                  <Mail className="w-4 h-4" /> Send Reply
+                  <Mail className="w-4 h-4" /> {sending ? 'Sending...' : 'Send Reply'}
                 </button>
                 <button
                   onClick={() => handleArchive(selected.id)}

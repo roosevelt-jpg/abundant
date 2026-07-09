@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
+import { SiteLogo } from './site-logo';
 import { useSettings } from '@/hooks/useSettings';
 import { Page, FooterPlacement } from '@/lib/types';
 import { SocialLinks } from './social-links';
@@ -52,8 +52,10 @@ export const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           <div>
-            <Image src="/logo-text.png" alt={settings?.siteName || 'Abundant Global Club'} width={160} height={60} className="mb-4" />
-            <p className="text-sm text-gray-300">{settings?.description || 'A global network of success'}</p>
+            <SiteLogo variant="footer" className="mb-4" />
+            <p className="text-sm text-gray-300">
+              {settings?.branding?.footerTagline || settings?.description || 'A global network of success'}
+            </p>
           </div>
 
           {(['platform', 'company', 'connect'] as FooterPlacement[]).map((col) => (
@@ -75,7 +77,23 @@ export const Footer = () => {
         </div>
 
         <div className="border-t border-gray-700 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-gray-400">{t('footer.copyright', `© ${new Date().getFullYear()} Abundant Global Club. All rights reserved.`)}</p>
+          <p className="text-sm text-gray-400">
+            {settings?.branding?.copyrightText ||
+              t('footer.copyright', `© ${new Date().getFullYear()} Abundant Global Club. All rights reserved.`)}
+            {settings?.branding?.creditName && settings?.branding?.creditUrl && (
+              <>
+                {' '}
+                <a
+                  href={settings.branding.creditUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white transition-colors"
+                >
+                  Made with ❤️ by {settings.branding.creditName}
+                </a>
+              </>
+            )}
+          </p>
           {settings?.contactEmail && (
             <a href={`mailto:${settings.contactEmail}`} className="text-sm text-gray-400 hover:text-white">{settings.contactEmail}</a>
           )}

@@ -16,8 +16,10 @@ export async function GET() {
       return NextResponse.json([]);
     }
 
+    const count = Math.max(1, Math.min(12, settings.youtubeSection?.videosPerPage ?? 3));
+
     const response = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=3&order=date&type=video&key=${apiKey}`
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=${count}&order=date&type=video&key=${apiKey}`
     );
 
     if (!response.ok) return NextResponse.json([]);

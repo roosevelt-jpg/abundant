@@ -132,6 +132,13 @@ export function getDefaultSettings(): Settings {
       enabled: false,
       title: 'Featured Videos',
       description: 'Watch our latest content',
+      videosPerPage: 3,
+    },
+    branding: {
+      footerTagline: 'A global network of success',
+      copyrightText: `© ${new Date().getFullYear()} Abundant Global Club. All rights reserved.`,
+      creditName: 'FLYN.AI',
+      creditUrl: 'https://myflynai.com/',
     },
     chatbot: {
       enabled: false,
