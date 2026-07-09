@@ -17,11 +17,18 @@ function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
+    const timeout = setTimeout(() => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Image processing timed out'));
+    }, 30_000);
+
     img.onload = () => {
+      clearTimeout(timeout);
       URL.revokeObjectURL(url);
       resolve(img);
     };
     img.onerror = () => {
+      clearTimeout(timeout);
       URL.revokeObjectURL(url);
       reject(new Error('Failed to load image'));
     };

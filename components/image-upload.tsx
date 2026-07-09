@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { uploadImage } from '@/lib/storage-service';
 import { compressImage, formatFileSize } from '@/lib/compress-image';
+import { useAuth } from '@/context/AuthContext';
 
 interface ImageUploadProps {
   value: string;
@@ -26,6 +27,7 @@ export function ImageUpload({
   maxHeight = 1600,
   quality = 0.82,
 }: ImageUploadProps) {
+  const { currentUser } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
@@ -40,6 +42,11 @@ export function ImageUpload({
       setError('Image must be under 15MB');
       return;
     }
+    if (!currentUser) {
+      setError('Please sign in to upload images');
+      return;
+    }
+
     try {
       setUploading(true);
       setError('');
@@ -53,11 +60,13 @@ export function ImageUpload({
         setStatus('Uploading...');
       }
 
-      const url = await uploadImage(optimized, folder);
+      const idToken = await currentUser.getIdToken();
+      const url = await uploadImage(optimized, folder, idToken);
       onChange(url);
     } catch (err) {
       console.error('Upload failed:', err);
-      setError('Upload failed. Try a URL instead.');
+      const message = err instanceof Error ? err.message : 'Upload failed';
+      setError(message.includes('timed out') ? message : `${message}. Try a URL instead.`);
     } finally {
       setUploading(false);
       setStatus('');
