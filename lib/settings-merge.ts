@@ -329,17 +329,29 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
       slides: existing.heroSlider ?? [],
       speed: 5000,
       transition: 'fade' as const,
+      transitionDuration: 700,
       autoplay: true,
       loop: true,
       pauseOnHover: true,
+      showArrows: true,
+      showDots: true,
+      kenBurns: false,
+      mobileImageFirst: false,
+      contentAlignment: 'left' as const,
     };
 
     result.heroSliderConfig = {
       speed: updates.heroSliderConfig.speed ?? base.speed,
       transition: updates.heroSliderConfig.transition ?? base.transition,
+      transitionDuration: updates.heroSliderConfig.transitionDuration ?? base.transitionDuration,
       autoplay: updates.heroSliderConfig.autoplay ?? base.autoplay,
       loop: updates.heroSliderConfig.loop ?? base.loop,
       pauseOnHover: updates.heroSliderConfig.pauseOnHover ?? base.pauseOnHover,
+      showArrows: updates.heroSliderConfig.showArrows ?? base.showArrows,
+      showDots: updates.heroSliderConfig.showDots ?? base.showDots,
+      kenBurns: updates.heroSliderConfig.kenBurns ?? base.kenBurns,
+      mobileImageFirst: updates.heroSliderConfig.mobileImageFirst ?? base.mobileImageFirst,
+      contentAlignment: updates.heroSliderConfig.contentAlignment ?? base.contentAlignment,
       slides: keepExistingSlides ? base.slides : incomingSlides,
     };
     result.heroSlider = result.heroSliderConfig.slides;

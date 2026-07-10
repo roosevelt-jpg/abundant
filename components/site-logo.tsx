@@ -11,6 +11,10 @@ interface SiteLogoProps {
   variant?: 'header' | 'footer';
 }
 
+/** Blends away opaque dark PNG backgrounds on navy header/footer. */
+const DARK_SURFACE_LOGO_CLASS =
+  'block bg-transparent mix-blend-lighten [filter:none] [box-shadow:none] [text-shadow:none]';
+
 export function SiteLogo({ className = '', height, variant = 'header' }: SiteLogoProps) {
   const { settings, loading } = useSettings();
   const { resolvedTheme } = useTheme();
@@ -21,7 +25,6 @@ export function SiteLogo({ className = '', height, variant = 'header' }: SiteLog
     (resolvedTheme === 'dark' && settings.branding?.logoUrlDark) ||
     settings.branding?.logoUrl;
 
-  // Avoid flashing the hardcoded fallback while settings are still loading
   if (!customLogo && loading) {
     return (
       <span
@@ -33,16 +36,19 @@ export function SiteLogo({ className = '', height, variant = 'header' }: SiteLog
   }
 
   const logoUrl = customLogo || DEFAULT_LOGO;
+  const onDarkSurface = variant === 'header' || variant === 'footer';
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={logoUrl}
-      alt={settings.siteName || 'Abundant Global Club'}
-      className={className}
-      style={{ height: h, width: 'auto' }}
-      fetchPriority={variant === 'header' ? 'high' : 'auto'}
-      decoding="async"
-    />
+    <span className="inline-flex items-center leading-none">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={logoUrl}
+        alt={settings.siteName || 'Abundant Global Club'}
+        className={`${onDarkSurface ? DARK_SURFACE_LOGO_CLASS : 'block bg-transparent'} ${className}`}
+        style={{ height: h, width: 'auto' }}
+        fetchPriority={variant === 'header' ? 'high' : 'auto'}
+        decoding="async"
+      />
+    </span>
   );
 }

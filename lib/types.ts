@@ -350,13 +350,21 @@ export interface HeroSlide {
   order: number;
 }
 
+export type HeroTransition = 'fade' | 'slide' | 'slide-up' | 'slide-down' | 'zoom' | 'blur' | 'none';
+
 export interface HeroSliderConfig {
   slides: HeroSlide[];
   speed: number;
-  transition: 'fade' | 'slide' | 'none';
+  transition: HeroTransition;
+  transitionDuration: number;
   autoplay: boolean;
   loop: boolean;
   pauseOnHover: boolean;
+  showArrows: boolean;
+  showDots: boolean;
+  kenBurns: boolean;
+  mobileImageFirst: boolean;
+  contentAlignment: 'left' | 'center';
 }
 
 // Chatbot

@@ -6,6 +6,7 @@ import { ImageUpload } from '@/components/image-upload';
 import { useSettings } from '@/hooks/useSettings';
 import { LoadState } from '@/components/load-state';
 import { Settings, HeroSlide, HeroSliderConfig, HomePageContent, HomeFeatureCard } from '@/lib/types';
+import { DEFAULT_HERO_SLIDER_CONFIG, HERO_TRANSITION_OPTIONS } from '@/lib/hero-slider-utils';
 import { getDefaultHomePage } from '@/lib/home-page';
 import { HOME_FEATURE_ICONS } from '@/lib/home-icons';
 import { useApiAuth } from '@/hooks/useApiAuth';
@@ -149,12 +150,8 @@ export default function AdminSettingsEditor() {
     integrationBlockConfiguredWithHints(key, block ?? {}, secretHints[key]);
 
   const sliderConfig: HeroSliderConfig = settings?.heroSliderConfig ?? {
+    ...DEFAULT_HERO_SLIDER_CONFIG,
     slides: settings?.heroSlider ?? [],
-    speed: 5000,
-    transition: 'fade',
-    autoplay: true,
-    loop: true,
-    pauseOnHover: true,
   };
 
   const updateSliderConfig = (partial: Partial<HeroSliderConfig>) => {
@@ -259,6 +256,9 @@ export default function AdminSettingsEditor() {
               <div className="p-6 bg-card rounded-xl border border-border space-y-4">
                 <h2 className="font-heading font-bold text-lg">Branding</h2>
                 <p className="text-sm text-muted-foreground">Logo, footer tagline, and copyright — used site-wide in header and footer</p>
+                <p className="text-xs text-muted-foreground p-3 bg-muted/30 rounded-lg border border-border">
+                  For a clean look on the navy header, upload a <strong>PNG with a transparent background</strong>. If your logo has a dark box around it, re-export without a background — the site also applies a blend fix, but transparent PNGs look best.
+                </p>
                 <ImageUpload
                   value={settings.branding?.logoUrl || ''}
                   onChange={(v) => update({ branding: { ...settings.branding, logoUrl: v } })}
@@ -561,40 +561,87 @@ export default function AdminSettingsEditor() {
                   Each slide pairs <strong>left-side content</strong> (badge, title, description, buttons) with a <strong>right-side image</strong>. When the slider advances, both update together.
                 </div>
 
-                <div className="p-6 bg-card rounded-xl border border-border space-y-4">
+                <div className="p-6 bg-card rounded-xl border border-border space-y-5">
                   <h2 className="font-heading font-bold text-lg">Slider Behavior</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">Speed (ms)</label>
+                      <label className="block text-sm font-medium mb-2">Autoplay interval (ms)</label>
                       <input
                         type="number"
+                        min={2000}
+                        max={30000}
+                        step={500}
                         value={sliderConfig.speed}
                         onChange={(e) => updateSliderConfig({ speed: parseInt(e.target.value) || 5000 })}
                         className="w-full px-4 py-2 bg-input border border-border rounded-lg"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-2">Transition</label>
+                      <label className="block text-sm font-medium mb-2">Transition duration (ms)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={2000}
+                        step={50}
+                        value={sliderConfig.transitionDuration ?? 700}
+                        onChange={(e) => updateSliderConfig({ transitionDuration: parseInt(e.target.value) || 700 })}
+                        className="w-full px-4 py-2 bg-input border border-border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Content alignment</label>
                       <select
-                        value={sliderConfig.transition}
-                        onChange={(e) => updateSliderConfig({ transition: e.target.value as HeroSliderConfig['transition'] })}
+                        value={sliderConfig.contentAlignment ?? 'left'}
+                        onChange={(e) => updateSliderConfig({ contentAlignment: e.target.value as HeroSliderConfig['contentAlignment'] })}
                         className="w-full px-4 py-2 bg-input border border-border rounded-lg"
                       >
-                        <option value="fade">Fade</option>
-                        <option value="slide">Slide</option>
-                        <option value="none">None</option>
+                        <option value="left">Left</option>
+                        <option value="center">Center</option>
                       </select>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-4">
-                    {(['autoplay', 'loop', 'pauseOnHover'] as const).map((key) => (
-                      <label key={key} className="flex items-center gap-2 text-sm">
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Transition effect</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {HERO_TRANSITION_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => updateSliderConfig({ transition: opt.value })}
+                          className={`text-left p-3 rounded-lg border transition-colors ${
+                            sliderConfig.transition === opt.value
+                              ? 'border-accent bg-accent/10'
+                              : 'border-border hover:border-accent/40'
+                          }`}
+                        >
+                          <span className="block text-sm font-semibold">{opt.label}</span>
+                          <span className="block text-xs text-muted-foreground mt-0.5">{opt.description}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {(
+                      [
+                        ['autoplay', 'Autoplay'],
+                        ['loop', 'Loop slides'],
+                        ['pauseOnHover', 'Pause on hover'],
+                        ['showArrows', 'Show arrows'],
+                        ['showDots', 'Show dots'],
+                        ['kenBurns', 'Ken Burns zoom'],
+                        ['mobileImageFirst', 'Image first on mobile'],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <label key={key} className="flex items-center gap-2 text-sm p-2 rounded-lg border border-border/60 bg-muted/20">
                         <input
                           type="checkbox"
-                          checked={sliderConfig[key]}
+                          checked={sliderConfig[key] ?? DEFAULT_HERO_SLIDER_CONFIG[key]}
                           onChange={(e) => updateSliderConfig({ [key]: e.target.checked })}
                         />
-                        {key === 'pauseOnHover' ? 'Pause on Hover' : key.charAt(0).toUpperCase() + key.slice(1)}
+                        {label}
                       </label>
                     ))}
                   </div>
