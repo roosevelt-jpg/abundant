@@ -2,14 +2,24 @@ import { Settings } from '@/lib/types';
 
 /** Strip secrets before sending settings to the public client */
 export function sanitizePublicSettings(settings: Settings): Settings {
-  const { systemPrompt: _omit, ...publicChatbot } = settings.chatbot ?? {};
-
   return {
     ...settings,
     chatbot: settings.chatbot
       ? {
-          ...publicChatbot,
           enabled: settings.chatbot.enabled,
+          assistantName: settings.chatbot.assistantName,
+          greetingMessage: settings.chatbot.greetingMessage,
+          systemPrompt: '',
+          persona: settings.chatbot.persona,
+          knowledgeSnippets: settings.chatbot.knowledgeSnippets,
+          whatsappGroups: settings.chatbot.whatsappGroups,
+          resources: settings.chatbot.resources,
+          sharePhone: settings.chatbot.sharePhone,
+          shareEmail: settings.chatbot.shareEmail,
+          shareAddress: settings.chatbot.shareAddress,
+          collectLeadInfo: settings.chatbot.collectLeadInfo,
+          leadPromptMessage: settings.chatbot.leadPromptMessage,
+          updatedAt: settings.chatbot.updatedAt,
         }
       : undefined,
     integrations: {

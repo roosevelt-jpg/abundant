@@ -29,12 +29,13 @@ export function normalizeSettingsForStorage(settings: Settings): Settings {
     heroSliderConfig: resolveHeroSliderConfig(settings.heroSliderConfig, heroSlides),
     heroSlider: heroSlides,
     chatbot: {
-      ...defaults.chatbot,
+      ...defaults.chatbot!,
       ...settings.chatbot,
+      enabled: settings.chatbot?.enabled ?? defaults.chatbot!.enabled,
       knowledgeSnippets: settings.chatbot?.knowledgeSnippets ?? [],
       whatsappGroups: settings.chatbot?.whatsappGroups ?? [],
       resources: settings.chatbot?.resources ?? [],
       updatedAt: settings.chatbot?.updatedAt ?? Date.now(),
     },
-  });
+  }) as Settings;
 }
