@@ -120,7 +120,7 @@ export function getDefaultSettings(): Settings {
       gmailSmtp: { host: 'smtp.gmail.com', port: 587, configured: false },
       fcm: { enabled: false, configured: false },
     },
-    languages: ['en', 'ar'],
+    languages: ['en', 'ar', 'es', 'fr', 'de', 'it', 'pt', 'nl', 'pl', 'ru', 'tr', 'zh', 'ja', 'ko', 'hi', 'he', 'fa', 'ur'],
     defaultLanguage: 'en',
     theme: 'dark',
     heroSlider: [],

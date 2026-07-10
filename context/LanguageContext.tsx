@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
+import { isRtlLanguage } from '@/lib/languages';
 
 interface LanguageContextType {
   language: string;
@@ -114,14 +115,14 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
     const saved = localStorage.getItem('language') || 'en';
     setLanguageState(saved);
     document.documentElement.lang = saved;
-    document.documentElement.dir = saved === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.dir = isRtlLanguage(saved) ? 'rtl' : 'ltr';
   }, []);
 
   const setLanguage = (lang: string) => {
     setLanguageState(lang);
     localStorage.setItem('language', lang);
     document.documentElement.lang = lang;
-    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.dir = isRtlLanguage(lang) ? 'rtl' : 'ltr';
   };
 
   const t = (key: string, defaultValue: string = key) => {
