@@ -19,6 +19,10 @@ import {
 } from 'firebase/firestore';
 import { Event, EventRegistration } from '@/lib/types';
 
+function omitUndefined<T extends Record<string, unknown>>(obj: T): T {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
+}
+
 export const eventsRef = () => collection(db(), 'events');
 export const registrationsRef = () => collection(db(), 'eventRegistrations');
 
@@ -75,13 +79,13 @@ export async function getUpcomingEvents(count: number = 10): Promise<Event[]> {
 
 export async function createEvent(event: Omit<Event, 'id' | 'createdAt' | 'updatedAt' | 'registered'>): Promise<string> {
   try {
-    const newEvent: Event = {
+    const newEvent = omitUndefined({
       ...event,
       id: doc(eventsRef()).id,
       registered: 0,
       createdAt: Date.now(),
-      updatedAt: Date.now()
-    };
+      updatedAt: Date.now(),
+    } as Record<string, unknown>) as unknown as Event;
     await setDoc(doc(eventsRef(), newEvent.id), newEvent);
     return newEvent.id;
   } catch (error) {
@@ -92,10 +96,13 @@ export async function createEvent(event: Omit<Event, 'id' | 'createdAt' | 'updat
 
 export async function updateEvent(id: string, updates: Partial<Event>): Promise<void> {
   try {
-    await updateDoc(doc(eventsRef(), id), {
-      ...updates,
-      updatedAt: Date.now()
-    });
+    await updateDoc(
+      doc(eventsRef(), id),
+      omitUndefined({
+        ...updates,
+        updatedAt: Date.now(),
+      } as Record<string, unknown>)
+    );
   } catch (error) {
     console.error('Error updating event:', error);
     throw error;

@@ -9,6 +9,7 @@ import {
   deleteEvent,
   getEventRegistrations,
 } from '@/lib/events-service';
+import { deleteField } from 'firebase/firestore';
 import {
   getAllEventTags,
   seedDefaultEventTags,
@@ -128,15 +129,13 @@ export default function AdminEventsEditor() {
     const [hours, minutes] = form.time.split(':').map(Number);
     const dateMs = new Date(year, month - 1, day, hours, minutes).getTime();
 
-    const payload = {
+    const payload: Record<string, unknown> = {
       title: form.title,
       description: form.description,
       date: dateMs,
       location: form.location,
-      virtualLink: form.virtualLink || undefined,
       capacity: form.capacity,
       pricingType: form.pricingType,
-      price: form.pricingType === 'paid' ? form.price : undefined,
       currency: form.currency,
       category: form.category,
       isPublic: form.isPublic,
@@ -147,11 +146,23 @@ export default function AdminEventsEditor() {
       imageUrl: '',
     };
 
+    if (form.virtualLink.trim()) {
+      payload.virtualLink = form.virtualLink.trim();
+    } else if (editingId) {
+      payload.virtualLink = deleteField();
+    }
+
+    if (form.pricingType === 'paid') {
+      payload.price = form.price;
+    } else if (editingId) {
+      payload.price = deleteField();
+    }
+
     try {
       if (editingId) {
-        await updateEvent(editingId, payload);
+        await updateEvent(editingId, payload as Parameters<typeof updateEvent>[1]);
       } else {
-        await createEvent(payload);
+        await createEvent(payload as Parameters<typeof createEvent>[0]);
       }
       await loadAll();
       setShowModal(false);
