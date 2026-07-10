@@ -10,6 +10,7 @@ import { FirebaseBootstrap } from '@/components/firebase-bootstrap';
 import { FirebaseConfigSync } from '@/components/firebase-config-sync';
 import { ChatbotWidget } from '@/components/chatbot-widget';
 import { WhatsAppFloating } from '@/components/whatsapp-floating';
+import { PushNotificationProvider } from '@/components/push-notification-provider';
 
 export function AppProviders({
   children,
@@ -25,6 +26,7 @@ export function AppProviders({
         <FirebaseConfigSync />
         <ThemeProvider>
           <LanguageProvider>
+            <PushNotificationProvider />
             {children}
             <ChatbotWidget />
             <WhatsAppFloating />

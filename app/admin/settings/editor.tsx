@@ -290,6 +290,20 @@ export default function AdminSettingsEditor() {
                   Square PNG or WebP works best (32×32 to 256×256). Save settings after uploading for it to appear in browser tabs.
                 </p>
                 <Field
+                  label="Founder name (email signature)"
+                  value={settings.branding?.founderName || ''}
+                  onChange={(v) => update({ branding: { ...settings.branding, founderName: v } })}
+                />
+                <Field
+                  label="Founder welcome message"
+                  value={settings.branding?.founderWelcomeMessage || ''}
+                  onChange={(v) => update({ branding: { ...settings.branding, founderWelcomeMessage: v } })}
+                  multiline
+                />
+                <p className="text-xs text-muted-foreground">
+                  Sent after a new member verifies their email. Signed with the Founder name above. Includes a link to membership packages.
+                </p>
+                <Field
                   label="Footer Tagline"
                   value={settings.branding?.footerTagline || ''}
                   onChange={(v) => update({ branding: { ...settings.branding, footerTagline: v } })}

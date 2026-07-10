@@ -13,6 +13,12 @@ export async function POST(req: NextRequest) {
     }
 
     const messageId = await sendMemberBroadcast({ title, body, link });
+    if (!messageId) {
+      return NextResponse.json(
+        { error: 'FCM is not enabled. Turn it on under Settings → Integrations.' },
+        { status: 400 }
+      );
+    }
 
     await logActivityServer({
       type: 'create',

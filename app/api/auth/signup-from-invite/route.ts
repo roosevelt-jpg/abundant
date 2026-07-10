@@ -9,6 +9,8 @@ import {
 } from '@/lib/intake-service';
 import { stripUndefined } from '@/lib/strip-undefined';
 import { User } from '@/lib/types';
+import { sendBrandedEmailVerification } from '@/lib/auth-emails';
+import { notifyMembersActivity } from '@/lib/notify-activity';
 
 export async function GET(req: NextRequest) {
   try {
@@ -56,7 +58,7 @@ export async function POST(req: NextRequest) {
         email: invite.email,
         password: parsed.data.password,
         displayName: app?.fullName || invite.email,
-        emailVerified: true,
+        emailVerified: false,
       });
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code;
@@ -101,7 +103,19 @@ export async function POST(req: NextRequest) {
 
     await markInviteUsed(invite.id);
 
-    return NextResponse.json({ ok: true, email: invite.email });
+    try {
+      await sendBrandedEmailVerification(invite.email, app?.fullName || invite.email);
+    } catch (err) {
+      console.error('[signup-from-invite] verification email', err);
+    }
+
+    await notifyMembersActivity({
+      title: 'New member joined',
+      body: `${app?.fullName || invite.email} just created an account.`,
+      link: '/admin/members',
+    }).catch(() => undefined);
+
+    return NextResponse.json({ ok: true, email: invite.email, needsEmailVerification: true });
   } catch (error) {
     console.error('[api/auth/signup-from-invite POST]', error);
     return NextResponse.json({ error: 'Failed to create account' }, { status: 500 });

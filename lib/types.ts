@@ -55,6 +55,11 @@ export interface User {
   subscriptionId?: string;
   subscriptionStatus?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'none';
   planId?: string;
+  /** FCM device tokens for push notifications */
+  fcmTokens?: string[];
+  /** Set after branded welcome email is sent post-verification */
+  welcomeEmailSentAt?: number;
+  emailVerifiedAt?: number;
 }
 
 export interface MemberProfile {
@@ -818,6 +823,10 @@ export interface BrandingConfig {
   faviconUrl?: string;
   footerTagline?: string;
   copyrightText?: string;
+  /** Founder name used as email signature */
+  founderName?: string;
+  /** Warm welcome message after email verification */
+  founderWelcomeMessage?: string;
 }
 
 export interface Settings {

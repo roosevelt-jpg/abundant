@@ -9,6 +9,8 @@ import { Footer } from '@/components/footer';
 import Link from 'next/link';
 import { Lock, Mail } from 'lucide-react';
 import { PRIMARY_ADMIN_EMAIL } from '@/lib/constants';
+import { SocialAuthButtons } from '@/components/social-auth-buttons';
+import { getFirebaseServices } from '@/lib/firebase';
 
 function SignupInner() {
   const searchParams = useSearchParams();
@@ -23,6 +25,7 @@ function SignupInner() {
   const [loading, setLoading] = useState(false);
   const [validating, setValidating] = useState(true);
   const [valid, setValid] = useState(false);
+  const [verifySent, setVerifySent] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -45,6 +48,14 @@ function SignupInner() {
       .finally(() => setValidating(false));
   }, [token]);
 
+  const afterAccount = async (needsVerification: boolean) => {
+    if (needsVerification) {
+      setVerifySent(true);
+      return;
+    }
+    router.push('/onboarding');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -62,7 +73,7 @@ function SignupInner() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to create account');
       await signIn(email, password);
-      router.push('/onboarding');
+      await afterAccount(!!data.needsEmailVerification);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign up');
     } finally {
@@ -88,12 +99,23 @@ function SignupInner() {
                 Apply for membership →
               </Link>
             </div>
+          ) : verifySent ? (
+            <div className="text-center space-y-4">
+              <h1 className="font-heading text-2xl font-bold">Check your email</h1>
+              <p className="text-sm text-muted-foreground">
+                We sent a branded verification link to <strong>{email}</strong>. After you verify, you&apos;ll
+                receive a welcome message from our Founder.
+              </p>
+              <Link href="/dashboard" className="inline-block text-sm font-semibold text-accent">
+                Continue to dashboard →
+              </Link>
+            </div>
           ) : (
             <>
               <div className="text-center mb-8">
                 <h1 className="font-heading text-3xl font-bold mb-2">Create your account</h1>
                 <p className="text-muted-foreground text-sm">
-                  Welcome{fullName ? `, ${fullName}` : ''}. Set a password to join Abundant.
+                  Welcome{fullName ? `, ${fullName}` : ''}. Set a password or continue with Google / Facebook.
                 </p>
               </div>
               {error && (
@@ -145,6 +167,34 @@ function SignupInner() {
                   {loading ? 'Creating account…' : 'Create account'}
                 </button>
               </form>
+
+              <SocialAuthButtons
+                mode="signup"
+                inviteToken={token}
+                disabled={loading}
+                onError={setError}
+                onSuccess={async (_cred, meta) => {
+                  setLoading(true);
+                  try {
+                    const { auth } = getFirebaseServices();
+                    if (auth?.currentUser) {
+                      const idToken = await auth.currentUser.getIdToken();
+                      await fetch('/api/auth/session', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ idToken }),
+                      });
+                    }
+                    if (meta?.emailVerified) {
+                      router.push('/onboarding');
+                    } else {
+                      setVerifySent(true);
+                    }
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              />
             </>
           )}
         </div>

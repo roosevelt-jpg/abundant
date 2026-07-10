@@ -99,6 +99,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
             
             setUserData(userData);
+
+            // After email verification (or OAuth), send founder welcome once
+            if (user.emailVerified && !userData.welcomeEmailSentAt) {
+              user.getIdToken(true).then((idToken) =>
+                fetch('/api/auth/ensure-welcome', {
+                  method: 'POST',
+                  headers: { Authorization: `Bearer ${idToken}` },
+                }).catch(() => undefined)
+              );
+            }
           } else {
             // Invite-gated: only auto-provision the primary admin account
             const isAdmin = user.email?.toLowerCase() === PRIMARY_ADMIN_EMAIL.toLowerCase();

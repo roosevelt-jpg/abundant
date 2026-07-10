@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { isWithinFreePeriod } from '@/lib/constants';
 import { isAdminRole } from '@/lib/auth-utils';
 import { useLanguage } from '@/context/LanguageContext';
+import { EmailVerifyBanner } from '@/components/email-verify-banner';
 
 export default function Dashboard() {
   const { currentUser, userData, loading } = useAuth();
@@ -106,6 +107,7 @@ export default function Dashboard() {
       
       <main className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <EmailVerifyBanner />
           {showUpgradeBanner && (
             <div className="mb-8 p-4 bg-accent/10 border border-accent/20 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>

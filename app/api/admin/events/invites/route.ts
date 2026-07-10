@@ -5,6 +5,7 @@ import { sendEventInviteEmail } from '@/lib/gmail-smtp';
 import { generateEventCode } from '@/lib/event-checkin';
 import { formatEventWhen, getEventPath } from '@/lib/event-utils';
 import { Event, EventInvite } from '@/lib/types';
+import { notifyMembersActivity } from '@/lib/notify-activity';
 
 export async function GET(req: NextRequest) {
   try {
@@ -99,6 +100,14 @@ export async function POST(req: NextRequest) {
           error: err instanceof Error ? err.message : 'Failed to send',
         });
       }
+    }
+
+    if (created.length > 0) {
+      await notifyMembersActivity({
+        title: 'Event invites sent',
+        body: `${created.length} invite(s) sent for “${event.title}”.`,
+        link: getEventPath(event),
+      });
     }
 
     return NextResponse.json({

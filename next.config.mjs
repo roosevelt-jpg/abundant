@@ -12,6 +12,9 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
+  async rewrites() {
+    return [{ source: '/firebase-messaging-sw.js', destination: '/api/fcm-sw' }];
+  },
   headers: async () => {
     return [
       {

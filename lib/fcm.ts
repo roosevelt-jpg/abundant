@@ -12,9 +12,9 @@ async function isFcmEnabled(): Promise<boolean> {
 export async function sendPushToToken(
   token: string,
   notification: { title: string; body: string; link?: string }
-): Promise<string> {
+): Promise<string | null> {
   if (!(await isFcmEnabled())) {
-    throw new Error('FCM is not enabled. Configure it in Settings → Integrations.');
+    return null;
   }
 
   const messaging = getMessaging(getAdminApp());
@@ -30,9 +30,9 @@ export async function sendPushToToken(
 export async function sendPushToTopic(
   topic: string,
   notification: { title: string; body: string; link?: string }
-): Promise<string> {
+): Promise<string | null> {
   if (!(await isFcmEnabled())) {
-    throw new Error('FCM is not enabled. Configure it in Settings → Integrations.');
+    return null;
   }
 
   const messaging = getMessaging(getAdminApp());
@@ -50,6 +50,6 @@ export async function sendMemberBroadcast(notification: {
   title: string;
   body: string;
   link?: string;
-}): Promise<string> {
+}): Promise<string | null> {
   return sendPushToTopic('members', notification);
 }

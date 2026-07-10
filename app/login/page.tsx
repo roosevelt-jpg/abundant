@@ -11,6 +11,7 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import Link from 'next/link';
 import { Mail, Lock } from 'lucide-react';
+import { SocialAuthButtons } from '@/components/social-auth-buttons';
 
 export default function Login() {
   return (
@@ -28,6 +29,18 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { signIn } = useAuth();
+
+  const syncAfterSocial = async () => {
+    const { auth } = getFirebaseServices();
+    if (auth?.currentUser) {
+      const idToken = await auth.currentUser.getIdToken();
+      await fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,6 +120,11 @@ function LoginContent() {
                   required
                 />
               </div>
+              <div className="mt-2 text-right">
+                <Link href="/forgot-password" className="text-xs text-accent hover:text-accent/80 font-medium">
+                  Forgot password?
+                </Link>
+              </div>
             </div>
 
             <button
@@ -118,10 +136,41 @@ function LoginContent() {
             </button>
           </form>
 
+          <SocialAuthButtons
+            mode="login"
+            disabled={loading}
+            onError={setError}
+            onSuccess={async () => {
+              setLoading(true);
+              try {
+                const { auth, db } = getFirebaseServices();
+                await syncAfterSocial();
+                const redirect = searchParams.get('redirect');
+                if (redirect?.startsWith('/admin')) {
+                  router.push(redirect);
+                  return;
+                }
+                if (auth?.currentUser && db) {
+                  const snap = await getDoc(doc(db, 'users', auth.currentUser.uid));
+                  const role = snap.data()?.role;
+                  if (isAdminRole(role) || auth.currentUser.email === 'admin@abundantglobalclub.com') {
+                    router.push('/admin/dashboard');
+                    return;
+                  }
+                }
+                router.push('/dashboard');
+              } catch (err) {
+                setError(err instanceof Error ? err.message : 'Sign-in failed');
+              } finally {
+                setLoading(false);
+              }
+            }}
+          />
+
           <div className="mt-6 text-center text-sm">
             Don't have an account?{' '}
-            <Link href="/signup" className="text-accent hover:text-accent/80 font-semibold">
-              Create one
+            <Link href="/apply" className="text-accent hover:text-accent/80 font-semibold">
+              Apply for membership
             </Link>
           </div>
         </div>

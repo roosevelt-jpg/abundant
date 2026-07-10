@@ -8,6 +8,7 @@ import {
 } from '@/lib/intake-service';
 import { sendMembershipInviteEmail, sendApplicationRejectedEmail } from '@/lib/intake-emails';
 import { logActivityServer } from '@/lib/activity-log';
+import { notifyMembersActivity } from '@/lib/notify-activity';
 
 export async function GET(req: NextRequest) {
   try {
@@ -69,6 +70,11 @@ export async function POST(req: NextRequest) {
         actorId: admin.uid,
         actorName: admin.email,
       });
+      await notifyMembersActivity({
+        title: 'Application update',
+        body: `An application was reviewed (${app.fullName}).`,
+        link: '/admin/applications',
+      });
       return NextResponse.json({ ok: true });
     }
 
@@ -101,6 +107,12 @@ export async function POST(req: NextRequest) {
       description: `Application approved + invite sent: ${app.email}`,
       actorId: admin.uid,
       actorName: admin.email,
+    });
+
+    await notifyMembersActivity({
+      title: 'New member invited',
+      body: `${app.fullName} was approved and invited to join.`,
+      link: '/admin/applications',
     });
 
     return NextResponse.json({ ok: true, inviteId: invite.id });

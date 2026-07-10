@@ -153,6 +153,9 @@ export function getDefaultSettings(): Settings {
     branding: {
       footerTagline: 'A global network of success',
       copyrightText: `© ${new Date().getFullYear()} Abundant Global Club. All rights reserved.`,
+      founderName: 'The Founder',
+      founderWelcomeMessage:
+        'Welcome to Abundant Global Club. I am truly glad you are here. This community was built for ambitious people who lift each other up — and I cannot wait to see what you build with us.',
     },
     chatbot: {
       enabled: false,

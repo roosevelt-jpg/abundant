@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/api-auth';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { canUserRegisterForEvent } from '@/lib/event-eligibility';
-import { getEffectiveTicketTiers, isEventFull } from '@/lib/event-utils';
+import { getEffectiveTicketTiers, isEventFull, getEventPath } from '@/lib/event-utils';
 import { generateEventCode } from '@/lib/event-checkin';
 import { Event, User } from '@/lib/types';
+import { notifyUserPush, notifyMembersActivity } from '@/lib/notify-activity';
 
 export async function POST(req: NextRequest) {
   try {
@@ -140,6 +141,20 @@ export async function POST(req: NextRequest) {
     } else if (status === 'waitlisted') {
       await eventDoc.ref.update({ waitlistCount: (event.waitlistCount || 0) + 1 });
     }
+
+    const path = getEventPath(event);
+    await notifyUserPush(user.uid, {
+      title: status === 'waitlisted' ? 'Added to waitlist' : 'Registration confirmed',
+      body: status === 'waitlisted'
+        ? `You're on the waitlist for ${event.title}.`
+        : `You're registered for ${event.title}.`,
+      link: path,
+    });
+    await notifyMembersActivity({
+      title: 'Event registration',
+      body: `A member registered for ${event.title}.`,
+      link: path,
+    });
 
     return NextResponse.json({
       registrationId: regRef.id,
