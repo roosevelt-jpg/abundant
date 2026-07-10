@@ -11,6 +11,7 @@ import { HOME_FEATURE_ICONS } from '@/lib/home-icons';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toAdminSettingsResponse, integrationBlockConfiguredWithHints, type AdminSettingsResponse, type IntegrationSecretHints } from '@/lib/settings-merge';
+import { formatStoredSecrets } from '@/lib/integration-secret-labels';
 
 type Tab = 'general' | 'branding' | 'integrations' | 'hero' | 'homepage' | 'social';
 
@@ -34,6 +35,8 @@ export default function AdminSettingsEditor() {
   const [successMessage, setSuccessMessage] = useState('');
   const [dirty, setDirty] = useState(false);
   const [secretHints, setSecretHints] = useState<IntegrationSecretHints>({});
+
+  const storedSecretLines = formatStoredSecrets(secretHints);
 
   const applyAdminResponse = (data: AdminSettingsResponse) => {
     const { _secretHints, ...settingsData } = data;
@@ -101,9 +104,12 @@ export default function AdminSettingsEditor() {
       applyAdminResponse(data);
       setDirty(false);
       retry();
+      const savedSecrets = formatStoredSecrets(data._secretHints ?? {});
       setSuccessMessage(
         activeTab === 'integrations'
-          ? 'Integrations saved. Secret fields are hidden for security but remain stored — leave blank to keep existing values.'
+          ? savedSecrets.length > 0
+            ? `Integrations saved. ${savedSecrets.length} secret credential(s) stored securely: ${savedSecrets.join(', ')}. Fields stay empty for security — look for the green "Stored" label.`
+            : 'Integrations saved. Enter secret keys and save again if any integration still shows "Not configured".'
           : 'Settings saved successfully!'
       );
       setTimeout(() => setSuccessMessage(''), 4000);
@@ -304,8 +310,23 @@ export default function AdminSettingsEditor() {
 
             {activeTab === 'integrations' && (
               <div className="space-y-6">
+                {storedSecretLines.length > 0 && (
+                  <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg space-y-2">
+                    <p className="text-sm font-semibold text-green-700 dark:text-green-400">
+                      ✓ Your credentials are saved in Firestore
+                    </p>
+                    <ul className="text-sm text-green-800/90 dark:text-green-300/90 list-disc list-inside space-y-0.5">
+                      {storedSecretLines.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                    <p className="text-xs text-muted-foreground pt-1">
+                      Secret fields intentionally stay empty after save. A green <strong>Stored</strong> label on a field means the value is saved — you do not need to re-enter it.
+                    </p>
+                  </div>
+                )}
                 <p className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg border border-border">
-                  Credentials are saved securely on the server. Secret fields (API keys, passwords, private keys) are hidden after save for security — a green &quot;Stored&quot; label means your value is saved. Leave secret fields blank to keep the current stored value.
+                  Enter each credential once and click Save. Secret fields will clear after saving — that is normal. Non-secret fields (Project ID, Auth Domain, etc.) stay visible.
                 </p>
                 <IntegrationBlock
                   title="Firebase Admin SDK"
@@ -756,7 +777,7 @@ function Field({
   const safeValue = value ?? '';
   const isSecret = type === 'password';
   const showStored = isSecret && stored && !safeValue;
-  const placeholder = showStored ? '••••••••  (stored — leave blank to keep)' : undefined;
+  const placeholder = showStored ? 'Leave blank — already saved' : undefined;
 
   return (
     <div>
@@ -816,7 +837,7 @@ function IntegrationBlock({
         {fields.map((f) => {
           const isSecret = f.type === 'password';
           const isStored = isSecret && !!secretHints?.[f.key] && !String(values[f.key] || '').trim();
-          const placeholder = isStored ? '••••••••  (stored — leave blank to keep)' : undefined;
+          const placeholder = isStored ? 'Leave blank — already saved' : undefined;
           return (
           <div key={f.key}>
             <div className="flex items-center justify-between gap-2 mb-2">

@@ -8,6 +8,8 @@ import { ThemeProvider } from '@/context/ThemeContext'
 import { LanguageProvider } from '@/context/LanguageContext'
 import { ChatbotWidget } from '@/components/chatbot-widget';
 import { WhatsAppFloating } from '@/components/whatsapp-floating';
+import { FirebaseBootstrap } from '@/components/firebase-bootstrap';
+import { FirebaseConfigSync } from '@/components/firebase-config-sync';
 import { getPublicSettings } from '@/lib/settings-server'
 import { getDefaultSettings } from '@/lib/db-service'
 
@@ -61,8 +63,10 @@ export default async function RootLayout({
         ) : null}
       </head>
       <body className="font-sans antialiased bg-background text-foreground">
+        <FirebaseBootstrap initialSettings={initialSettings} />
         <AuthProvider>
           <SettingsProvider initialSettings={initialSettings}>
+            <FirebaseConfigSync />
             <ThemeProvider>
               <LanguageProvider>
                 {children}

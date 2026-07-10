@@ -2,27 +2,33 @@ import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
-
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
+import { Settings } from '@/lib/types';
+import { resolveFirebaseClientConfig } from '@/lib/firebase-client-config';
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
+let activeConfigKey = '';
 
-function initializeFirebase() {
+function configKey(config: ReturnType<typeof resolveFirebaseClientConfig>): string {
+  if (!config) return '';
+  return `${config.apiKey}|${config.projectId}|${config.appId}`;
+}
+
+function initializeFirebaseWithConfig(fromSettings?: Settings['integrations']['firebaseClient']) {
   if (typeof window === 'undefined') return;
+
+  const config = resolveFirebaseClientConfig(fromSettings);
+  if (!config) return;
+
+  const nextKey = configKey(config);
+  if (app && activeConfigKey === nextKey) return;
   if (app) return;
 
   try {
-    app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
+    app = getApps().length > 0 ? getApps()[0] : initializeApp(config);
+    activeConfigKey = nextKey;
     auth = getAuth(app);
     db = getFirestore(app);
     storage = getStorage(app);
@@ -35,19 +41,20 @@ function initializeFirebase() {
   }
 }
 
-if (typeof window !== 'undefined') {
-  initializeFirebase();
+/** Called from SettingsProvider sync — prefers Firestore config over env. */
+export function applyFirebaseClientConfig(fromSettings?: Settings['integrations']['firebaseClient']) {
+  initializeFirebaseWithConfig(fromSettings);
 }
 
 export function getFirebaseServices() {
   if (typeof window !== 'undefined' && !app) {
-    initializeFirebase();
+    initializeFirebaseWithConfig();
   }
   return { app, auth, db, storage };
 }
 
 export function getDb(): Firestore {
-  if (!db) initializeFirebase();
+  if (!db) initializeFirebaseWithConfig();
   if (!db) throw new Error('Firestore is not available');
   return db;
 }
