@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminAuth } from '@/lib/firebase-admin';
-import { cookies } from 'next/headers';
 
 const SESSION_COOKIE = '__session';
 const MAX_AGE = 60 * 60 * 24 * 5; // 5 days
+
+function sessionCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    maxAge: MAX_AGE,
+    path: '/',
+  };
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,16 +22,11 @@ export async function POST(req: NextRequest) {
     }
 
     const decoded = await getAdminAuth().verifyIdToken(idToken);
-    const cookieStore = await cookies();
-    cookieStore.set(SESSION_COOKIE, idToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: MAX_AGE,
-      path: '/',
-    });
-
-    return NextResponse.json({ success: true, uid: decoded.uid });
+    const res = NextResponse.json({ success: true, uid: decoded.uid });
+    // Must set on the response object — cookies() from next/headers often does not
+    // attach Set-Cookie correctly for this route in production.
+    res.cookies.set(SESSION_COOKIE, idToken, sessionCookieOptions());
+    return res;
   } catch (error) {
     console.error('[api/auth/session]', error);
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
@@ -30,7 +34,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE() {
-  const cookieStore = await cookies();
-  cookieStore.delete(SESSION_COOKIE);
-  return NextResponse.json({ success: true });
+  const res = NextResponse.json({ success: true });
+  res.cookies.set(SESSION_COOKIE, '', { ...sessionCookieOptions(), maxAge: 0 });
+  return res;
 }

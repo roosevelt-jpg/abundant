@@ -59,7 +59,7 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const { signIn, currentUser, userData, loading: authLoading } = useAuth();
 
-  // Already signed in (Firebase) but stuck on /login — sync session cookie then leave
+  // Already signed in (Firebase) but stuck on /login — leave for admin/member area
   useEffect(() => {
     if (authLoading || !currentUser || loading) return;
     let cancelled = false;
@@ -78,16 +78,25 @@ function LoginContent() {
           currentUser.email || userData?.email || '',
           redirect
         );
-        router.replace(path);
+        // Full navigation avoids client-router + middleware bounce loops
+        window.location.assign(path);
       } catch (err) {
         console.error(err);
-        if (!cancelled) setRedirecting(false);
+        if (!cancelled) {
+          // Still try to leave login if Firebase session exists
+          const redirect = searchParams.get('redirect');
+          const fallback =
+            redirect?.startsWith('/admin') || isPrimaryAdmin(currentUser.email)
+              ? '/admin/dashboard'
+              : '/dashboard';
+          window.location.assign(fallback);
+        }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [authLoading, currentUser, userData, loading, router, searchParams]);
+  }, [authLoading, currentUser, userData, loading, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,10 +107,9 @@ function LoginContent() {
       await signIn(email, password);
       const redirect = searchParams.get('redirect');
       const path = await resolvePostLoginPath(email, redirect);
-      router.replace(path);
+      window.location.assign(path);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to sign in');
-    } finally {
       setLoading(false);
     }
   };
@@ -200,7 +208,7 @@ function LoginContent() {
                 }
                 const redirect = searchParams.get('redirect');
                 const path = await resolvePostLoginPath(auth?.currentUser?.email || '', redirect);
-                router.replace(path);
+                window.location.assign(path);
               } catch (err) {
                 setError(err instanceof Error ? err.message : 'Sign-in failed');
               } finally {

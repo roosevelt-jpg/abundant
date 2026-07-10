@@ -1,21 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const SESSION_COOKIE = '__session';
-
-export function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
-
-  if (!pathname.startsWith('/admin')) {
-    return NextResponse.next();
-  }
-
-  const session = req.cookies.get(SESSION_COOKIE)?.value;
-  if (!session) {
-    const loginUrl = new URL('/login', req.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
+/**
+ * Admin routes are protected client-side by AdminProtectedLayout (Firebase Auth).
+ * A soft session cookie is still set for convenience, but we no longer hard-block
+ * here — a missing cookie was bouncing signed-in users back to /login forever.
+ */
+export function middleware(_req: NextRequest) {
   return NextResponse.next();
 }
 
