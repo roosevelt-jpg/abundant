@@ -128,60 +128,95 @@ export function ChatbotWidget() {
     if (!collectLead || leadComplete) startChatSession();
   };
 
-  const inputCls = 'w-full px-3 py-1.5 text-sm bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent';
+  const inputCls =
+    'w-full px-2.5 py-1.5 text-xs bg-input border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent';
 
   return (
     <>
       {open && (
-        <div className="fixed z-[100] bottom-[calc(max(1.25rem,env(safe-area-inset-bottom))+4rem)] right-4 sm:right-6 w-[min(calc(100vw-2rem),380px)] max-h-[min(520px,75dvh)] bg-card border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-accent/5">
+        <div className="fixed z-[100] bottom-[calc(max(1rem,env(safe-area-inset-bottom))+3.5rem)] right-3 sm:right-5 w-[min(calc(100vw-1.5rem),300px)] max-h-[min(420px,70dvh)] bg-card border border-border rounded-lg shadow-2xl flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-accent/5">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
-                <MessageCircle className="w-4 h-4 text-accent" />
+              <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+                <MessageCircle className="w-3.5 h-3.5 text-accent" />
               </div>
-              <h3 className="font-heading font-bold text-sm truncate">{assistantName}</h3>
+              <h3 className="font-heading font-bold text-xs truncate">{assistantName}</h3>
             </div>
-            <button onClick={() => setOpen(false)} className="p-1 hover:bg-accent/10 rounded flex-shrink-0" aria-label="Close chat">
-              <X className="w-5 h-5" />
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="p-0.5 hover:bg-accent/10 rounded flex-shrink-0"
+              aria-label="Close chat"
+            >
+              <X className="w-4 h-4" />
             </button>
           </div>
 
           {collectLead && !leadComplete ? (
-            <div className="flex-1 overflow-y-auto p-4">
-              <p className="text-sm text-muted-foreground mb-4">
+            <div className="p-3 overflow-y-auto">
+              <p className="text-xs text-muted-foreground mb-2.5 leading-snug">
                 {chatbot.leadPromptMessage ||
-                  "Welcome! Before we chat, please share your contact details so our team can follow up with you."}
+                  'Welcome! Please share your contact details so our team can follow up with you.'}
               </p>
-              {leadError && <p className="text-xs text-destructive mb-3">{leadError}</p>}
-              <form onSubmit={submitLead} className="space-y-3">
+              {leadError && <p className="text-[11px] text-destructive mb-2">{leadError}</p>}
+              <form onSubmit={submitLead} className="space-y-2">
                 <div>
-                  <label className="block text-xs font-medium mb-1">Name (optional)</label>
-                  <input value={leadForm.name} onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })} className={inputCls} placeholder="Your name" />
+                  <label className="block text-[11px] font-medium mb-0.5">Name (optional)</label>
+                  <input
+                    value={leadForm.name}
+                    onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })}
+                    className={inputCls}
+                    placeholder="Your name"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">Email</label>
-                  <input type="email" required value={leadForm.email} onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })} className={inputCls} placeholder="you@example.com" />
+                  <label className="block text-[11px] font-medium mb-0.5">Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={leadForm.email}
+                    onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })}
+                    className={inputCls}
+                    placeholder="you@example.com"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">Phone</label>
-                  <input type="tel" required value={leadForm.phone} onChange={(e) => setLeadForm({ ...leadForm, phone: e.target.value })} className={inputCls} placeholder="+1 234 567 8900" />
+                  <label className="block text-[11px] font-medium mb-0.5">Phone</label>
+                  <input
+                    type="tel"
+                    required
+                    value={leadForm.phone}
+                    onChange={(e) => setLeadForm({ ...leadForm, phone: e.target.value })}
+                    className={inputCls}
+                    placeholder="+1 234 567 8900"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">Address</label>
-                  <input required value={leadForm.address} onChange={(e) => setLeadForm({ ...leadForm, address: e.target.value })} className={inputCls} placeholder="Street, City, Country" />
+                  <label className="block text-[11px] font-medium mb-0.5">Address</label>
+                  <input
+                    required
+                    value={leadForm.address}
+                    onChange={(e) => setLeadForm({ ...leadForm, address: e.target.value })}
+                    className={inputCls}
+                    placeholder="Street, City, Country"
+                  />
                 </div>
-                <button type="submit" disabled={leadSaving} className="w-full py-2 text-sm bg-accent text-accent-foreground rounded-lg font-semibold disabled:opacity-50">
+                <button
+                  type="submit"
+                  disabled={leadSaving}
+                  className="w-full py-1.5 text-xs bg-accent text-accent-foreground rounded-md font-semibold disabled:opacity-50"
+                >
                   {leadSaving ? 'Saving...' : 'Start Chat'}
                 </button>
               </form>
             </div>
           ) : (
             <>
-              <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-[180px]">
+              <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5 min-h-[140px] max-h-[280px]">
                 {messages.map((m, i) => (
                   <div
                     key={i}
-                    className={`text-sm p-2.5 rounded-lg max-w-[90%] whitespace-pre-wrap ${
+                    className={`text-xs p-2 rounded-md max-w-[90%] whitespace-pre-wrap ${
                       m.role === 'user'
                         ? 'bg-accent text-accent-foreground ml-auto'
                         : 'bg-background border border-border'
@@ -191,23 +226,28 @@ export function ChatbotWidget() {
                   </div>
                 ))}
                 {loading && (
-                  <div className="text-xs text-muted-foreground flex items-center gap-2">
+                  <div className="text-[11px] text-muted-foreground flex items-center gap-2">
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                     Typing...
                   </div>
                 )}
                 <div ref={bottomRef} />
               </div>
-              <div className="p-2.5 border-t border-border flex gap-2">
+              <div className="p-2 border-t border-border flex gap-1.5">
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
                   placeholder="Ask about events, membership..."
-                  className="flex-1 px-3 py-2 bg-input border border-border rounded-lg text-sm"
+                  className="flex-1 px-2.5 py-1.5 bg-input border border-border rounded-md text-xs"
                 />
-                <button onClick={send} disabled={loading || !input.trim()} className="p-2 bg-accent text-accent-foreground rounded-lg disabled:opacity-50 flex-shrink-0">
-                  <Send className="w-4 h-4" />
+                <button
+                  type="button"
+                  onClick={send}
+                  disabled={loading || !input.trim()}
+                  className="p-1.5 bg-accent text-accent-foreground rounded-md disabled:opacity-50 flex-shrink-0"
+                >
+                  <Send className="w-3.5 h-3.5" />
                 </button>
               </div>
             </>
@@ -218,11 +258,11 @@ export function ChatbotWidget() {
       <button
         type="button"
         onClick={() => (open ? setOpen(false) : handleOpen())}
-        className="fixed z-[100] bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 sm:right-6 bg-accent text-accent-foreground rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform ring-2 ring-accent/30 animate-in fade-in zoom-in duration-300"
+        className="fixed z-[100] bottom-[max(1rem,env(safe-area-inset-bottom))] right-3 sm:right-5 bg-accent text-accent-foreground rounded-full w-12 h-12 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform ring-2 ring-accent/30"
         aria-label={open ? 'Close chat' : `Open ${assistantName}`}
         aria-expanded={open}
       >
-        {open ? <X className="w-6 h-6" /> : <Bot className="w-6 h-6" />}
+        {open ? <X className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
       </button>
     </>
   );
