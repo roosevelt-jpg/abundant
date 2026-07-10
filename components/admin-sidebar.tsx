@@ -79,8 +79,8 @@ export const AdminSidebar = () => {
       <div className="p-4 sm:p-6 border-b border-border">
         <Link href="/admin/dashboard" className="flex items-center gap-2 min-w-0">
           <SiteLogo
-            variant="header"
-            className={`object-contain object-left ${isCollapsed ? 'h-8' : 'h-10'} w-auto max-w-full`}
+            variant="admin"
+            className={`object-contain object-left ${isCollapsed ? 'h-8' : 'h-9'} w-auto max-w-full`}
           />
         </Link>
       </div>
