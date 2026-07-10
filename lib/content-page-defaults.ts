@@ -1,9 +1,13 @@
 import {
   CareersPageContent,
+  JobPosting,
   LegalPagesContent,
+  PressItem,
   PressPageContent,
+  ResourceItem,
   ResourcesPageContent,
 } from '@/lib/types';
+import { PRIMARY_ADMIN_EMAIL } from '@/lib/constants';
 
 export function getDefaultResourcesPage(): ResourcesPageContent {
   return {
@@ -26,7 +30,7 @@ export function getDefaultResourcesPage(): ResourcesPageContent {
     lockedCtaLink: '/membership',
     submitCta: {
       title: 'Have something worth sharing with the network?',
-      body: 'Members can submit resources for consideration. Contact the team to pitch a playbook, briefing, or template.',
+      body: `Members can submit resources for consideration. Contact the team at ${PRIMARY_ADMIN_EMAIL} to pitch a playbook, briefing, or template.`,
       buttonText: 'Contact the team',
       buttonLink: '/contact',
     },
@@ -43,8 +47,7 @@ export function getDefaultCareersPage(): CareersPageContent {
         'Abundant Global Club is a small team running a global community. Open roles below — or send us a general application.',
     },
     generalTitle: "Don't see the right role?",
-    generalBody:
-      "We're always open to hearing from exceptional people who believe in what Abundant is building. Send us your background and where you'd add value.",
+    generalBody: `We're always open to hearing from exceptional people who believe in what Abundant is building. Send us your background and where you'd add value, or email ${PRIMARY_ADMIN_EMAIL}.`,
     generalCtaText: 'Send general application →',
     updatedAt: Date.now(),
   };
@@ -70,7 +73,7 @@ export function getDefaultPressPage(): PressPageContent {
       'Abundant Global Club is a members-only network connecting principals, founders, and investors across cities worldwide. Founded to foster meaningful introductions, the club runs curated events, introductions, and a private resource library for its global membership.',
     mediaContactTitle: 'For press inquiries',
     mediaContactBody: 'Reach our media team directly.',
-    mediaContactEmail: 'press@abundant.club',
+    mediaContactEmail: PRIMARY_ADMIN_EMAIL,
     updatedAt: Date.now(),
   };
 }
@@ -83,7 +86,7 @@ export function getDefaultLegalPages(): LegalPagesContent {
       effectiveDate: now,
       intro:
         'This policy explains how Abundant Global Club collects, uses, and protects your information. Please have legal counsel review and finalize this language before publishing.',
-      contactEmail: 'privacy@abundant.club',
+      contactEmail: PRIMARY_ADMIN_EMAIL,
       sections: [
         {
           id: 'p-overview',
@@ -112,7 +115,7 @@ export function getDefaultLegalPages(): LegalPagesContent {
         {
           id: 'p-rights',
           title: 'Your rights',
-          body: 'Depending on your location, you may have rights to access, correct, or delete your personal data. To exercise these rights, contact us using the email below.',
+          body: `Depending on your location, you may have rights to access, correct, or delete your personal data. To exercise these rights, contact us at ${PRIMARY_ADMIN_EMAIL}.`,
           order: 4,
         },
         {
@@ -130,7 +133,7 @@ export function getDefaultLegalPages(): LegalPagesContent {
         {
           id: 'p-contact',
           title: 'Contact',
-          body: 'For privacy-related questions or requests, contact our privacy team at the email listed on this page.',
+          body: `For privacy-related questions or requests, contact us at ${PRIMARY_ADMIN_EMAIL}.`,
           order: 7,
         },
       ],
@@ -141,7 +144,7 @@ export function getDefaultLegalPages(): LegalPagesContent {
       effectiveDate: now,
       intro:
         'These Terms govern your use of Abundant Global Club. Please have legal counsel review and finalize this language before publishing.',
-      contactEmail: 'hello@abundant.club',
+      contactEmail: PRIMARY_ADMIN_EMAIL,
       sections: [
         {
           id: 't-accept',
@@ -200,7 +203,7 @@ export function getDefaultLegalPages(): LegalPagesContent {
         {
           id: 't-contact',
           title: 'Contact',
-          body: 'Questions about these Terms can be sent to the contact email listed on this page.',
+          body: `Questions about these Terms can be sent to ${PRIMARY_ADMIN_EMAIL}.`,
           order: 9,
         },
       ],
@@ -208,4 +211,146 @@ export function getDefaultLegalPages(): LegalPagesContent {
     },
     updatedAt: Date.now(),
   };
+}
+
+export function getSeedResources(): Omit<ResourceItem, 'id' | 'createdAt' | 'updatedAt'>[] {
+  return [
+    {
+      title: 'Raising Your First Fund',
+      category: 'Playbooks',
+      summary: 'A practical playbook for first-time fundraisers in the Abundant network.',
+      body: `This playbook walks through positioning, outreach, and diligence for raising your first fund.\n\nQuestions? Email ${PRIMARY_ADMIN_EMAIL}.`,
+      access: 'members',
+      format: 'article',
+      readTime: '12 min read',
+      order: 0,
+      isPublished: true,
+    },
+    {
+      title: 'Q3 Global Markets Briefing',
+      category: 'Market Briefings',
+      summary: 'A concise briefing on global market themes relevant to members and guests.',
+      body: `An overview of macro themes, regional opportunities, and discussion prompts for the quarter.\n\nFor briefing requests, contact ${PRIMARY_ADMIN_EMAIL}.`,
+      access: 'public',
+      format: 'article',
+      readTime: '8 min read',
+      order: 1,
+      isPublished: true,
+    },
+    {
+      title: 'Inside the Dubai Chapter Launch',
+      category: 'Event Recaps',
+      summary: 'Photo essay and highlights from the Dubai chapter launch.',
+      body: `A look inside the Dubai Chapter Launch — moments, conversations, and what comes next for the chapter.\n\nMedia inquiries: ${PRIMARY_ADMIN_EMAIL}.`,
+      access: 'public',
+      format: 'photo_essay',
+      readTime: 'Photo essay',
+      order: 2,
+      isPublished: true,
+    },
+    {
+      title: 'Introduction Request Template',
+      category: 'Templates',
+      summary: 'A ready-to-use template for requesting warm introductions within the network.',
+      body: `Use this template when requesting an introduction through Abundant.\n\nMembers-only download. Need help? Email ${PRIMARY_ADMIN_EMAIL}.`,
+      access: 'members',
+      format: 'download',
+      readTime: 'Download (PDF)',
+      downloadUrl: '',
+      order: 3,
+      isPublished: true,
+    },
+  ];
+}
+
+export function getSeedJobs(): Omit<JobPosting, 'id' | 'createdAt' | 'updatedAt'>[] {
+  return [
+    {
+      title: 'Chapter Lead — Dubai',
+      department: 'Community',
+      location: 'Dubai',
+      employmentType: 'full-time',
+      about:
+        'Lead the Dubai chapter experience — hosting gatherings, welcoming members, and representing Abundant on the ground. You will work closely with the global team to grow a high-trust local community.',
+      responsibilities: [
+        'Plan and host chapter events and member gatherings',
+        'Welcome new members and support local introductions',
+        'Partner with the global team on programming and standards',
+        'Represent Abundant with professionalism in the Dubai market',
+      ],
+      requirements: [
+        'Deep roots in the Dubai professional community',
+        'Excellent hosting and relationship skills',
+        'Comfortable representing a premium membership brand',
+        `Willingness to collaborate remotely with the core team (${PRIMARY_ADMIN_EMAIL})`,
+      ],
+      order: 0,
+      isPublished: true,
+    },
+    {
+      title: 'Member Experience Manager',
+      department: 'Operations',
+      location: 'Remote',
+      employmentType: 'full-time',
+      about:
+        'Own the member journey from onboarding through ongoing engagement. You will make sure every member feels known, supported, and connected to the right people and resources.',
+      responsibilities: [
+        'Run onboarding and member check-ins',
+        'Coordinate introductions and resource access',
+        'Gather feedback and improve the member experience',
+        'Support event logistics and follow-up',
+      ],
+      requirements: [
+        'Experience in community, customer success, or operations',
+        'Strong written communication',
+        'Highly organized and detail-oriented',
+        'Aligned with Abundant’s values of trust and discretion',
+      ],
+      order: 1,
+      isPublished: true,
+    },
+    {
+      title: 'Partnerships & Events',
+      department: 'Growth',
+      location: 'Remote',
+      employmentType: 'contract',
+      about:
+        'Help expand Abundant’s partnerships and event footprint. Ideal for someone who thrives on relationship-building and high-quality programming.',
+      responsibilities: [
+        'Source and manage partnership opportunities',
+        'Support event concepting and guest experience',
+        'Coordinate with hosts, venues, and partners',
+        'Report outcomes and recommendations to the team',
+      ],
+      requirements: [
+        'Background in partnerships, events, or business development',
+        'Comfortable working across time zones',
+        'Polished communication with senior stakeholders',
+        `Apply via the form or email ${PRIMARY_ADMIN_EMAIL}`,
+      ],
+      order: 2,
+      isPublished: true,
+    },
+  ];
+}
+
+export function getSeedPressItems(): Omit<PressItem, 'id' | 'createdAt' | 'updatedAt'>[] {
+  return [
+    {
+      outletName: 'Gulf Business',
+      headline: 'Abundant Global Club expands its Dubai chapter',
+      dateLabel: 'March 2026',
+      url: 'https://abundantglobalclub.com',
+      order: 0,
+      isPublished: true,
+    },
+    {
+      outletName: 'Arabian Business',
+      headline: 'Inside the private network connecting founders and investors',
+      dateLabel: 'January 2026',
+      url: 'https://abundantglobalclub.com',
+      order: 1,
+      isPublished: true,
+    },
+  ];
 }

@@ -6,6 +6,13 @@ import { normalizeSettingsForStorage } from '@/lib/settings-normalize';
 import { Settings } from '@/lib/types';
 
 export async function getAdminSettings(): Promise<Settings> {
+  const { ensureSeededContent } = await import('@/lib/seed-content');
+  try {
+    await ensureSeededContent();
+  } catch (err) {
+    console.error('[getAdminSettings] seed', err);
+  }
+
   const defaults = getDefaultSettings();
   const snap = await getAdminDb().collection('settings').doc(SETTINGS_DOC_ID).get();
   if (!snap.exists) return defaults;

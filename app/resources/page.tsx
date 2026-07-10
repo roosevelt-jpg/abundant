@@ -99,11 +99,7 @@ export default function ResourcesPage() {
 
         <ContentCtaBlock
           title={page.submitCta.title}
-          body={
-            settings?.contactEmail
-              ? `${page.submitCta.body} Contact ${settings.contactEmail}.`
-              : page.submitCta.body
-          }
+          body={page.submitCta.body}
           buttonText={page.submitCta.buttonText}
           buttonLink={page.submitCta.buttonLink}
         />

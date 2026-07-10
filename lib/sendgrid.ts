@@ -19,7 +19,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
     throw new Error('SendGrid is not configured. Add your API key in Settings → Integrations.');
   }
 
-  const fromEmail = options.fromEmail || settings?.contactEmail || 'hello@abundant.club';
+  const fromEmail = options.fromEmail || settings?.contactEmail || 'admin@abundantglobalclub.com';
   const fromName = options.fromName || settings?.siteName || 'Abundant Global Club';
 
   const response = await fetch('https://api.sendgrid.com/v3/mail/send', {

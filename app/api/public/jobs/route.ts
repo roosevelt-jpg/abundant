@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { JobPosting } from '@/lib/types';
+import { ensureSeededContent } from '@/lib/seed-content';
 
 export async function GET() {
   try {
+    await ensureSeededContent();
     const snap = await getAdminDb().collection('jobPostings').where('isPublished', '==', true).get();
     const items = snap.docs
       .map((d) => d.data() as JobPosting)

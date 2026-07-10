@@ -100,7 +100,7 @@ export function getDefaultSettings(): Settings {
     id: SETTINGS_DOC_ID,
     siteName: 'Abundant Global Club',
     description: 'A Global Network of Success',
-    contactEmail: 'hello@abundant.club',
+    contactEmail: 'admin@abundantglobalclub.com',
     phone: '+1 (234) 567-890',
     address: 'Dubai, UAE',
     socialLinks: {
