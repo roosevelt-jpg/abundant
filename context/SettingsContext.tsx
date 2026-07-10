@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { Settings } from '@/lib/types';
 import { getDefaultSettings } from '@/lib/db-service';
 import { AuthContext } from '@/context/AuthContext';
-import { canAccessAdmin } from '@/lib/auth-utils';
+import { canAccessAdmin, isPrimaryAdmin } from '@/lib/auth-utils';
 
 interface UseSettingsResult {
   settings: Settings;
@@ -60,14 +60,14 @@ export function SettingsProvider({
         setLoading(true);
         setError(null);
 
-        const isAdmin = canAccessAdmin(userData);
+        const isAdmin = canAccessAdmin(userData) || isPrimaryAdmin(currentUser?.email);
 
         if (isAdmin) {
           if (!currentUser) {
             if (!cancelled) setLoading(false);
             return;
           }
-          const token = await currentUser.getIdToken();
+          const token = await currentUser.getIdToken(true);
           const adminSettings = await fetchAdminSettings(token);
           if (!cancelled) {
             setSettings(adminSettings);

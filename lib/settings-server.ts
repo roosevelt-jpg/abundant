@@ -53,5 +53,19 @@ export async function saveAdminSettings(updates: Partial<Settings>, updatedBy: s
 
 export async function getPublicSettings(): Promise<Settings> {
   const { sanitizePublicSettings } = await import('@/lib/public-settings');
-  return sanitizePublicSettings(await getAdminSettings());
+  try {
+    const defaults = getDefaultSettings();
+    const snap = await getAdminDb().collection('settings').doc(SETTINGS_DOC_ID).get();
+    if (!snap.exists) return sanitizePublicSettings(defaults);
+    const filled = fillBlankSettingsFromDefaults(snap.data() as Settings, defaults);
+    return sanitizePublicSettings(
+      normalizeSettingsForStorage({
+        ...filled,
+        integrations: normalizeStoredIntegrations(filled.integrations),
+      })
+    );
+  } catch (err) {
+    console.error('[getPublicSettings]', err);
+    return sanitizePublicSettings(getDefaultSettings());
+  }
 }

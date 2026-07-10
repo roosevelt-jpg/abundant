@@ -15,14 +15,41 @@ function getAdminClientEmail(): string | undefined {
   return process.env.FIREBASE_ADMIN_CLIENT_EMAIL || process.env.FIREBASE_CLIENT_EMAIL;
 }
 
+/**
+ * Vercel/env UIs often store private keys with literal \n, wrapped quotes, or real newlines.
+ */
+function normalizePrivateKey(raw: string): string {
+  let key = raw.trim();
+  // Strip wrapping quotes from dashboard paste
+  if (
+    (key.startsWith('"') && key.endsWith('"')) ||
+    (key.startsWith("'") && key.endsWith("'"))
+  ) {
+    key = key.slice(1, -1);
+  }
+  // Convert escaped newlines (and double-escaped) to real PEM line breaks
+  key = key.replace(/\\n/g, '\n');
+  // Some stores use literal "\n" twice
+  if (!key.includes('-----BEGIN') && key.includes('BEGIN')) {
+    // corrupted — leave as-is for clearer cert() error
+  }
+  return key;
+}
+
 function getPrivateKey(): string {
-  const key = process.env.FIREBASE_ADMIN_PRIVATE_KEY || process.env.FIREBASE_PRIVATE_KEY;
-  if (!key) {
+  const raw = process.env.FIREBASE_ADMIN_PRIVATE_KEY || process.env.FIREBASE_PRIVATE_KEY;
+  if (!raw) {
     throw new Error(
       'Firebase Admin private key is not configured. Set FIREBASE_ADMIN_PRIVATE_KEY or FIREBASE_PRIVATE_KEY.'
     );
   }
-  return key.replace(/\\n/g, '\n');
+  const key = normalizePrivateKey(raw);
+  if (!key.includes('BEGIN PRIVATE KEY') && !key.includes('BEGIN RSA PRIVATE KEY')) {
+    throw new Error(
+      'Firebase Admin private key looks invalid (missing BEGIN PRIVATE KEY). Re-paste the full PEM in Vercel env vars.'
+    );
+  }
+  return key;
 }
 
 export function getAdminApp(): App {
@@ -41,17 +68,22 @@ export function getAdminApp(): App {
     );
   }
 
-  adminApp = initializeApp({
-    credential: cert({
-      projectId,
-      clientEmail,
-      privateKey: getPrivateKey(),
-    }),
-    storageBucket:
-      process.env.FIREBASE_STORAGE_BUCKET ||
-      process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
-      `${projectId}.firebasestorage.app`,
-  });
+  try {
+    adminApp = initializeApp({
+      credential: cert({
+        projectId,
+        clientEmail,
+        privateKey: getPrivateKey(),
+      }),
+      storageBucket:
+        process.env.FIREBASE_STORAGE_BUCKET ||
+        process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
+        `${projectId}.firebasestorage.app`,
+    });
+  } catch (err) {
+    console.error('[firebase-admin] initializeApp failed:', err);
+    throw err;
+  }
 
   return adminApp;
 }
