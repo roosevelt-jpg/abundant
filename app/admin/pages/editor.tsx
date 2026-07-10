@@ -5,6 +5,11 @@ import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
 import { getAllPages, updatePage, deletePage } from '@/lib/db-service';
 import { Page } from '@/lib/types';
 import { useApiAuth } from '@/hooks/useApiAuth';
+import {
+  isPlaceholderPageSlug,
+  resolvePageSlug,
+  slugifyPageTitle,
+} from '@/lib/page-slug';
 
 export default function AdminPagesEditor() {
   const { authFetch } = useApiAuth();
@@ -12,6 +17,7 @@ export default function AdminPagesEditor() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<Partial<Page>>({});
+  const [slugLocked, setSlugLocked] = useState(false);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +29,27 @@ export default function AdminPagesEditor() {
     try {
       setLoading(true);
       setError(null);
-      const allPages = await getAllPages();
+      let allPages = await getAllPages();
+
+      // Migrate legacy page-{timestamp} URLs to title-based slugs
+      const taken = allPages.map((p) => p.slug);
+      let migrated = false;
+      for (const page of allPages) {
+        if (!isPlaceholderPageSlug(page.slug)) continue;
+        const nextSlug = resolvePageSlug({
+          title: page.title || 'page',
+          existingSlugs: taken.filter((s) => s !== page.slug),
+          forceFromTitle: true,
+        });
+        if (nextSlug !== page.slug) {
+          await updatePage(page.id, { slug: nextSlug });
+          const idx = taken.indexOf(page.slug);
+          if (idx >= 0) taken[idx] = nextSlug;
+          migrated = true;
+        }
+      }
+      if (migrated) allPages = await getAllPages();
+
       setPages(allPages);
     } catch (err) {
       console.error('Error loading pages:', err);
@@ -35,17 +61,50 @@ export default function AdminPagesEditor() {
 
   const handleEdit = (page: Page) => {
     setEditingId(page.id);
-    setEditingData(page);
+    const data = { ...page };
+    if (isPlaceholderPageSlug(page.slug)) {
+      data.slug = resolvePageSlug({
+        title: page.title,
+        existingSlugs: pages.filter((p) => p.id !== page.id).map((p) => p.slug),
+        forceFromTitle: true,
+      });
+      setSlugLocked(false);
+    } else {
+      setSlugLocked(true);
+    }
+    setEditingData(data);
+  };
+
+  const handleTitleChange = (title: string) => {
+    const next: Partial<Page> = { ...editingData, title };
+    if (!slugLocked || isPlaceholderPageSlug(editingData.slug)) {
+      next.slug = slugifyPageTitle(title);
+      setSlugLocked(false);
+    }
+    setEditingData(next);
+  };
+
+  const handleSlugChange = (slug: string) => {
+    setSlugLocked(true);
+    setEditingData({ ...editingData, slug: slugifyPageTitle(slug) || slug });
   };
 
   const handleSave = async () => {
     if (!editingId) return;
     try {
       setError(null);
-      await updatePage(editingId, editingData);
+      const title = (editingData.title || '').trim() || 'Untitled';
+      const slug = resolvePageSlug({
+        title,
+        slug: editingData.slug,
+        existingSlugs: pages.filter((p) => p.id !== editingId).map((p) => p.slug),
+        forceFromTitle: isPlaceholderPageSlug(editingData.slug),
+      });
+      await updatePage(editingId, { ...editingData, title, slug });
       await loadPages();
       setEditingId(null);
       setEditingData({});
+      setSlugLocked(false);
     } catch (err) {
       console.error('Error saving page:', err);
       setError('Failed to save page');
@@ -70,7 +129,7 @@ export default function AdminPagesEditor() {
       setError(null);
       const res = await authFetch('/api/admin/pages', {
         method: 'POST',
-        body: JSON.stringify({ title: 'New Page', slug: `page-${Date.now()}` }),
+        body: JSON.stringify({ title: 'New Page' }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -80,6 +139,7 @@ export default function AdminPagesEditor() {
       await loadPages();
       setEditingId(page.id);
       setEditingData(page);
+      setSlugLocked(false);
     } catch (err) {
       console.error('Error creating page:', err);
       setError(err instanceof Error ? err.message : 'Failed to create page');
@@ -97,7 +157,7 @@ export default function AdminPagesEditor() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="font-heading text-3xl font-bold mb-2">Pages Management</h1>
-          <p className="text-muted-foreground">Create and manage website pages with live Firestore sync</p>
+          <p className="text-muted-foreground">Create and manage website pages — URLs use the page name</p>
         </div>
         <button
           onClick={handleCreate}
@@ -125,18 +185,25 @@ export default function AdminPagesEditor() {
                   <input
                     type="text"
                     value={editingData.title || ''}
-                    onChange={(e) => setEditingData({ ...editingData, title: e.target.value })}
+                    onChange={(e) => handleTitleChange(e.target.value)}
                     className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Slug</label>
-                  <input
-                    type="text"
-                    value={editingData.slug || ''}
-                    onChange={(e) => setEditingData({ ...editingData, slug: e.target.value })}
-                    className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                  />
+                  <label className="block text-sm font-medium mb-2">URL slug</label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">/</span>
+                    <input
+                      type="text"
+                      value={editingData.slug || ''}
+                      onChange={(e) => handleSlugChange(e.target.value)}
+                      className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent font-mono text-sm"
+                      placeholder="privacy-policy"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Auto-fills from the title. Edit to customize; reserved routes get a unique suffix.
+                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Content</label>
@@ -152,7 +219,12 @@ export default function AdminPagesEditor() {
                     <label className="block text-sm font-medium mb-2">Footer Placement</label>
                     <select
                       value={editingData.footerPlacement || 'none'}
-                      onChange={(e) => setEditingData({ ...editingData, footerPlacement: e.target.value as Page['footerPlacement'] })}
+                      onChange={(e) =>
+                        setEditingData({
+                          ...editingData,
+                          footerPlacement: e.target.value as Page['footerPlacement'],
+                        })
+                      }
                       className="w-full px-4 py-2 bg-input border border-border rounded-lg"
                     >
                       <option value="none">None</option>
@@ -165,7 +237,12 @@ export default function AdminPagesEditor() {
                     <label className="block text-sm font-medium mb-2">Navbar Placement</label>
                     <select
                       value={editingData.navPlacement || 'none'}
-                      onChange={(e) => setEditingData({ ...editingData, navPlacement: e.target.value as Page['navPlacement'] })}
+                      onChange={(e) =>
+                        setEditingData({
+                          ...editingData,
+                          navPlacement: e.target.value as Page['navPlacement'],
+                        })
+                      }
                       className="w-full px-4 py-2 bg-input border border-border rounded-lg"
                     >
                       <option value="none">None</option>
@@ -199,6 +276,7 @@ export default function AdminPagesEditor() {
                     onClick={() => {
                       setEditingId(null);
                       setEditingData({});
+                      setSlugLocked(false);
                     }}
                     className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive rounded-lg font-semibold hover:bg-destructive/20 transition-colors"
                   >
@@ -211,14 +289,16 @@ export default function AdminPagesEditor() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <h3 className="font-heading font-bold text-lg mb-2">{page.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">/{page.slug}</p>
+                  <p className="text-sm text-muted-foreground mb-2 font-mono">/{page.slug}</p>
                   <p className="text-sm text-muted-foreground line-clamp-2">{page.content}</p>
                   <div className="mt-3">
-                    <span className={`inline-block px-2 py-1 text-xs font-semibold rounded ${
-                      page.isPublished
-                        ? 'bg-green-500/10 text-green-600'
-                        : 'bg-yellow-500/10 text-yellow-600'
-                    }`}>
+                    <span
+                      className={`inline-block px-2 py-1 text-xs font-semibold rounded ${
+                        page.isPublished
+                          ? 'bg-green-500/10 text-green-600'
+                          : 'bg-yellow-500/10 text-yellow-600'
+                      }`}
+                    >
                       {page.isPublished ? 'Published' : 'Draft'}
                     </span>
                   </div>

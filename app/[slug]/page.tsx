@@ -10,7 +10,9 @@ import { CustomFormRenderer } from '@/components/custom-form-renderer';
 import { Page, CustomForm } from '@/lib/types';
 import Link from 'next/link';
 
-const RESERVED = ['admin', 'api', 'dashboard', 'login', 'signup', 'events', 'about', 'contact', 'membership', 'pricing', 'faq', 'join-admin', 'resources', 'careers', 'press', 'privacy', 'terms'];
+import { RESERVED_PAGE_SLUGS } from '@/lib/page-slug';
+
+const RESERVED = Array.from(RESERVED_PAGE_SLUGS);
 
 export default function DynamicPage() {
   const params = useParams();

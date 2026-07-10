@@ -3,6 +3,7 @@ import { getAdminDb } from '@/lib/firebase-admin';
 import { requireAdmin } from '@/lib/api-auth';
 import { logActivityServer } from '@/lib/activity-log';
 import { Page } from '@/lib/types';
+import { resolvePageSlug } from '@/lib/page-slug';
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,11 +13,20 @@ export async function POST(req: NextRequest) {
     const db = getAdminDb();
     const ref = db.collection('pages').doc();
     const now = Date.now();
+    const title = String(body.title || 'New Page').trim() || 'New Page';
+
+    const existingSnap = await db.collection('pages').get();
+    const existingSlugs = existingSnap.docs.map((d) => (d.data() as Page).slug).filter(Boolean);
 
     const page: Page = {
       id: ref.id,
-      title: body.title || 'New Page',
-      slug: body.slug || `page-${ref.id.slice(0, 6)}`,
+      title,
+      slug: resolvePageSlug({
+        title,
+        slug: body.slug,
+        existingSlugs,
+        forceFromTitle: !body.slug || String(body.slug).startsWith('page-'),
+      }),
       content: body.content || '',
       isPublished: false,
       footerPlacement: body.footerPlacement || 'none',
