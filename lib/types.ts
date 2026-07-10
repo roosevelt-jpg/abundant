@@ -113,32 +113,105 @@ export interface EventDiscountCode {
   createdAt: number;
 }
 
+export type EventFormat = 'in-person' | 'virtual' | 'hybrid';
+export type EventRegistrationMode = 'open' | 'approval' | 'invite_only';
+
+export interface EventTicketTier {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  capacity?: number;
+  sold?: number;
+  /** Hide from public after this time */
+  salesEndAt?: number;
+}
+
+export interface EventHost {
+  id: string;
+  name: string;
+  title?: string;
+  bio?: string;
+  imageUrl?: string;
+  email?: string;
+  website?: string;
+  linkedin?: string;
+  twitter?: string;
+  instagram?: string;
+}
+
+export type EventRecurrenceFrequency = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly';
+
+export interface EventRecurrence {
+  frequency: EventRecurrenceFrequency;
+  /** Number of occurrences including the first (2–52) */
+  count: number;
+  /** Optional end date (ms) — stops earlier if reached before count */
+  until?: number;
+}
+
+export interface EventInvite {
+  id: string;
+  eventId: string;
+  email: string;
+  code: string;
+  status: 'pending' | 'accepted' | 'expired' | 'revoked';
+  invitedBy: string;
+  invitedAt: number;
+  acceptedAt?: number;
+  acceptedBy?: string;
+  expiresAt: number;
+}
+
 export interface Event {
   id: string;
   title: string;
+  /** URL-friendly unique slug for /events/[slug] */
+  slug?: string;
   description: string;
+  /** Short teaser shown on cards (Luma-style subtitle) */
+  subtitle?: string;
   date: number;
   endDate?: number;
+  timezone?: string;
   location: string;
+  locationPlaceId?: string;
   virtualLink?: string;
+  format?: EventFormat;
   capacity?: number;
   registered: number;
+  waitlistCount?: number;
+  enableWaitlist?: boolean;
   imageUrl?: string;
   category: 'networking' | 'workshop' | 'webinar' | 'conference' | 'other';
   status: 'draft' | 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
   isPublic: boolean;
+  /** How guests join: open RSVP, host approval, or invite-only */
+  registrationMode?: EventRegistrationMode;
   pricingType: 'free' | 'paid';
   price?: number;
   currency?: string;
   stripePriceId?: string;
+  /** Multiple ticket types (Luma-style). If empty, use pricingType/price. */
+  ticketTiers?: EventTicketTier[];
   audienceGender?: EventAudienceGender;
   tags?: string[];
+  hosts?: EventHost[];
   createdBy: string;
   createdAt: number;
   updatedAt: number;
   attendees?: string[];
-  agenda?: { time: string; title: string; speaker?: string }[];
-  speakers?: { name: string; title?: string; bio?: string; image?: string }[];
+  agenda?: { id?: string; time: string; title: string; speaker?: string }[];
+  speakers?: { id?: string; name: string; title?: string; bio?: string; image?: string }[];
+  /** Show guest list on public page */
+  showGuestList?: boolean;
+  /** Require approval before confirmed (alias of registrationMode === 'approval') */
+  requireApproval?: boolean;
+  /** Shared id across recurring occurrences */
+  seriesId?: string;
+  /** Index within series (0 = first) */
+  seriesIndex?: number;
+  recurrence?: EventRecurrence;
 }
 
 export interface EventRegistration {
@@ -148,13 +221,18 @@ export interface EventRegistration {
   userName: string;
   userEmail: string;
   registeredAt: number;
-  status: 'registered' | 'attended' | 'cancelled';
+  status: 'registered' | 'attended' | 'cancelled' | 'waitlisted' | 'pending' | 'declined';
   paymentStatus?: 'free' | 'paid' | 'pending' | 'failed';
   stripePaymentId?: string;
   amountPaid?: number;
   discountCode?: string;
   discountAmount?: number;
   checkInTime?: number;
+  /** Short code / token encoded in guest QR for door check-in */
+  checkInCode?: string;
+  ticketTierId?: string;
+  ticketTierName?: string;
+  inviteCode?: string;
 }
 
 // Membership plans

@@ -83,3 +83,35 @@ This code expires on ${expiry} and can only be used once.`,
     `,
   });
 }
+
+export async function sendEventInviteEmail(options: {
+  to: string;
+  eventTitle: string;
+  eventWhen: string;
+  eventLocation: string;
+  inviteCode: string;
+  eventUrl: string;
+  hostName?: string;
+}): Promise<void> {
+  const host = options.hostName || 'Abundant Global Club';
+  await sendGmailEmail({
+    to: options.to,
+    subject: `You're invited: ${options.eventTitle}`,
+    text: `${host} invited you to ${options.eventTitle}.
+
+When: ${options.eventWhen}
+Where: ${options.eventLocation}
+
+Your invite code: ${options.inviteCode}
+
+RSVP here: ${options.eventUrl}
+
+Use this invite code when registering if the event is invite-only.`,
+    html: `
+      <p><strong>${host}</strong> invited you to <strong>${options.eventTitle}</strong>.</p>
+      <p><strong>When:</strong> ${options.eventWhen}<br/><strong>Where:</strong> ${options.eventLocation}</p>
+      <p>Your invite code: <strong style="font-size:18px;letter-spacing:2px">${options.inviteCode}</strong></p>
+      <p><a href="${options.eventUrl}" style="display:inline-block;padding:10px 18px;background:#B8973A;color:#fff;text-decoration:none;border-radius:8px;font-weight:600">View event & RSVP</a></p>
+    `,
+  });
+}

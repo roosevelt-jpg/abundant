@@ -115,6 +115,12 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    match /eventInvites/{inviteId} {
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.email == request.auth.token.email);
+      allow create, update, delete: if isAdmin();
+    }
+
     match /faqs/{faqId} {
       allow read: if resource.data.isPublished == true || isAdmin();
       allow create, update, delete: if isAdmin();

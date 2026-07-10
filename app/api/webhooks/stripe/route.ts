@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripe, getWebhookSecret } from '@/lib/stripe-server';
 import { getAdminDb } from '@/lib/firebase-admin';
+import { generateEventCode } from '@/lib/event-checkin';
 import Stripe from 'stripe';
 
 export async function POST(req: NextRequest) {
@@ -71,6 +72,9 @@ export async function POST(req: NextRequest) {
               amountPaid: (session.amount_total || 0) / 100,
               discountCode: discountCode || undefined,
               discountAmount: discountAmount || undefined,
+              ticketTierId: session.metadata?.ticketTierId || undefined,
+              ticketTierName: session.metadata?.ticketTierName || undefined,
+              checkInCode: generateEventCode(8),
             });
 
             const ev = eventDoc.data()!;

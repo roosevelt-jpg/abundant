@@ -41,7 +41,7 @@ export function getAdminDb(): Firestore {
   if (!adminDb) {
     const app = getAdminApp();
     try {
-      adminDb = initializeFirestore(app, { ignoreUndefinedProperties: true });
+      adminDb = initializeFirestore(app, { ignoreUndefinedProperties: true } as Parameters<typeof initializeFirestore>[1]);
     } catch {
       adminDb = getFirestore(app);
     }

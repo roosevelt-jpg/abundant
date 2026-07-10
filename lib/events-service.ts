@@ -37,6 +37,31 @@ export async function getEvent(id: string): Promise<Event | null> {
   }
 }
 
+export async function getEventBySlug(slug: string): Promise<Event | null> {
+  try {
+    const q = query(eventsRef(), where('slug', '==', slug), limit(1));
+    const snap = await getDocs(q);
+    if (!snap.empty) return snap.docs[0].data() as Event;
+    // Fallback: treat slug as document id
+    return getEvent(slug);
+  } catch (error) {
+    console.error('Error getting event by slug:', error);
+    return null;
+  }
+}
+
+export async function updateRegistrationStatus(
+  registrationId: string,
+  status: EventRegistration['status'],
+  extra: Record<string, unknown> = {}
+): Promise<void> {
+  await updateDoc(doc(registrationsRef(), registrationId), {
+    status,
+    ...extra,
+    updatedAt: Date.now(),
+  });
+}
+
 export async function getPublicEvents(): Promise<Event[]> {
   try {
     const q = query(eventsRef(), where('isPublic', '==', true), orderBy('date', 'asc'));
@@ -96,13 +121,12 @@ export async function createEvent(event: Omit<Event, 'id' | 'createdAt' | 'updat
 
 export async function updateEvent(id: string, updates: Partial<Event>): Promise<void> {
   try {
-    await updateDoc(
-      doc(eventsRef(), id),
-      omitUndefined({
-        ...updates,
-        updatedAt: Date.now(),
-      } as Record<string, unknown>)
-    );
+    const cleaned = omitUndefined({
+      ...updates,
+      updatedAt: Date.now(),
+    } as Record<string, unknown>);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await updateDoc(doc(eventsRef(), id), cleaned as any);
   } catch (error) {
     console.error('Error updating event:', error);
     throw error;

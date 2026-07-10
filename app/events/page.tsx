@@ -14,6 +14,7 @@ import { isSameDay, format } from 'date-fns';
 import { downloadIcs, googleCalendarUrl } from '@/lib/ics';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { getEventDisplayPrice, getEventPath } from '@/lib/event-utils';
 
 export default function EventsPage() {
   return (
@@ -200,7 +201,7 @@ function EventsContent() {
                   {filtered.length === 0 ? (
                     <p className="text-muted-foreground text-sm">{t('events.none', 'No events on this date')}</p>
                   ) : (
-                    filtered.map((e) => <EventCard key={e.id} event={e} tagMap={tagMap} onSelect={() => openEvent(e)} compact />)
+                    filtered.map((e) => <EventCard key={e.id} event={e} tagMap={tagMap} compact />)
                   )}
                 </div>
               </div>
@@ -215,7 +216,7 @@ function EventsContent() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filtered.map((e) => (
-                  <EventCard key={e.id} event={e} tagMap={tagMap} onSelect={() => openEvent(e)} />
+                  <EventCard key={e.id} event={e} tagMap={tagMap} />
                 ))}
               </div>
             )}
@@ -326,24 +327,36 @@ function EventsContent() {
 function EventCard({
   event,
   tagMap,
-  onSelect,
   compact = false,
 }: {
   event: Event;
   tagMap: Record<string, EventTag>;
-  onSelect: () => void;
   compact?: boolean;
 }) {
+  const price = getEventDisplayPrice(event);
   return (
-    <button onClick={onSelect} className={`text-left bg-card rounded-xl border border-border hover:border-accent transition-all w-full ${compact ? 'p-4' : 'overflow-hidden'}`}>
-      {!compact && event.imageUrl && (
-        <img src={event.imageUrl} alt="" className="w-full h-32 object-cover" />
+    <Link
+      href={getEventPath(event)}
+      className={`text-left bg-card rounded-xl border border-border hover:border-accent transition-all w-full block ${compact ? 'p-4' : 'overflow-hidden'}`}
+    >
+      {!compact && (
+        event.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={event.imageUrl} alt="" className="w-full h-36 object-cover" />
+        ) : (
+          <div className="w-full h-24 bg-gradient-to-r from-[#001F3F] to-[#B8973A]" />
+        )
       )}
       <div className={compact ? '' : 'p-6'}>
         <div className="flex flex-wrap gap-1 mb-2">
           <span className="inline-block px-2 py-0.5 bg-accent/10 text-accent text-xs font-semibold rounded capitalize">
-            {event.pricingType || 'free'}
+            {price.label}
           </span>
+          {event.format && (
+            <span className="inline-block px-2 py-0.5 bg-muted text-muted-foreground text-xs font-semibold rounded capitalize">
+              {event.format}
+            </span>
+          )}
           {event.audienceGender && event.audienceGender !== 'mixed' && (
             <span className="inline-block px-2 py-0.5 bg-blue-500/10 text-blue-600 text-xs font-semibold rounded">
               {getAudienceGenderLabel(event.audienceGender)}
@@ -358,12 +371,15 @@ function EventCard({
             ) : null;
           })}
         </div>
-        <h3 className="font-heading font-bold mb-2 break-words">{event.title}</h3>
+        <h3 className="font-heading font-bold mb-1 break-words">{event.title}</h3>
+        {event.subtitle && !compact && (
+          <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{event.subtitle}</p>
+        )}
         <div className="space-y-1 text-sm text-muted-foreground">
           <p className="flex items-center gap-2"><Calendar className="w-3 h-3" />{new Date(event.date).toLocaleDateString()}</p>
-          <p className="flex items-center gap-2"><MapPin className="w-3 h-3" />{event.location}</p>
+          <p className="flex items-center gap-2"><MapPin className="w-3 h-3" />{event.location || 'Location TBA'}</p>
         </div>
       </div>
-    </button>
+    </Link>
   );
 }
