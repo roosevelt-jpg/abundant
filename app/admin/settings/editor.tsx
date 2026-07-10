@@ -10,8 +10,9 @@ import { getDefaultHomePage } from '@/lib/home-page';
 import { HOME_FEATURE_ICONS } from '@/lib/home-icons';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { toAdminSettingsResponse, integrationBlockConfiguredWithHints, type AdminSettingsResponse, type IntegrationSecretHints } from '@/lib/settings-merge';
+import { toAdminSettingsResponse, integrationBlockConfiguredWithHints, type AdminSettingsResponse, type IntegrationSecretHints, type IntegrationSecretPreviews } from '@/lib/settings-merge';
 import { formatStoredSecrets } from '@/lib/integration-secret-labels';
+import { StoredSecretField } from '@/components/stored-secret-field';
 
 type Tab = 'general' | 'branding' | 'integrations' | 'hero' | 'homepage' | 'social';
 
@@ -35,12 +36,14 @@ export default function AdminSettingsEditor() {
   const [successMessage, setSuccessMessage] = useState('');
   const [dirty, setDirty] = useState(false);
   const [secretHints, setSecretHints] = useState<IntegrationSecretHints>({});
+  const [secretPreviews, setSecretPreviews] = useState<IntegrationSecretPreviews>({});
 
   const storedSecretLines = formatStoredSecrets(secretHints);
 
   const applyAdminResponse = (data: AdminSettingsResponse) => {
-    const { _secretHints, ...settingsData } = data;
+    const { _secretHints, _secretPreviews, ...settingsData } = data;
     setSecretHints(_secretHints ?? {});
+    setSecretPreviews(_secretPreviews ?? {});
     setSettings(settingsData);
   };
 
@@ -108,7 +111,7 @@ export default function AdminSettingsEditor() {
       setSuccessMessage(
         activeTab === 'integrations'
           ? savedSecrets.length > 0
-            ? `Integrations saved. ${savedSecrets.length} secret credential(s) stored securely: ${savedSecrets.join(', ')}. Fields stay empty for security — look for the green "Stored" label.`
+            ? `Integrations saved. ${savedSecrets.length} secret credential(s) stored securely: ${savedSecrets.join(', ')}.`
             : 'Integrations saved. Enter secret keys and save again if any integration still shows "Not configured".'
           : 'Settings saved successfully!'
       );
@@ -321,17 +324,18 @@ export default function AdminSettingsEditor() {
                       ))}
                     </ul>
                     <p className="text-xs text-muted-foreground pt-1">
-                      Secret fields intentionally stay empty after save. A green <strong>Stored</strong> label on a field means the value is saved — you do not need to re-enter it.
+                      Saved secrets show a green <strong>Saved securely</strong> box with a masked preview (last 4 characters). Click <strong>Replace</strong> only when you need to change a credential.
                     </p>
                   </div>
                 )}
                 <p className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg border border-border">
-                  Enter each credential once and click Save. Secret fields will clear after saving — that is normal. Non-secret fields (Project ID, Auth Domain, etc.) stay visible.
+                  Enter each credential once and click Save. Secret fields show a green confirmation box after saving — your keys are stored, not lost.
                 </p>
                 <IntegrationBlock
                   title="Firebase Admin SDK"
                   configured={integrationConfigured('firebaseAdmin', settings.integrations.firebaseAdmin as Record<string, unknown>)}
                   secretHints={secretHints.firebaseAdmin}
+                  secretPreviews={secretPreviews.firebaseAdmin}
                   fields={[
                     { label: 'Project ID', key: 'projectId' },
                     { label: 'Client Email', key: 'clientEmail' },
@@ -349,6 +353,7 @@ export default function AdminSettingsEditor() {
                   title="Firebase Client SDK"
                   configured={integrationConfigured('firebaseClient', settings.integrations.firebaseClient as Record<string, unknown>)}
                   secretHints={secretHints.firebaseClient}
+                  secretPreviews={secretPreviews.firebaseClient}
                   fields={[
                     { label: 'API Key', key: 'apiKey', type: 'password' },
                     { label: 'Auth Domain', key: 'authDomain' },
@@ -383,6 +388,7 @@ export default function AdminSettingsEditor() {
                     label="App Password"
                     value={settings.integrations.gmailSmtp?.password || ''}
                     stored={!!secretHints.gmailSmtp?.password}
+                    preview={secretPreviews.gmailSmtp?.password}
                     onChange={(v) => updateIntegrations('gmailSmtp', { password: v })}
                   />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -424,12 +430,14 @@ export default function AdminSettingsEditor() {
                     onChange={(v) => updateIntegrations('fcm', { serverKey: v })}
                     type="password"
                     stored={!!secretHints.fcm?.serverKey}
+                    preview={secretPreviews.fcm?.serverKey}
                   />
                 </div>
                 <IntegrationBlock
                   title="Stripe"
                   configured={integrationConfigured('stripe', settings.integrations.stripe as Record<string, unknown>)}
                   secretHints={secretHints.stripe}
+                  secretPreviews={secretPreviews.stripe}
                   fields={[
                     { label: 'Publishable Key', key: 'publishableKey', type: 'password' },
                     { label: 'Secret Key (server only)', key: 'secretKey', type: 'password' },
@@ -444,6 +452,7 @@ export default function AdminSettingsEditor() {
                   title="YouTube"
                   configured={integrationConfigured('youtube', settings.integrations.youtube as Record<string, unknown>)}
                   secretHints={secretHints.youtube}
+                  secretPreviews={secretPreviews.youtube}
                   fields={[
                     { label: 'API Key', key: 'apiKey', type: 'password' },
                     { label: 'Channel ID', key: 'channelId' },
@@ -457,6 +466,7 @@ export default function AdminSettingsEditor() {
                   title="Google Maps / Places"
                   configured={integrationConfigured('googlePlaces', settings.integrations.googlePlaces as Record<string, unknown>)}
                   secretHints={secretHints.googlePlaces}
+                  secretPreviews={secretPreviews.googlePlaces}
                   fields={[{ label: 'Maps API Key (client-side)', key: 'apiKey', type: 'password' }]}
                   values={settings.integrations.googlePlaces || {}}
                   onChange={(key, val) => {
@@ -470,6 +480,7 @@ export default function AdminSettingsEditor() {
                   title="Chatbot AI"
                   configured={integrationConfigured('anthropic', settings.integrations.anthropic as Record<string, unknown>)}
                   secretHints={secretHints.anthropic}
+                  secretPreviews={secretPreviews.anthropic}
                   fields={[{ label: 'API Key (server only)', key: 'apiKey', type: 'password' }]}
                   values={settings.integrations.anthropic || {}}
                   onChange={(key, val) => {
@@ -483,6 +494,7 @@ export default function AdminSettingsEditor() {
                   title="SendGrid"
                   configured={integrationConfigured('sendgrid', settings.integrations.sendgrid as Record<string, unknown>)}
                   secretHints={secretHints.sendgrid}
+                  secretPreviews={secretPreviews.sendgrid}
                   fields={[{ label: 'API Key', key: 'apiKey', type: 'password' }]}
                   values={settings.integrations.sendgrid || {}}
                   onChange={(key, val) => {
@@ -765,6 +777,7 @@ function Field({
   type = 'text',
   multiline = false,
   stored = false,
+  preview,
 }: {
   label: string;
   value?: string;
@@ -772,23 +785,31 @@ function Field({
   type?: string;
   multiline?: boolean;
   stored?: boolean;
+  preview?: string;
 }) {
-  const cls = 'w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent';
   const safeValue = value ?? '';
-  const isSecret = type === 'password';
-  const showStored = isSecret && stored && !safeValue;
-  const placeholder = showStored ? 'Leave blank — already saved' : undefined;
+  if (type === 'password') {
+    return (
+      <StoredSecretField
+        label={label}
+        value={safeValue}
+        onChange={onChange}
+        stored={stored}
+        preview={preview}
+        multiline={multiline}
+      />
+    );
+  }
+
+  const cls = 'w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent';
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <label className="block text-sm font-medium">{label}</label>
-        {showStored && <span className="text-xs text-green-600 font-medium">Stored</span>}
-      </div>
+      <label className="block text-sm font-medium mb-2">{label}</label>
       {multiline ? (
-        <textarea value={safeValue} onChange={(e) => onChange(e.target.value)} className={cls} rows={3} placeholder={placeholder} />
+        <textarea value={safeValue} onChange={(e) => onChange(e.target.value)} className={cls} rows={3} />
       ) : (
-        <input type={type} value={safeValue} onChange={(e) => onChange(e.target.value)} className={cls} placeholder={placeholder} />
+        <input type={type} value={safeValue} onChange={(e) => onChange(e.target.value)} className={cls} />
       )}
     </div>
   );
@@ -799,13 +820,23 @@ function SecretField({
   value,
   onChange,
   stored = false,
+  preview,
 }: {
   label: string;
   value?: string;
   onChange: (v: string) => void;
   stored?: boolean;
+  preview?: string;
 }) {
-  return <Field label={label} value={value} onChange={onChange} type="password" stored={stored} />;
+  return (
+    <StoredSecretField
+      label={label}
+      value={value ?? ''}
+      onChange={onChange}
+      stored={stored}
+      preview={preview}
+    />
+  );
 }
 
 function IntegrationBlock({
@@ -815,6 +846,7 @@ function IntegrationBlock({
   values,
   onChange,
   secretHints,
+  secretPreviews,
 }: {
   title: string;
   configured?: boolean;
@@ -822,6 +854,7 @@ function IntegrationBlock({
   values: Record<string, unknown>;
   onChange: (key: string, value: string) => void;
   secretHints?: Record<string, boolean>;
+  secretPreviews?: Record<string, string>;
 }) {
   const cls = 'w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent';
   return (
@@ -836,33 +869,44 @@ function IntegrationBlock({
       <div className="space-y-3">
         {fields.map((f) => {
           const isSecret = f.type === 'password';
-          const isStored = isSecret && !!secretHints?.[f.key] && !String(values[f.key] || '').trim();
-          const placeholder = isStored ? 'Leave blank — already saved' : undefined;
+          const fieldValue = String(values[f.key] || '');
+          const isStored = isSecret && !!secretHints?.[f.key] && !fieldValue.trim();
+
+          if (isSecret) {
+            return (
+              <StoredSecretField
+                key={f.key}
+                label={f.label}
+                value={fieldValue}
+                onChange={(v) => onChange(f.key, v)}
+                stored={isStored}
+                preview={secretPreviews?.[f.key]}
+                multiline={f.multiline}
+              />
+            );
+          }
+
           return (
-          <div key={f.key}>
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <label className="block text-sm font-medium">{f.label}</label>
-              {isStored && <span className="text-xs text-green-600 font-medium">Stored</span>}
+            <div key={f.key}>
+              <label className="block text-sm font-medium mb-2">{f.label}</label>
+              {f.multiline ? (
+                <textarea
+                  value={fieldValue}
+                  onChange={(e) => onChange(f.key, e.target.value)}
+                  className={cls}
+                  rows={4}
+                />
+              ) : (
+                <input
+                  type={f.type || 'text'}
+                  value={fieldValue}
+                  onChange={(e) => onChange(f.key, e.target.value)}
+                  className={cls}
+                />
+              )}
             </div>
-            {f.multiline ? (
-              <textarea
-                value={String(values[f.key] || '')}
-                onChange={(e) => onChange(f.key, e.target.value)}
-                className={cls}
-                rows={4}
-                placeholder={placeholder}
-              />
-            ) : (
-              <input
-                type={f.type || 'text'}
-                value={String(values[f.key] || '')}
-                onChange={(e) => onChange(f.key, e.target.value)}
-                className={cls}
-                placeholder={placeholder}
-              />
-            )}
-          </div>
-        );})}
+          );
+        })}
       </div>
     </div>
   );

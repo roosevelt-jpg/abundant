@@ -2,14 +2,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, Inter } from 'next/font/google'
 import './globals.css'
-import { AuthProvider } from '@/context/AuthContext'
-import { SettingsProvider } from '@/context/SettingsContext'
-import { ThemeProvider } from '@/context/ThemeContext'
-import { LanguageProvider } from '@/context/LanguageContext'
-import { ChatbotWidget } from '@/components/chatbot-widget';
-import { WhatsAppFloating } from '@/components/whatsapp-floating';
-import { FirebaseBootstrap } from '@/components/firebase-bootstrap';
-import { FirebaseConfigSync } from '@/components/firebase-config-sync';
+import { AppProviders } from '@/components/app-providers'
 import { getPublicSettings } from '@/lib/settings-server'
 import { getDefaultSettings } from '@/lib/db-service'
 
@@ -63,20 +56,10 @@ export default async function RootLayout({
         ) : null}
       </head>
       <body className="font-sans antialiased bg-background text-foreground">
-        <FirebaseBootstrap initialSettings={initialSettings} />
-        <AuthProvider>
-          <SettingsProvider initialSettings={initialSettings}>
-            <FirebaseConfigSync />
-            <ThemeProvider>
-              <LanguageProvider>
-                {children}
-                <ChatbotWidget />
-                <WhatsAppFloating />
-                {process.env.NODE_ENV === 'production' && <Analytics />}
-              </LanguageProvider>
-            </ThemeProvider>
-          </SettingsProvider>
-        </AuthProvider>
+        <AppProviders initialSettings={initialSettings}>
+          {children}
+          {process.env.NODE_ENV === 'production' && <Analytics />}
+        </AppProviders>
       </body>
     </html>
   )

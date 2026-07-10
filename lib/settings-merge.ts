@@ -103,6 +103,28 @@ function mergeIntegrationBlock(
   return merged;
 }
 
+/** Omit blank secret fields from PATCH payload so masked form values never reach merge. */
+export function omitBlankIntegrationSecrets(
+  integrations: Partial<Settings['integrations']>
+): Partial<Settings['integrations']> {
+  if (!integrations) return integrations;
+
+  const result: Partial<Settings['integrations']> = {};
+
+  for (const [integrationKey, block] of Object.entries(integrations)) {
+    if (!block || typeof block !== 'object') continue;
+    const cleaned: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(block as Record<string, unknown>)) {
+      if (SECRET_FIELD_NAMES.has(key) && isBlank(value)) continue;
+      cleaned[key] = value;
+    }
+    result[integrationKey as keyof Settings['integrations']] =
+      cleaned as Settings['integrations'][keyof Settings['integrations']];
+  }
+
+  return result;
+}
+
 export function mergeSettingsIntegrations(
   existing: Settings['integrations'],
   incoming: Partial<Settings['integrations']>
@@ -143,6 +165,14 @@ export function maskSettingsSecretsForDisplay(settings: Settings): Settings {
 }
 
 export type IntegrationSecretHints = Record<string, Record<string, boolean>>;
+export type IntegrationSecretPreviews = Record<string, Record<string, string>>;
+
+function maskSecretPreview(value: unknown): string | undefined {
+  if (isBlank(value) || typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (trimmed.length <= 4) return '••••';
+  return `••••••••${trimmed.slice(-4)}`;
+}
 
 /** Which integration secret fields have stored values (for admin UI placeholders). */
 export function getIntegrationSecretHints(settings: Settings): IntegrationSecretHints {
@@ -165,6 +195,26 @@ export function getIntegrationSecretHints(settings: Settings): IntegrationSecret
   return hints;
 }
 
+/** Masked previews (last 4 chars) so admins can confirm a secret was saved. */
+export function getIntegrationSecretPreviews(settings: Settings): IntegrationSecretPreviews {
+  const previews: IntegrationSecretPreviews = {};
+
+  for (const [integrationKey, block] of Object.entries(settings.integrations || {})) {
+    if (!block || typeof block !== 'object') continue;
+    const record = block as Record<string, unknown>;
+    const fieldPreviews: Record<string, string> = {};
+    for (const key of SECRET_FIELD_NAMES) {
+      const preview = maskSecretPreview(record[key]);
+      if (preview) fieldPreviews[key] = preview;
+    }
+    if (Object.keys(fieldPreviews).length > 0) {
+      previews[integrationKey] = fieldPreviews;
+    }
+  }
+
+  return previews;
+}
+
 /** Recompute configured flags from stored integration values (fixes stale Firestore flags). */
 export function normalizeStoredIntegrations(integrations: Settings['integrations']): Settings['integrations'] {
   return mergeSettingsIntegrations(integrations, {});
@@ -172,12 +222,14 @@ export function normalizeStoredIntegrations(integrations: Settings['integrations
 
 export type AdminSettingsResponse = Settings & {
   _secretHints?: IntegrationSecretHints;
+  _secretPreviews?: IntegrationSecretPreviews;
 };
 
 export function toAdminSettingsResponse(settings: Settings): AdminSettingsResponse {
   return {
     ...maskSettingsSecretsForDisplay(settings),
     _secretHints: getIntegrationSecretHints(settings),
+    _secretPreviews: getIntegrationSecretPreviews(settings),
   };
 }
 

@@ -1,16 +1,9 @@
 'use client';
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { Settings } from '@/lib/types';
 import { getDefaultSettings } from '@/lib/db-service';
-import { useAuth } from '@/context/AuthContext';
+import { AuthContext } from '@/context/AuthContext';
 import { canAccessAdmin } from '@/lib/auth-utils';
 
 interface UseSettingsResult {
@@ -46,7 +39,9 @@ export function SettingsProvider({
   children: ReactNode;
   initialSettings: Settings;
 }) {
-  const { userData, currentUser } = useAuth();
+  const auth = useContext(AuthContext);
+  const userData = auth?.userData ?? null;
+  const currentUser = auth?.currentUser ?? null;
   const [settings, setSettings] = useState<Settings>(initialSettings);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
