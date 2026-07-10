@@ -10,6 +10,7 @@ import { isWithinFreePeriod } from '@/lib/constants';
 import { isAdminRole } from '@/lib/auth-utils';
 import { useLanguage } from '@/context/LanguageContext';
 import { EmailVerifyBanner } from '@/components/email-verify-banner';
+import { EnablePushCard } from '@/components/enable-push-card';
 
 export default function Dashboard() {
   const { currentUser, userData, loading } = useAuth();
@@ -156,6 +157,10 @@ export default function Dashboard() {
                 <li><Link href="/dashboard/testimonials" className="text-accent hover:text-accent/80">Share Testimonial</Link></li>
               </ul>
             </div>
+          </div>
+
+          <div className="mb-12">
+            <EnablePushCard />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

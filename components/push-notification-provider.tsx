@@ -24,13 +24,14 @@ export function PushNotificationProvider() {
         const supported = await isSupported();
         if (!supported || cancelled) return;
 
-        const permission = await Notification.requestPermission();
+        const permission = Notification.permission;
         if (permission !== 'granted' || cancelled) return;
 
         const { app } = getFirebaseServices();
         if (!app) return;
 
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        await navigator.serviceWorker.ready;
         const messaging = getMessaging(app);
         const token = await getToken(messaging, {
           vapidKey: fcm.vapidKey,

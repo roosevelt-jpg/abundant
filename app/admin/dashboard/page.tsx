@@ -5,6 +5,7 @@ import { Users, Calendar, MessageSquare, Mail } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ActivityLog } from '@/lib/types';
+import { EnablePushCard } from '@/components/enable-push-card';
 
 interface DashboardStats {
   totalMembers: number;
@@ -94,6 +95,10 @@ export default function AdminDashboard() {
                 </Link>
               );
             })}
+      </div>
+
+      <div className="mb-8">
+        <EnablePushCard />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
