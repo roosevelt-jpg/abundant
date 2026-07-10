@@ -135,17 +135,17 @@ export function ChatbotWidget() {
     <>
       {open && (
         <div className="fixed z-[100] bottom-[calc(max(1rem,env(safe-area-inset-bottom))+3.5rem)] right-3 sm:right-5 w-[min(calc(100vw-1.5rem),300px)] max-h-[min(420px,70dvh)] bg-card border border-border rounded-lg shadow-2xl flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-accent/5">
+          <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-[#001F3F] to-[#B8973A] text-white">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
-                <MessageCircle className="w-3.5 h-3.5 text-accent" />
+              <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <MessageCircle className="w-3.5 h-3.5 text-white" />
               </div>
-              <h3 className="font-heading font-bold text-xs truncate">{assistantName}</h3>
+              <h3 className="font-heading font-bold text-xs truncate text-white">{assistantName}</h3>
             </div>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="p-0.5 hover:bg-accent/10 rounded flex-shrink-0"
+              className="p-0.5 hover:bg-white/15 rounded flex-shrink-0 text-white"
               aria-label="Close chat"
             >
               <X className="w-4 h-4" />
@@ -204,7 +204,7 @@ export function ChatbotWidget() {
                 <button
                   type="submit"
                   disabled={leadSaving}
-                  className="w-full py-1.5 text-xs bg-accent text-accent-foreground rounded-md font-semibold disabled:opacity-50"
+                  className="w-full py-1.5 text-xs bg-gradient-to-r from-[#001F3F] to-[#B8973A] text-white rounded-md font-semibold disabled:opacity-50"
                 >
                   {leadSaving ? 'Saving...' : 'Start Chat'}
                 </button>
@@ -258,7 +258,7 @@ export function ChatbotWidget() {
       <button
         type="button"
         onClick={() => (open ? setOpen(false) : handleOpen())}
-        className="fixed z-[100] bottom-[max(1rem,env(safe-area-inset-bottom))] right-3 sm:right-5 bg-accent text-accent-foreground rounded-full w-12 h-12 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform ring-2 ring-accent/30"
+        className="fixed z-[100] bottom-[max(1rem,env(safe-area-inset-bottom))] right-3 sm:right-5 bg-gradient-to-br from-[#001F3F] to-[#B8973A] text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform ring-2 ring-[#B8973A]/40"
         aria-label={open ? 'Close chat' : `Open ${assistantName}`}
         aria-expanded={open}
       >
