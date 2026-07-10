@@ -17,6 +17,10 @@ export const ADMIN_PERMISSION_DEFS: {
   { id: 'contact', label: 'Contact Submissions', description: 'View and reply to messages' },
   { id: 'chatbot', label: 'Chatbot', description: 'Chatbot settings and logs' },
   { id: 'faq', label: 'FAQ', description: 'Manage FAQ questions and answers' },
+  { id: 'resources', label: 'Resources', description: 'Resource library page and items' },
+  { id: 'careers', label: 'Careers', description: 'Job postings and applications' },
+  { id: 'press', label: 'Press', description: 'Press mentions and media kit' },
+  { id: 'legal', label: 'Legal', description: 'Privacy Policy and Terms of Service' },
   { id: 'invites', label: 'Invite Admins', description: 'Invite and manage admins (super admin only)' },
   { id: 'settings', label: 'Settings', description: 'Platform settings and integrations' },
 ];
@@ -35,6 +39,10 @@ export const ROUTE_PERMISSIONS: Record<string, AdminPermission> = {
   '/admin/contact': 'contact',
   '/admin/chatbot': 'chatbot',
   '/admin/faq': 'faq',
+  '/admin/resources': 'resources',
+  '/admin/careers': 'careers',
+  '/admin/press': 'press',
+  '/admin/legal': 'legal',
   '/admin/invites': 'invites',
   '/admin/settings': 'settings',
 };

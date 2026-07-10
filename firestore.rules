@@ -126,6 +126,26 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    match /resources/{resourceId} {
+      allow read: if resource.data.isPublished == true || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /jobPostings/{jobId} {
+      allow read: if resource.data.isPublished == true || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /jobApplications/{applicationId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /pressItems/{pressId} {
+      allow read: if resource.data.isPublished == true || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
     match /chatLeads/{leadId} {
       allow create: if true;
       allow read, update, delete: if isAdmin();

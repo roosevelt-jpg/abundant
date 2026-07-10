@@ -20,10 +20,15 @@ const DEFAULT_LINKS: Record<FooterPlacement, { href: string; label: string }[]> 
   platform: [
     { href: '/membership', label: 'Membership' },
     { href: '/events', label: 'Events' },
+    { href: '/resources', label: 'Resources' },
   ],
   company: [
     { href: '/about', label: 'About' },
     { href: '/contact', label: 'Contact' },
+    { href: '/careers', label: 'Careers' },
+    { href: '/press', label: 'Press' },
+    { href: '/privacy', label: 'Privacy Policy' },
+    { href: '/terms', label: 'Terms of Service' },
   ],
   connect: [],
   none: [],
@@ -45,7 +50,13 @@ export const Footer = () => {
     const cms = cmsPages
       .filter((p) => p.footerPlacement === column)
       .map((p) => ({ href: `/${p.slug}`, label: p.title }));
-    return [...DEFAULT_LINKS[column], ...cms];
+    const merged = [...DEFAULT_LINKS[column], ...cms];
+    const seen = new Set<string>();
+    return merged.filter((link) => {
+      if (seen.has(link.href)) return false;
+      seen.add(link.href);
+      return true;
+    });
   };
 
   return (

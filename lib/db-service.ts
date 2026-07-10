@@ -14,6 +14,12 @@ import {
 } from 'firebase/firestore';
 import { Page, Settings } from '@/lib/types';
 import { SETTINGS_DOC_ID } from '@/lib/constants';
+import {
+  getDefaultCareersPage,
+  getDefaultLegalPages,
+  getDefaultPressPage,
+  getDefaultResourcesPage,
+} from '@/lib/content-page-defaults';
 
 function db() {
   return getDb();
@@ -166,6 +172,10 @@ export function getDefaultSettings(): Settings {
       teamMembers: [],
       updatedAt: Date.now(),
     },
+    resourcesPage: getDefaultResourcesPage(),
+    careersPage: getDefaultCareersPage(),
+    pressPage: getDefaultPressPage(),
+    legalPages: getDefaultLegalPages(),
     homePage: {
       eventsSection: {
         title: 'Upcoming Events',

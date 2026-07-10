@@ -14,6 +14,10 @@ export type AdminPermission =
   | 'contact'
   | 'chatbot'
   | 'faq'
+  | 'resources'
+  | 'careers'
+  | 'press'
+  | 'legal'
   | 'invites'
   | 'settings';
 
@@ -358,6 +362,145 @@ export interface AboutPageContent {
   updatedAt: number;
 }
 
+/** Shared hero + CTA blocks for marketing content pages */
+export interface ContentPageHero {
+  eyebrow: string;
+  headline: string;
+  subtext: string;
+}
+
+export interface ContentPageCta {
+  title: string;
+  body: string;
+  buttonText: string;
+  buttonLink: string;
+}
+
+export type ResourceAccess = 'public' | 'members';
+export type ResourceFormat = 'article' | 'download' | 'photo_essay' | 'other';
+
+export interface ResourceItem {
+  id: string;
+  title: string;
+  category: string;
+  summary?: string;
+  body?: string;
+  access: ResourceAccess;
+  format: ResourceFormat;
+  readTime?: string;
+  downloadUrl?: string;
+  coverImageUrl?: string;
+  order: number;
+  isPublished: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ResourcesPageContent {
+  hero: ContentPageHero;
+  categories: string[];
+  lockedTitle: string;
+  lockedBody: string;
+  lockedCtaText: string;
+  lockedCtaLink: string;
+  submitCta: ContentPageCta;
+  updatedAt: number;
+}
+
+export type JobEmploymentType = 'full-time' | 'part-time' | 'contract' | 'internship';
+
+export interface JobPosting {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  employmentType: JobEmploymentType;
+  about: string;
+  responsibilities: string[];
+  requirements: string[];
+  order: number;
+  isPublished: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface JobApplication {
+  id: string;
+  jobId?: string;
+  jobTitle?: string;
+  isGeneral: boolean;
+  fullName: string;
+  email: string;
+  linkedinOrPortfolio?: string;
+  cvUrl?: string;
+  coverNote: string;
+  status: 'new' | 'reviewed' | 'archived';
+  submittedAt: number;
+}
+
+export interface CareersPageContent {
+  hero: ContentPageHero;
+  generalTitle: string;
+  generalBody: string;
+  generalCtaText: string;
+  updatedAt: number;
+}
+
+export interface PressItem {
+  id: string;
+  outletName: string;
+  outletLogoUrl?: string;
+  headline: string;
+  dateLabel: string;
+  url: string;
+  order: number;
+  isPublished: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface MediaKitDownload {
+  id: string;
+  label: string;
+  url: string;
+}
+
+export interface PressPageContent {
+  hero: ContentPageHero;
+  inThePressTitle: string;
+  mediaKitTitle: string;
+  mediaKitBody: string;
+  mediaKitDownloads: MediaKitDownload[];
+  boilerplateTitle: string;
+  boilerplate: string;
+  mediaContactTitle: string;
+  mediaContactBody: string;
+  mediaContactEmail: string;
+  updatedAt: number;
+}
+
+export interface LegalSection {
+  id: string;
+  title: string;
+  body: string;
+  order: number;
+}
+
+export interface LegalDocumentContent {
+  title: string;
+  effectiveDate: string;
+  intro?: string;
+  sections: LegalSection[];
+  contactEmail: string;
+  updatedAt: number;
+}
+
+export interface LegalPagesContent {
+  privacy: LegalDocumentContent;
+  terms: LegalDocumentContent;
+  updatedAt: number;
+}
+
 // Custom forms
 export type FormFieldType = 'text' | 'email' | 'phone' | 'textarea' | 'select' | 'checkbox' | 'file';
 
@@ -614,6 +757,10 @@ export interface Settings {
   aboutContent?: AboutPageContent;
   homePage?: HomePageContent;
   branding?: BrandingConfig;
+  resourcesPage?: ResourcesPageContent;
+  careersPage?: CareersPageContent;
+  pressPage?: PressPageContent;
+  legalPages?: LegalPagesContent;
   updatedAt: number;
   updatedBy: string;
 }

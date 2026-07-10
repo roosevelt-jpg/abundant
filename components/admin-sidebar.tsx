@@ -16,6 +16,10 @@ import {
   Info,
   FormInput,
   HelpCircle,
+  BookOpen,
+  Briefcase,
+  Newspaper,
+  Scale,
 } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
@@ -59,6 +63,10 @@ export const AdminSidebar = () => {
     { icon: FormInput, label: 'Forms', href: '/admin/forms', permission: 'forms' },
     { icon: Image, label: 'Hero Slider', href: '/admin/settings?tab=hero', permission: 'hero' },
     { icon: HelpCircle, label: 'FAQ', href: '/admin/faq', permission: 'faq' },
+    { icon: BookOpen, label: 'Resources', href: '/admin/resources', permission: 'resources' },
+    { icon: Briefcase, label: 'Careers', href: '/admin/careers', permission: 'careers' },
+    { icon: Newspaper, label: 'Press', href: '/admin/press', permission: 'press' },
+    { icon: Scale, label: 'Legal', href: '/admin/legal', permission: 'legal' },
     { icon: Mail, label: 'Contact Submissions', href: '/admin/contact', permission: 'contact' },
     { icon: Bot, label: 'Chatbot', href: '/admin/chatbot', permission: 'chatbot' },
     { icon: UserPlus, label: 'Invite Admins', href: '/admin/invites', permission: 'invites' },

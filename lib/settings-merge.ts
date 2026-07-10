@@ -1,6 +1,7 @@
 import { Settings, HomePageContent } from '@/lib/types';
 import { resolveHeroSliderConfig } from '@/lib/hero-slider-utils';
 import { getDefaultHomePage } from '@/lib/home-page';
+import { getDefaultLegalPages } from '@/lib/content-page-defaults';
 
 const SECRET_FIELD_NAMES = new Set([
   'apiKey',
@@ -272,6 +273,10 @@ export function fillBlankSettingsFromDefaults(settings: Settings, defaults: Sett
       settings.colors as Record<string, unknown> | undefined,
       defaults.colors as Record<string, unknown> | undefined
     ) as Settings['colors'],
+    resourcesPage: settings.resourcesPage ?? defaults.resourcesPage,
+    careersPage: settings.careersPage ?? defaults.careersPage,
+    pressPage: settings.pressPage ?? defaults.pressPage,
+    legalPages: settings.legalPages ?? defaults.legalPages,
   };
 }
 
@@ -419,6 +424,67 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
         ? incoming.highlightCards
         : existing.aboutContent?.highlightCards ?? [],
       updatedAt: incoming.updatedAt ?? Date.now(),
+    };
+  }
+
+  if (updates.resourcesPage) {
+    result.resourcesPage = {
+      ...existing.resourcesPage,
+      ...updates.resourcesPage,
+      hero: { ...existing.resourcesPage?.hero, ...updates.resourcesPage.hero },
+      submitCta: { ...existing.resourcesPage?.submitCta, ...updates.resourcesPage.submitCta },
+      categories: updates.resourcesPage.categories?.length
+        ? updates.resourcesPage.categories
+        : existing.resourcesPage?.categories ?? [],
+      updatedAt: updates.resourcesPage.updatedAt ?? Date.now(),
+    };
+  }
+
+  if (updates.careersPage) {
+    result.careersPage = {
+      ...existing.careersPage,
+      ...updates.careersPage,
+      hero: { ...existing.careersPage?.hero, ...updates.careersPage.hero },
+      updatedAt: updates.careersPage.updatedAt ?? Date.now(),
+    };
+  }
+
+  if (updates.pressPage) {
+    result.pressPage = {
+      ...existing.pressPage,
+      ...updates.pressPage,
+      hero: { ...existing.pressPage?.hero, ...updates.pressPage.hero },
+      mediaKitDownloads: updates.pressPage.mediaKitDownloads?.length
+        ? updates.pressPage.mediaKitDownloads
+        : existing.pressPage?.mediaKitDownloads ?? [],
+      updatedAt: updates.pressPage.updatedAt ?? Date.now(),
+    };
+  }
+
+  if (updates.legalPages) {
+    const defaults = getDefaultLegalPages();
+    result.legalPages = {
+      privacy: updates.legalPages.privacy
+        ? {
+            ...defaults.privacy,
+            ...existing.legalPages?.privacy,
+            ...updates.legalPages.privacy,
+            sections: updates.legalPages.privacy.sections?.length
+              ? updates.legalPages.privacy.sections
+              : existing.legalPages?.privacy?.sections ?? defaults.privacy.sections,
+          }
+        : existing.legalPages?.privacy ?? defaults.privacy,
+      terms: updates.legalPages.terms
+        ? {
+            ...defaults.terms,
+            ...existing.legalPages?.terms,
+            ...updates.legalPages.terms,
+            sections: updates.legalPages.terms.sections?.length
+              ? updates.legalPages.terms.sections
+              : existing.legalPages?.terms?.sections ?? defaults.terms.sections,
+          }
+        : existing.legalPages?.terms ?? defaults.terms,
+      updatedAt: updates.legalPages.updatedAt ?? Date.now(),
     };
   }
 
