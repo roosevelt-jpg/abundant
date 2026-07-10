@@ -10,6 +10,8 @@ import { SiteLogo } from './site-logo';
 import { useEffect, useState } from 'react';
 import { Menu, X, ChevronDown } from 'lucide-react';
 
+import { isAdminRole, isPrimaryAdmin } from '@/lib/auth-utils';
+
 const STATIC_NAV = [
   { href: '/', labelKey: 'nav.home', label: 'Home', menu: 'home' },
   { href: '/about', labelKey: 'nav.about', label: 'About', menu: 'about' },
@@ -51,6 +53,11 @@ export const Header = () => {
       console.error('Logout failed:', error);
     }
   };
+
+  const dashboardHref =
+    isAdminRole(userData?.role) || isPrimaryAdmin(currentUser?.email)
+      ? '/admin/dashboard'
+      : '/dashboard';
 
   const navLinkCls = 'text-sm text-white/90 hover:text-[#D4AF87] transition-colors block py-2';
   const accentLinkCls = 'text-sm font-medium text-[#D4AF87] hover:text-white transition-colors';
@@ -110,7 +117,7 @@ export const Header = () => {
           </div>
           {currentUser ? (
             <div className="hidden md:flex items-center gap-3">
-              <Link href={userData?.role === 'admin' || userData?.role === 'super_admin' ? '/admin/dashboard' : '/dashboard'} className={accentLinkCls}>
+              <Link href={dashboardHref} className={accentLinkCls}>
                 Dashboard
               </Link>
               <button type="button" onClick={handleLogout} className="text-sm text-white/70 hover:text-white transition-colors">Logout</button>
@@ -168,7 +175,7 @@ export const Header = () => {
               </div>
               {currentUser ? (
                 <div className="pt-2 space-y-2 border-t border-white/10">
-                  <Link href={userData?.role === 'admin' || userData?.role === 'super_admin' ? '/admin/dashboard' : '/dashboard'} className={`block ${accentLinkCls}`} onClick={() => setMobileOpen(false)}>Dashboard</Link>
+                  <Link href={dashboardHref} className={`block ${accentLinkCls}`} onClick={() => setMobileOpen(false)}>Dashboard</Link>
                   <button type="button" onClick={handleLogout} className="text-sm text-white/70 hover:text-white">Logout</button>
                 </div>
               ) : (

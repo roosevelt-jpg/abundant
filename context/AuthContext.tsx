@@ -42,12 +42,15 @@ const defaultAuthContext: AuthContextType = {
 async function syncSessionCookie(user: FirebaseUser | null) {
   try {
     if (user) {
-      const idToken = await user.getIdToken();
-      await fetch('/api/auth/session', {
+      const idToken = await user.getIdToken(/* forceRefresh */ true);
+      const res = await fetch('/api/auth/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
       });
+      if (!res.ok) {
+        console.error('Session sync failed:', await res.text());
+      }
     } else {
       await fetch('/api/auth/session', { method: 'DELETE' });
     }
@@ -76,7 +79,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setCurrentUser(user);
       
       if (user) {
-        syncSessionCookie(user);
+        // Must finish before admin routes — middleware requires __session cookie
+        await syncSessionCookie(user);
         try {
           // Fetch user data from Firestore with error handling
           const userRef = doc(db, 'users', user.uid);
@@ -156,7 +160,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
       } else {
-        syncSessionCookie(null);
+        await syncSessionCookie(null);
         setUserData(null);
       }
       
