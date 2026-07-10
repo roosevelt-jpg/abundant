@@ -142,6 +142,62 @@ export function maskSettingsSecretsForDisplay(settings: Settings): Settings {
   return masked;
 }
 
+export type IntegrationSecretHints = Record<string, Record<string, boolean>>;
+
+/** Which integration secret fields have stored values (for admin UI placeholders). */
+export function getIntegrationSecretHints(settings: Settings): IntegrationSecretHints {
+  const hints: IntegrationSecretHints = {};
+
+  for (const [integrationKey, block] of Object.entries(settings.integrations || {})) {
+    if (!block || typeof block !== 'object') continue;
+    const record = block as Record<string, unknown>;
+    const fieldHints: Record<string, boolean> = {};
+    for (const key of SECRET_FIELD_NAMES) {
+      if (key in record) {
+        fieldHints[key] = !isBlank(record[key]);
+      }
+    }
+    if (Object.keys(fieldHints).length > 0) {
+      hints[integrationKey] = fieldHints;
+    }
+  }
+
+  return hints;
+}
+
+/** Recompute configured flags from stored integration values (fixes stale Firestore flags). */
+export function normalizeStoredIntegrations(integrations: Settings['integrations']): Settings['integrations'] {
+  return mergeSettingsIntegrations(integrations, {});
+}
+
+export type AdminSettingsResponse = Settings & {
+  _secretHints?: IntegrationSecretHints;
+};
+
+export function toAdminSettingsResponse(settings: Settings): AdminSettingsResponse {
+  return {
+    ...maskSettingsSecretsForDisplay(settings),
+    _secretHints: getIntegrationSecretHints(settings),
+  };
+}
+
+/** Admin UI: treat stored secrets as present even when masked in the form. */
+export function integrationBlockConfiguredWithHints(
+  integrationKey: string,
+  block: Record<string, unknown>,
+  secretHints?: Record<string, boolean>
+): boolean {
+  const withHints = { ...block };
+  if (secretHints) {
+    for (const [key, stored] of Object.entries(secretHints)) {
+      if (stored && isBlank(withHints[key])) {
+        withHints[key] = '__stored__';
+      }
+    }
+  }
+  return computeIntegrationConfigured(integrationKey, withHints);
+}
+
 /** Restore blank top-level fields from defaults when reading wiped settings. */
 export function fillBlankSettingsFromDefaults(settings: Settings, defaults: Settings): Settings {
   return {

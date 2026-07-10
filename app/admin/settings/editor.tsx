@@ -10,7 +10,7 @@ import { getDefaultHomePage } from '@/lib/home-page';
 import { HOME_FEATURE_ICONS } from '@/lib/home-icons';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { maskSettingsSecretsForDisplay } from '@/lib/settings-merge';
+import { toAdminSettingsResponse, integrationBlockConfiguredWithHints, type AdminSettingsResponse, type IntegrationSecretHints } from '@/lib/settings-merge';
 
 type Tab = 'general' | 'branding' | 'integrations' | 'hero' | 'homepage' | 'social';
 
@@ -33,6 +33,13 @@ export default function AdminSettingsEditor() {
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [dirty, setDirty] = useState(false);
+  const [secretHints, setSecretHints] = useState<IntegrationSecretHints>({});
+
+  const applyAdminResponse = (data: AdminSettingsResponse) => {
+    const { _secretHints, ...settingsData } = data;
+    setSecretHints(_secretHints ?? {});
+    setSettings(settingsData);
+  };
 
   useEffect(() => {
     const tab = searchParams.get('tab') as Tab | null;
@@ -43,9 +50,35 @@ export default function AdminSettingsEditor() {
 
   useEffect(() => {
     if (liveSettings && !dirty) {
-      setSettings(maskSettingsSecretsForDisplay(liveSettings));
+      applyAdminResponse(liveSettings as AdminSettingsResponse);
     }
   }, [liveSettings, dirty]);
+
+  const buildSavePayload = (): Partial<Settings> => {
+    if (!settings) return {};
+    switch (activeTab) {
+      case 'integrations':
+        return { integrations: settings.integrations };
+      case 'general':
+        return {
+          siteName: settings.siteName,
+          description: settings.description,
+          contactEmail: settings.contactEmail,
+          phone: settings.phone,
+          address: settings.address,
+        };
+      case 'branding':
+        return { branding: settings.branding };
+      case 'social':
+        return { socialLinks: settings.socialLinks };
+      case 'hero':
+        return { heroSliderConfig: settings.heroSliderConfig, heroSlider: settings.heroSliderConfig?.slides };
+      case 'homepage':
+        return { homePage: settings.homePage };
+      default:
+        return settings;
+    }
+  };
 
   const selectTab = (tab: Tab) => {
     setActiveTab(tab);
@@ -59,16 +92,20 @@ export default function AdminSettingsEditor() {
       setSuccessMessage('');
       const res = await authFetch('/api/admin/settings', {
         method: 'PATCH',
-        body: JSON.stringify(settings),
+        body: JSON.stringify(buildSavePayload()),
       });
-      const data = await res.json();
+      const data = (await res.json()) as AdminSettingsResponse;
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to save settings');
+        throw new Error((data as { error?: string }).error || 'Failed to save settings');
       }
-      setSettings(maskSettingsSecretsForDisplay(data));
+      applyAdminResponse(data);
       setDirty(false);
       retry();
-      setSuccessMessage('Settings saved successfully!');
+      setSuccessMessage(
+        activeTab === 'integrations'
+          ? 'Integrations saved. Secret fields are hidden for security but remain stored — leave blank to keep existing values.'
+          : 'Settings saved successfully!'
+      );
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (err) {
       console.error('Error saving settings:', err);
@@ -85,18 +122,22 @@ export default function AdminSettingsEditor() {
 
   const updateIntegrations = (key: string, value: Record<string, unknown>) => {
     setDirty(true);
+    const { configured: _omit, ...fields } = value;
     setSettings((prev) =>
       prev
         ? {
             ...prev,
             integrations: {
               ...prev.integrations,
-              [key]: { ...prev.integrations[key as keyof typeof prev.integrations], ...value },
+              [key]: { ...prev.integrations[key as keyof typeof prev.integrations], ...fields },
             },
           }
         : prev
     );
   };
+
+  const integrationConfigured = (key: string, block: Record<string, unknown> | undefined) =>
+    integrationBlockConfiguredWithHints(key, block ?? {}, secretHints[key]);
 
   const sliderConfig: HeroSliderConfig = settings?.heroSliderConfig ?? {
     slides: settings?.heroSlider ?? [],
@@ -264,11 +305,12 @@ export default function AdminSettingsEditor() {
             {activeTab === 'integrations' && (
               <div className="space-y-6">
                 <p className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg border border-border">
-                  Credentials are saved securely on the server and synced to Firestore. Password fields can be left blank to keep existing values. Ensure Firebase Admin env vars are set on Vercel for server-side saves to work.
+                  Credentials are saved securely on the server. Secret fields (API keys, passwords, private keys) are hidden after save for security — a green &quot;Stored&quot; label means your value is saved. Leave secret fields blank to keep the current stored value.
                 </p>
                 <IntegrationBlock
                   title="Firebase Admin SDK"
-                  configured={settings.integrations.firebaseAdmin?.configured}
+                  configured={integrationConfigured('firebaseAdmin', settings.integrations.firebaseAdmin as Record<string, unknown>)}
+                  secretHints={secretHints.firebaseAdmin}
                   fields={[
                     { label: 'Project ID', key: 'projectId' },
                     { label: 'Client Email', key: 'clientEmail' },
@@ -276,11 +318,7 @@ export default function AdminSettingsEditor() {
                   ]}
                   values={settings.integrations.firebaseAdmin || {}}
                   onChange={(key, val) => {
-                    const next = { ...settings.integrations.firebaseAdmin, [key]: val };
-                    updateIntegrations('firebaseAdmin', {
-                      ...next,
-                      configured: !!(next.projectId && next.clientEmail && next.privateKey),
-                    });
+                    updateIntegrations('firebaseAdmin', { ...settings.integrations.firebaseAdmin, [key]: val });
                   }}
                 />
                 <p className="text-xs text-muted-foreground -mt-4 px-2">
@@ -288,7 +326,8 @@ export default function AdminSettingsEditor() {
                 </p>
                 <IntegrationBlock
                   title="Firebase Client SDK"
-                  configured={settings.integrations.firebaseClient?.configured}
+                  configured={integrationConfigured('firebaseClient', settings.integrations.firebaseClient as Record<string, unknown>)}
+                  secretHints={secretHints.firebaseClient}
                   fields={[
                     { label: 'API Key', key: 'apiKey', type: 'password' },
                     { label: 'Auth Domain', key: 'authDomain' },
@@ -299,11 +338,7 @@ export default function AdminSettingsEditor() {
                   ]}
                   values={settings.integrations.firebaseClient || {}}
                   onChange={(key, val) => {
-                    const next = { ...settings.integrations.firebaseClient, [key]: val };
-                    updateIntegrations('firebaseClient', {
-                      ...next,
-                      configured: !!(next.apiKey && next.projectId && next.appId),
-                    });
+                    updateIntegrations('firebaseClient', { ...settings.integrations.firebaseClient, [key]: val });
                   }}
                 />
                 <p className="text-xs text-muted-foreground -mt-4 px-2">
@@ -313,17 +348,22 @@ export default function AdminSettingsEditor() {
                   <div className="flex items-center justify-between">
                     <h3 className="font-heading font-bold">Gmail SMTP</h3>
                     <span className={`flex items-center gap-2 text-xs font-semibold ${settings.integrations.gmailSmtp?.configured ? 'text-green-600' : 'text-muted-foreground'}`}>
-                      <span className={`w-2 h-2 rounded-full ${settings.integrations.gmailSmtp?.configured ? 'bg-green-500' : 'bg-gray-400'}`} />
-                      {settings.integrations.gmailSmtp?.configured ? 'Live' : 'Not configured'}
+                      <span className={`w-2 h-2 rounded-full ${integrationConfigured('gmailSmtp', settings.integrations.gmailSmtp as Record<string, unknown>) ? 'bg-green-500' : 'bg-gray-400'}`} />
+                      {integrationConfigured('gmailSmtp', settings.integrations.gmailSmtp as Record<string, unknown>) ? 'Live' : 'Not configured'}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">Used to email admin invite codes. Use a Gmail App Password if 2FA is enabled.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="SMTP Host" value={settings.integrations.gmailSmtp?.host || 'smtp.gmail.com'} onChange={(v) => updateIntegrations('gmailSmtp', { host: v, configured: !!(settings.integrations.gmailSmtp?.user && settings.integrations.gmailSmtp?.password) })} />
-                    <Field label="SMTP Port" value={String(settings.integrations.gmailSmtp?.port || 587)} onChange={(v) => updateIntegrations('gmailSmtp', { port: parseInt(v) || 587, configured: !!(settings.integrations.gmailSmtp?.user && settings.integrations.gmailSmtp?.password) })} />
+                    <Field label="SMTP Host" value={settings.integrations.gmailSmtp?.host || 'smtp.gmail.com'} onChange={(v) => updateIntegrations('gmailSmtp', { host: v })} />
+                    <Field label="SMTP Port" value={String(settings.integrations.gmailSmtp?.port || 587)} onChange={(v) => updateIntegrations('gmailSmtp', { port: parseInt(v) || 587 })} />
                   </div>
-                  <Field label="Gmail Address" value={settings.integrations.gmailSmtp?.user || ''} onChange={(v) => updateIntegrations('gmailSmtp', { user: v, configured: !!(v && settings.integrations.gmailSmtp?.password) })} />
-                  <Field label="App Password" value={settings.integrations.gmailSmtp?.password || ''} onChange={(v) => updateIntegrations('gmailSmtp', { password: v, configured: !!(settings.integrations.gmailSmtp?.user && v) })} type="password" />
+                  <Field label="Gmail Address" value={settings.integrations.gmailSmtp?.user || ''} onChange={(v) => updateIntegrations('gmailSmtp', { user: v })} />
+                  <SecretField
+                    label="App Password"
+                    value={settings.integrations.gmailSmtp?.password || ''}
+                    stored={!!secretHints.gmailSmtp?.password}
+                    onChange={(v) => updateIntegrations('gmailSmtp', { password: v })}
+                  />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field label="From Email" value={settings.integrations.gmailSmtp?.fromEmail || ''} onChange={(v) => updateIntegrations('gmailSmtp', { fromEmail: v })} />
                     <Field label="From Name" value={settings.integrations.gmailSmtp?.fromName || ''} onChange={(v) => updateIntegrations('gmailSmtp', { fromName: v })} />
@@ -340,7 +380,6 @@ export default function AdminSettingsEditor() {
                           updateIntegrations('fcm', {
                             ...settings.integrations.fcm,
                             enabled: e.target.checked,
-                            configured: !!(settings.integrations.fcm?.vapidKey),
                           })
                         }
                       />
@@ -355,7 +394,6 @@ export default function AdminSettingsEditor() {
                       updateIntegrations('fcm', {
                         vapidKey: v,
                         enabled: settings.integrations.fcm?.enabled,
-                        configured: !!v,
                       })
                     }
                   />
@@ -364,11 +402,13 @@ export default function AdminSettingsEditor() {
                     value={settings.integrations.fcm?.serverKey || ''}
                     onChange={(v) => updateIntegrations('fcm', { serverKey: v })}
                     type="password"
+                    stored={!!secretHints.fcm?.serverKey}
                   />
                 </div>
                 <IntegrationBlock
                   title="Stripe"
-                  configured={settings.integrations.stripe?.configured}
+                  configured={integrationConfigured('stripe', settings.integrations.stripe as Record<string, unknown>)}
+                  secretHints={secretHints.stripe}
                   fields={[
                     { label: 'Publishable Key', key: 'publishableKey', type: 'password' },
                     { label: 'Secret Key (server only)', key: 'secretKey', type: 'password' },
@@ -376,28 +416,30 @@ export default function AdminSettingsEditor() {
                   ]}
                   values={settings.integrations.stripe || {}}
                   onChange={(key, val) => {
-                    updateIntegrations('stripe', { [key]: val, configured: !!val });
+                    updateIntegrations('stripe', { ...settings.integrations.stripe, [key]: val });
                   }}
                 />
                 <IntegrationBlock
                   title="YouTube"
-                  configured={settings.integrations.youtube?.configured}
+                  configured={integrationConfigured('youtube', settings.integrations.youtube as Record<string, unknown>)}
+                  secretHints={secretHints.youtube}
                   fields={[
                     { label: 'API Key', key: 'apiKey', type: 'password' },
                     { label: 'Channel ID', key: 'channelId' },
                   ]}
                   values={settings.integrations.youtube || {}}
                   onChange={(key, val) => {
-                    updateIntegrations('youtube', { [key]: val, configured: !!(settings.integrations.youtube?.apiKey || key === 'apiKey' ? val : settings.integrations.youtube?.channelId) });
+                    updateIntegrations('youtube', { ...settings.integrations.youtube, [key]: val });
                   }}
                 />
                 <IntegrationBlock
                   title="Google Maps / Places"
-                  configured={settings.integrations.googlePlaces?.configured}
+                  configured={integrationConfigured('googlePlaces', settings.integrations.googlePlaces as Record<string, unknown>)}
+                  secretHints={secretHints.googlePlaces}
                   fields={[{ label: 'Maps API Key (client-side)', key: 'apiKey', type: 'password' }]}
                   values={settings.integrations.googlePlaces || {}}
                   onChange={(key, val) => {
-                    updateIntegrations('googlePlaces', { [key]: val, configured: !!val });
+                    updateIntegrations('googlePlaces', { ...settings.integrations.googlePlaces, [key]: val });
                   }}
                 />
                 <p className="text-xs text-muted-foreground -mt-4 px-2">
@@ -405,11 +447,12 @@ export default function AdminSettingsEditor() {
                 </p>
                 <IntegrationBlock
                   title="Chatbot AI"
-                  configured={settings.integrations.anthropic?.configured}
+                  configured={integrationConfigured('anthropic', settings.integrations.anthropic as Record<string, unknown>)}
+                  secretHints={secretHints.anthropic}
                   fields={[{ label: 'API Key (server only)', key: 'apiKey', type: 'password' }]}
                   values={settings.integrations.anthropic || {}}
                   onChange={(key, val) => {
-                    updateIntegrations('anthropic', { [key]: val, configured: !!val });
+                    updateIntegrations('anthropic', { ...settings.integrations.anthropic, [key]: val });
                   }}
                 />
                 <p className="text-xs text-muted-foreground -mt-4 px-2">
@@ -417,11 +460,12 @@ export default function AdminSettingsEditor() {
                 </p>
                 <IntegrationBlock
                   title="SendGrid"
-                  configured={settings.integrations.sendgrid?.configured}
+                  configured={integrationConfigured('sendgrid', settings.integrations.sendgrid as Record<string, unknown>)}
+                  secretHints={secretHints.sendgrid}
                   fields={[{ label: 'API Key', key: 'apiKey', type: 'password' }]}
                   values={settings.integrations.sendgrid || {}}
                   onChange={(key, val) => {
-                    updateIntegrations('sendgrid', { [key]: val, configured: !!val });
+                    updateIntegrations('sendgrid', { ...settings.integrations.sendgrid, [key]: val });
                   }}
                 />
                 <div className="p-6 bg-card rounded-xl border border-border">
@@ -699,25 +743,48 @@ function Field({
   onChange,
   type = 'text',
   multiline = false,
+  stored = false,
 }: {
   label: string;
   value?: string;
   onChange: (v: string) => void;
   type?: string;
   multiline?: boolean;
+  stored?: boolean;
 }) {
   const cls = 'w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent';
   const safeValue = value ?? '';
+  const isSecret = type === 'password';
+  const showStored = isSecret && stored && !safeValue;
+  const placeholder = showStored ? '••••••••  (stored — leave blank to keep)' : undefined;
+
   return (
     <div>
-      <label className="block text-sm font-medium mb-2">{label}</label>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <label className="block text-sm font-medium">{label}</label>
+        {showStored && <span className="text-xs text-green-600 font-medium">Stored</span>}
+      </div>
       {multiline ? (
-        <textarea value={safeValue} onChange={(e) => onChange(e.target.value)} className={cls} rows={3} />
+        <textarea value={safeValue} onChange={(e) => onChange(e.target.value)} className={cls} rows={3} placeholder={placeholder} />
       ) : (
-        <input type={type} value={safeValue} onChange={(e) => onChange(e.target.value)} className={cls} />
+        <input type={type} value={safeValue} onChange={(e) => onChange(e.target.value)} className={cls} placeholder={placeholder} />
       )}
     </div>
   );
+}
+
+function SecretField({
+  label,
+  value,
+  onChange,
+  stored = false,
+}: {
+  label: string;
+  value?: string;
+  onChange: (v: string) => void;
+  stored?: boolean;
+}) {
+  return <Field label={label} value={value} onChange={onChange} type="password" stored={stored} />;
 }
 
 function IntegrationBlock({
@@ -726,12 +793,14 @@ function IntegrationBlock({
   fields,
   values,
   onChange,
+  secretHints,
 }: {
   title: string;
   configured?: boolean;
   fields: { label: string; key: string; type?: string; multiline?: boolean }[];
   values: Record<string, unknown>;
   onChange: (key: string, value: string) => void;
+  secretHints?: Record<string, boolean>;
 }) {
   const cls = 'w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent';
   return (
@@ -746,17 +815,21 @@ function IntegrationBlock({
       <div className="space-y-3">
         {fields.map((f) => {
           const isSecret = f.type === 'password';
-          const hasSavedSecret = isSecret && configured && !!values[f.key];
+          const isStored = isSecret && !!secretHints?.[f.key] && !String(values[f.key] || '').trim();
+          const placeholder = isStored ? '••••••••  (stored — leave blank to keep)' : undefined;
           return (
           <div key={f.key}>
-            <label className="block text-sm font-medium mb-2">{f.label}</label>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <label className="block text-sm font-medium">{f.label}</label>
+              {isStored && <span className="text-xs text-green-600 font-medium">Stored</span>}
+            </div>
             {f.multiline ? (
               <textarea
                 value={String(values[f.key] || '')}
                 onChange={(e) => onChange(f.key, e.target.value)}
                 className={cls}
                 rows={4}
-                placeholder={hasSavedSecret ? 'Saved — leave blank to keep current value' : undefined}
+                placeholder={placeholder}
               />
             ) : (
               <input
@@ -764,7 +837,7 @@ function IntegrationBlock({
                 value={String(values[f.key] || '')}
                 onChange={(e) => onChange(f.key, e.target.value)}
                 className={cls}
-                placeholder={hasSavedSecret ? 'Saved — leave blank to keep current value' : undefined}
+                placeholder={placeholder}
               />
             )}
           </div>
