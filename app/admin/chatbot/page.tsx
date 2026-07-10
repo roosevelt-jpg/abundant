@@ -34,6 +34,7 @@ export default function ChatbotAdminPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [messageIsError, setMessageIsError] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [tab, setTab] = useState<'config' | 'leads' | 'logs'>('config');
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -89,10 +90,13 @@ export default function ChatbotAdminPage() {
     );
   };
 
+  const aiConfigured = settings?.integrations?.anthropic?.configured === true;
+
   const handleSave = async () => {
     if (!settings) return;
     try {
       setSaving(true);
+      setMessage('');
       const res = await authFetch('/api/admin/settings', {
         method: 'PATCH',
         body: JSON.stringify({ chatbot: settings.chatbot }),
@@ -101,13 +105,15 @@ export default function ChatbotAdminPage() {
       if (!res.ok) {
         throw new Error(data.error || 'Failed to save');
       }
-      setSettings((prev) => (prev ? { ...prev, chatbot: data.chatbot } : prev));
+      setSettings((prev) => (prev ? { ...prev, chatbot: data.chatbot ?? settings.chatbot } : prev));
       setDirty(false);
       retry();
-      setMessage('Saved!');
-      setTimeout(() => setMessage(''), 3000);
-    } catch {
-      setMessage('Error saving');
+      setMessageIsError(false);
+      setMessage('Chatbot configuration saved. Visit the homepage to see the floating button when enabled.');
+      setTimeout(() => setMessage(''), 5000);
+    } catch (err) {
+      setMessageIsError(true);
+      setMessage(err instanceof Error ? err.message : 'Error saving chatbot settings');
     } finally {
       setSaving(false);
     }
@@ -138,7 +144,39 @@ export default function ChatbotAdminPage() {
             ))}
           </div>
 
-          {message && <div className="mb-4 p-3 bg-green-500/10 text-green-600 rounded-lg text-sm">{message}</div>}
+          {message && (
+            <div
+              className={`mb-4 p-3 rounded-lg text-sm ${
+                messageIsError ? 'bg-destructive/10 text-destructive' : 'bg-green-500/10 text-green-600'
+              }`}
+            >
+              {message}
+            </div>
+          )}
+
+          {tab === 'config' && (
+            <div
+              className={`mb-6 p-4 rounded-xl border text-sm ${
+                aiConfigured
+                  ? 'border-green-500/30 bg-green-500/5 text-green-800 dark:text-green-300'
+                  : 'border-amber-500/30 bg-amber-500/5 text-amber-900 dark:text-amber-200'
+              }`}
+            >
+              {aiConfigured ? (
+                <p>
+                  <strong>AI connected.</strong> Add your Anthropic API key under Settings → Integrations if replies fail.
+                </p>
+              ) : (
+                <p>
+                  <strong>AI key required.</strong> Save an Anthropic API key under{' '}
+                  <a href="/admin/settings?tab=integrations" className="underline font-medium">
+                    Settings → Integrations → Chatbot AI
+                  </a>{' '}
+                  before the chatbot can answer questions.
+                </p>
+              )}
+            </div>
+          )}
 
           {tab === 'config' ? (
             <div className="space-y-6">

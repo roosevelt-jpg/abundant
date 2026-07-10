@@ -108,7 +108,14 @@ export function ChatbotWidget() {
         setSessionId(data.sessionId);
         sessionStorage.setItem('chatSessionId', data.sessionId);
       }
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.reply || data.error || 'Sorry, something went wrong.' }]);
+      if (!res.ok) {
+        setMessages((prev) => [
+          ...prev,
+          { role: 'assistant', content: data.error || 'Sorry, the assistant is unavailable right now.' },
+        ]);
+        return;
+      }
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.reply || 'Sorry, something went wrong.' }]);
     } catch {
       setMessages((prev) => [...prev, { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' }]);
     } finally {
@@ -209,9 +216,11 @@ export function ChatbotWidget() {
       )}
 
       <button
+        type="button"
         onClick={() => (open ? setOpen(false) : handleOpen())}
-        className="fixed z-[100] bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 sm:right-6 bg-accent text-accent-foreground rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:scale-105 transition-transform ring-2 ring-accent/30"
-        aria-label={open ? 'Close chat' : 'Open chat assistant'}
+        className="fixed z-[100] bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 sm:right-6 bg-accent text-accent-foreground rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform ring-2 ring-accent/30 animate-in fade-in zoom-in duration-300"
+        aria-label={open ? 'Close chat' : `Open ${assistantName}`}
+        aria-expanded={open}
       >
         {open ? <X className="w-6 h-6" /> : <Bot className="w-6 h-6" />}
       </button>

@@ -2,6 +2,7 @@ import { getAdminDb } from '@/lib/firebase-admin';
 import { SETTINGS_DOC_ID } from '@/lib/constants';
 import { getDefaultSettings } from '@/lib/db-service';
 import { fillBlankSettingsFromDefaults, mergeSettingsUpdates, normalizeStoredIntegrations, omitBlankIntegrationSecrets } from '@/lib/settings-merge';
+import { normalizeSettingsForStorage } from '@/lib/settings-normalize';
 import { Settings } from '@/lib/types';
 
 export async function getAdminSettings(): Promise<Settings> {
@@ -9,10 +10,10 @@ export async function getAdminSettings(): Promise<Settings> {
   const snap = await getAdminDb().collection('settings').doc(SETTINGS_DOC_ID).get();
   if (!snap.exists) return defaults;
   const filled = fillBlankSettingsFromDefaults(snap.data() as Settings, defaults);
-  return {
+  return normalizeSettingsForStorage({
     ...filled,
     integrations: normalizeStoredIntegrations(filled.integrations),
-  };
+  });
 }
 
 export async function saveAdminSettings(updates: Partial<Settings>, updatedBy: string): Promise<Settings> {
@@ -38,8 +39,9 @@ export async function saveAdminSettings(updates: Partial<Settings>, updatedBy: s
 
   merged.integrations = normalizeStoredIntegrations(merged.integrations);
 
-  await ref.set(merged);
-  return merged;
+  const normalized = normalizeSettingsForStorage(merged);
+  await ref.set(normalized);
+  return normalized;
 }
 
 export async function getPublicSettings(): Promise<Settings> {

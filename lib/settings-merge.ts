@@ -1,4 +1,5 @@
 import { Settings, HomePageContent } from '@/lib/types';
+import { resolveHeroSliderConfig } from '@/lib/hero-slider-utils';
 import { getDefaultHomePage } from '@/lib/home-page';
 
 const SECRET_FIELD_NAMES = new Set([
@@ -325,35 +326,19 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
   if (updates.heroSliderConfig) {
     const incomingSlides = updates.heroSliderConfig.slides;
     const keepExistingSlides = !incomingSlides || incomingSlides.length === 0;
-    const base = existing.heroSliderConfig ?? {
-      slides: existing.heroSlider ?? [],
-      speed: 5000,
-      transition: 'fade' as const,
-      transitionDuration: 700,
-      autoplay: true,
-      loop: true,
-      pauseOnHover: true,
-      showArrows: true,
-      showDots: true,
-      kenBurns: false,
-      mobileImageFirst: false,
-      contentAlignment: 'left' as const,
-    };
+    const base = resolveHeroSliderConfig(
+      existing.heroSliderConfig,
+      keepExistingSlides ? (existing.heroSliderConfig?.slides ?? existing.heroSlider ?? []) : incomingSlides
+    );
 
-    result.heroSliderConfig = {
-      speed: updates.heroSliderConfig.speed ?? base.speed,
-      transition: updates.heroSliderConfig.transition ?? base.transition,
-      transitionDuration: updates.heroSliderConfig.transitionDuration ?? base.transitionDuration,
-      autoplay: updates.heroSliderConfig.autoplay ?? base.autoplay,
-      loop: updates.heroSliderConfig.loop ?? base.loop,
-      pauseOnHover: updates.heroSliderConfig.pauseOnHover ?? base.pauseOnHover,
-      showArrows: updates.heroSliderConfig.showArrows ?? base.showArrows,
-      showDots: updates.heroSliderConfig.showDots ?? base.showDots,
-      kenBurns: updates.heroSliderConfig.kenBurns ?? base.kenBurns,
-      mobileImageFirst: updates.heroSliderConfig.mobileImageFirst ?? base.mobileImageFirst,
-      contentAlignment: updates.heroSliderConfig.contentAlignment ?? base.contentAlignment,
-      slides: keepExistingSlides ? base.slides : incomingSlides,
-    };
+    result.heroSliderConfig = resolveHeroSliderConfig(
+      {
+        ...base,
+        ...updates.heroSliderConfig,
+        slides: keepExistingSlides ? base.slides : incomingSlides,
+      },
+      keepExistingSlides ? base.slides : incomingSlides
+    );
     result.heroSlider = result.heroSliderConfig.slides;
   }
 

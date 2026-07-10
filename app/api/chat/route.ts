@@ -25,9 +25,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Chatbot is disabled' }, { status: 503 });
     }
 
-    const apiKey = settings.integrations?.anthropic?.apiKey;
+    const apiKey =
+      settings.integrations?.anthropic?.apiKey?.trim() || process.env.ANTHROPIC_API_KEY?.trim();
     if (!apiKey) {
-      return NextResponse.json({ error: 'Chatbot AI is not configured. Add an API key in Settings → Integrations.' }, { status: 503 });
+      return NextResponse.json(
+        { error: 'Chatbot AI is not configured. Add an API key in Settings → Integrations.' },
+        { status: 503 }
+      );
     }
 
     const context = await buildChatContext();

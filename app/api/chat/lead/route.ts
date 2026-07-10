@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { ChatLead } from '@/lib/types';
+import { stripUndefinedDeep } from '@/lib/settings-normalize';
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,16 +22,16 @@ export async function POST(req: NextRequest) {
       .limit(1)
       .get();
 
-    const payload: Omit<ChatLead, 'id'> = {
+    const payload = stripUndefinedDeep({
       sessionId,
-      name: name?.trim() || undefined,
-      email: email?.trim() || undefined,
-      phone: phone?.trim() || undefined,
-      address: address?.trim() || undefined,
-      source: 'chatbot',
+      name: name?.trim() || '',
+      email: email?.trim() || '',
+      phone: phone?.trim() || '',
+      address: address?.trim() || '',
+      source: 'chatbot' as const,
       createdAt: existing.empty ? Date.now() : (existing.docs[0].data() as ChatLead).createdAt,
       updatedAt: Date.now(),
-    };
+    });
 
     if (existing.empty) {
       const ref = db.collection('chatLeads').doc();

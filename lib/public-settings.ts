@@ -2,8 +2,16 @@ import { Settings } from '@/lib/types';
 
 /** Strip secrets before sending settings to the public client */
 export function sanitizePublicSettings(settings: Settings): Settings {
+  const { systemPrompt: _omit, ...publicChatbot } = settings.chatbot ?? {};
+
   return {
     ...settings,
+    chatbot: settings.chatbot
+      ? {
+          ...publicChatbot,
+          enabled: settings.chatbot.enabled,
+        }
+      : undefined,
     integrations: {
       stripe: settings.integrations.stripe
         ? {
