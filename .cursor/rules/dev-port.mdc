@@ -1,0 +1,12 @@
+---
+description: Local dev port for this Abundant project
+alwaysApply: true
+---
+
+# Dev server port
+
+This project runs on **port 3001** only (`http://localhost:3001`).
+
+- Do not use ports 3000 or 3002 — those belong to other projects on this machine.
+- Prefer `npm run dev` (already pinned to 3001 in `package.json`).
+- If starting Next manually, always pass `--port 3001`.

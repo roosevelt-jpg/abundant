@@ -1,6 +1,6 @@
 {
   "buildCommand": "next build",
-  "devCommand": "next dev --port 3000",
+  "devCommand": "next dev --port 3001",
   "installCommand": "pnpm install --frozen-lockfile",
   "framework": "nextjs",
   "git": {
