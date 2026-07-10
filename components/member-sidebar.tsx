@@ -40,17 +40,17 @@ export function MemberSidebar() {
 
   return (
     <aside
-      className={`${isCollapsed ? 'w-20' : 'w-64'} bg-card border-r border-border transition-all duration-300 flex flex-col h-screen fixed left-0 top-0 z-30 hidden md:flex`}
+      className={`${isCollapsed ? 'w-20' : 'w-64'} app-sidebar border-r transition-all duration-300 flex flex-col h-screen fixed left-0 top-0 z-30 hidden md:flex`}
     >
-      <div className="p-4 sm:p-6 border-b border-border">
+      <div className="p-4 sm:p-6 border-b app-sidebar-divider">
         <Link href="/dashboard" className="flex items-center gap-2 min-w-0">
           <SiteLogo
-            variant="admin"
+            variant="header"
             className={`object-contain object-left ${isCollapsed ? 'h-8' : 'h-9'} w-auto max-w-full`}
           />
         </Link>
         {!isCollapsed && (
-          <p className="mt-2 text-[11px] uppercase tracking-wide text-muted-foreground">Member area</p>
+          <p className="mt-2 text-[11px] uppercase tracking-wide text-white/55">Member area</p>
         )}
       </div>
 
@@ -62,10 +62,8 @@ export function MemberSidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium ${
-                active
-                  ? 'bg-accent/10 text-accent'
-                  : 'text-muted-foreground hover:bg-accent/10 hover:text-accent'
+              className={`app-sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium ${
+                active ? 'app-sidebar-link-active' : ''
               }`}
             >
               <Icon className="w-5 h-5 flex-shrink-0" />
@@ -75,10 +73,10 @@ export function MemberSidebar() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-border space-y-1">
+      <div className="p-4 border-t app-sidebar-divider space-y-1">
         <Link
           href="/"
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent/10 hover:text-accent"
+          className="app-sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium"
         >
           <ExternalLink className="w-5 h-5 flex-shrink-0" />
           {!isCollapsed && <span>View website</span>}
@@ -86,7 +84,7 @@ export function MemberSidebar() {
         <button
           type="button"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="w-full text-left px-4 py-2 text-xs text-muted-foreground hover:text-foreground"
+          className="app-sidebar-link w-full text-left px-4 py-2 text-xs text-white/70 rounded-lg"
         >
           {isCollapsed ? '→ Expand' : '← Collapse'}
         </button>

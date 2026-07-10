@@ -189,6 +189,39 @@
     background-color: #001F3F;
   }
 
+  /* Admin + member dashboard sidebars */
+  .app-sidebar {
+    background: linear-gradient(165deg, #0F1B2E 0%, #001F3F 42%, #16304f 78%, #2a3a1f 100%);
+    border-right-color: rgba(184, 151, 58, 0.28);
+    color: #ffffff;
+  }
+
+  .app-sidebar-divider {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .app-sidebar-link {
+    color: rgba(255, 255, 255, 0.92);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  }
+
+  .app-sidebar-link:hover {
+    color: #ffffff;
+    background: rgba(184, 151, 58, 0.16);
+    box-shadow:
+      0 0 18px rgba(184, 151, 58, 0.45),
+      0 0 0 1px rgba(212, 175, 135, 0.35);
+  }
+
+  .app-sidebar-link-active {
+    color: #ffffff;
+    background: rgba(184, 151, 58, 0.28);
+    box-shadow:
+      0 0 22px rgba(184, 151, 58, 0.55),
+      0 0 0 1px rgba(212, 175, 135, 0.55),
+      inset 0 0 12px rgba(184, 151, 58, 0.15);
+  }
+
   @keyframes hero-ken-burns {
     from {
       transform: scale(1);

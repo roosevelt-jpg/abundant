@@ -88,12 +88,12 @@ export const AdminSidebar = () => {
 
   return (
     <aside
-      className={`${isCollapsed ? 'w-20' : 'w-64'} bg-card border-r border-border transition-all duration-300 flex flex-col h-screen fixed left-0 top-0 z-30`}
+      className={`${isCollapsed ? 'w-20' : 'w-64'} app-sidebar border-r transition-all duration-300 flex flex-col h-screen fixed left-0 top-0 z-30`}
     >
-      <div className="p-4 sm:p-6 border-b border-border">
+      <div className="p-4 sm:p-6 border-b app-sidebar-divider">
         <Link href="/admin/dashboard" className="flex items-center gap-2 min-w-0">
           <SiteLogo
-            variant="admin"
+            variant="header"
             className={`object-contain object-left ${isCollapsed ? 'h-8' : 'h-9'} w-auto max-w-full`}
           />
         </Link>
@@ -107,10 +107,8 @@ export const AdminSidebar = () => {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium ${
-                active
-                  ? 'bg-accent/10 text-accent'
-                  : 'text-muted-foreground hover:bg-accent/10 hover:text-accent'
+              className={`app-sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium ${
+                active ? 'app-sidebar-link-active' : ''
               }`}
             >
               <Icon className="w-5 h-5 flex-shrink-0" />
@@ -121,10 +119,11 @@ export const AdminSidebar = () => {
       </nav>
 
       <button
+        type="button"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="p-4 border-t border-border hover:bg-accent/5 transition-colors"
+        className="p-4 border-t app-sidebar-divider app-sidebar-link w-full text-left"
       >
-        <span className="text-xs text-muted-foreground">{isCollapsed ? '→' : '←'}</span>
+        <span className="text-xs text-white/70">{isCollapsed ? '→' : '←'}</span>
       </button>
     </aside>
   );
