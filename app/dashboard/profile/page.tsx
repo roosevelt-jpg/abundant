@@ -1,11 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save } from 'lucide-react';
-import { Header } from '@/components/header';
-import { Footer } from '@/components/footer';
+import { Save } from 'lucide-react';
 import { ImageUpload } from '@/components/image-upload';
 import { MemberLocationFields } from '@/components/member-location-fields';
 import { useAuth } from '@/context/AuthContext';
@@ -85,7 +82,6 @@ export default function DashboardProfilePage() {
         address: location.address || '',
       };
 
-      // Prefer API (Admin SDK) then sync local AuthContext state
       const res = await authFetch('/api/members/me', {
         method: 'PATCH',
         body: JSON.stringify(payload),
@@ -119,130 +115,117 @@ export default function DashboardProfilePage() {
   };
 
   if (loading || !currentUser) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-accent" />
-      </div>
-    );
+    return <div className="py-12 text-center text-sm text-muted-foreground">Loading profile…</div>;
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1 py-10 px-4">
-        <div className="max-w-2xl mx-auto">
-          <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6">
-            <ArrowLeft className="w-4 h-4" /> Back to dashboard
-          </Link>
-          <h1 className="font-heading text-3xl font-bold mb-2">Edit profile</h1>
-          <p className="text-sm text-muted-foreground mb-8">
-            Update your details and photo. Country fields use the global country list.
-          </p>
+    <div className="max-w-2xl">
+      <h2 className="font-heading text-3xl font-bold mb-2">Edit profile</h2>
+      <p className="text-sm text-muted-foreground mb-8">
+        Update your details and photo. Country fields use the global country list.
+      </p>
 
-          {message && (
-            <div className="mb-4 p-3 rounded-lg bg-green-500/10 text-green-700 text-sm">{message}</div>
-          )}
-          {error && (
-            <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>
-          )}
+      {message && (
+        <div className="mb-4 p-3 rounded-lg bg-green-500/10 text-green-700 text-sm">{message}</div>
+      )}
+      {error && (
+        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>
+      )}
 
-          <form onSubmit={handleSave} className="space-y-6 bg-card border border-border rounded-xl p-6">
-            <ImageUpload
-              value={photoURL}
-              onChange={setPhotoURL}
-              folder="members"
-              label="Profile picture"
-              maxWidth={800}
-              maxHeight={800}
-            />
+      <form onSubmit={handleSave} className="space-y-6 bg-card border border-border rounded-xl p-6">
+        <ImageUpload
+          value={photoURL}
+          onChange={setPhotoURL}
+          folder="members"
+          label="Profile picture"
+          maxWidth={800}
+          maxHeight={800}
+        />
 
-            <label className="block text-sm">
-              <span className="font-medium mb-1 block">Display name</span>
-              <input
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                required
-                className="w-full px-3 py-2 bg-input border border-border rounded-lg"
-              />
-            </label>
+        <label className="block text-sm">
+          <span className="font-medium mb-1 block">Display name</span>
+          <input
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            required
+            className="w-full px-3 py-2 bg-input border border-border rounded-lg"
+          />
+        </label>
 
-            <label className="block text-sm">
-              <span className="font-medium mb-1 block">Email</span>
-              <input
-                value={userData?.email || currentUser.email || ''}
-                disabled
-                className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-muted-foreground"
-              />
-            </label>
+        <label className="block text-sm">
+          <span className="font-medium mb-1 block">Email</span>
+          <input
+            value={userData?.email || currentUser.email || ''}
+            disabled
+            className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-muted-foreground"
+          />
+        </label>
 
-            <label className="block text-sm">
-              <span className="font-medium mb-1 block">Phone</span>
-              <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-3 py-2 bg-input border border-border rounded-lg"
-              />
-            </label>
+        <label className="block text-sm">
+          <span className="font-medium mb-1 block">Phone</span>
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="w-full px-3 py-2 bg-input border border-border rounded-lg"
+          />
+        </label>
 
-            <label className="block text-sm">
-              <span className="font-medium mb-1 block">Title / headline</span>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Founder & CEO"
-                className="w-full px-3 py-2 bg-input border border-border rounded-lg"
-              />
-            </label>
+        <label className="block text-sm">
+          <span className="font-medium mb-1 block">Title / headline</span>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Founder & CEO"
+            className="w-full px-3 py-2 bg-input border border-border rounded-lg"
+          />
+        </label>
 
-            <label className="block text-sm">
-              <span className="font-medium mb-1 block">Profession</span>
-              <input
-                value={profession}
-                onChange={(e) => setProfession(e.target.value)}
-                className="w-full px-3 py-2 bg-input border border-border rounded-lg"
-              />
-            </label>
+        <label className="block text-sm">
+          <span className="font-medium mb-1 block">Profession</span>
+          <input
+            value={profession}
+            onChange={(e) => setProfession(e.target.value)}
+            className="w-full px-3 py-2 bg-input border border-border rounded-lg"
+          />
+        </label>
 
-            <label className="block text-sm">
-              <span className="font-medium mb-1 block">Gender</span>
-              <select
-                value={gender || ''}
-                onChange={(e) => setGender(e.target.value as User['gender'])}
-                className="w-full px-3 py-2 bg-input border border-border rounded-lg"
-              >
-                <option value="">Select…</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-                <option value="prefer_not_to_say">Prefer not to say</option>
-              </select>
-            </label>
+        <label className="block text-sm">
+          <span className="font-medium mb-1 block">Gender</span>
+          <select
+            value={gender || ''}
+            onChange={(e) => setGender(e.target.value as User['gender'])}
+            className="w-full px-3 py-2 bg-input border border-border rounded-lg"
+          >
+            <option value="">Select…</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+            <option value="prefer_not_to_say">Prefer not to say</option>
+          </select>
+        </label>
 
-            <MemberLocationFields value={location} onChange={setLocation} />
+        <MemberLocationFields value={location} onChange={setLocation} />
 
-            <label className="block text-sm">
-              <span className="font-medium mb-1 block">Bio</span>
-              <textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                rows={4}
-                className="w-full px-3 py-2 bg-input border border-border rounded-lg"
-                placeholder="A short introduction…"
-              />
-            </label>
+        <label className="block text-sm">
+          <span className="font-medium mb-1 block">Bio</span>
+          <textarea
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            rows={4}
+            className="w-full px-3 py-2 bg-input border border-border rounded-lg"
+            placeholder="A short introduction…"
+          />
+        </label>
 
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-accent-foreground rounded-lg font-semibold disabled:opacity-60"
-            >
-              <Save className="w-4 h-4" />
-              {saving ? 'Saving…' : 'Save profile'}
-            </button>
-          </form>
-        </div>
-      </main>
-      <Footer />
+        <button
+          type="submit"
+          disabled={saving}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-accent-foreground rounded-lg font-semibold disabled:opacity-60"
+        >
+          <Save className="w-4 h-4" />
+          {saving ? 'Saving…' : 'Save profile'}
+        </button>
+      </form>
     </div>
   );
 }
