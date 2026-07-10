@@ -11,6 +11,7 @@ import { Event } from '@/lib/types';
 import { useSettings } from '@/hooks/useSettings';
 import { getDefaultHomePage } from '@/lib/home-page';
 import { HomeFeatureIconComponent } from '@/lib/home-icons';
+import { getEventDisplayPrice, getEventPath } from '@/lib/event-utils';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -58,18 +59,33 @@ export default function Home() {
 
             {upcomingEvents.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {upcomingEvents.map((event) => (
-                  <div key={event.id} className="p-4 bg-card rounded-lg border border-border hover:border-accent transition-colors">
-                    <span className="inline-block px-2 py-0.5 bg-accent/10 text-accent text-xs font-semibold rounded capitalize mb-2">
-                      {event.pricingType || 'free'}
-                    </span>
-                    <h3 className="font-heading font-bold mb-1 line-clamp-2">{event.title}</h3>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      {new Date(event.date).toLocaleDateString()} · {event.location}
-                    </p>
-                    <Link href="/events" className="text-xs text-accent font-semibold">Register →</Link>
-                  </div>
-                ))}
+                {upcomingEvents.map((event) => {
+                  const price = getEventDisplayPrice(event);
+                  return (
+                    <Link
+                      key={event.id}
+                      href={getEventPath(event)}
+                      className="bg-card rounded-lg border border-border hover:border-accent transition-colors overflow-hidden block"
+                    >
+                      {event.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={event.imageUrl} alt="" className="w-full h-36 object-cover" />
+                      ) : (
+                        <div className="w-full h-24 bg-gradient-to-r from-[#001F3F] to-[#B8973A]" />
+                      )}
+                      <div className="p-4">
+                        <span className="inline-block px-2 py-0.5 bg-accent/10 text-accent text-xs font-semibold rounded capitalize mb-2">
+                          {price.label}
+                        </span>
+                        <h3 className="font-heading font-bold mb-1 line-clamp-2">{event.title}</h3>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          {new Date(event.date).toLocaleDateString()} · {event.location}
+                        </p>
+                        <span className="text-xs text-accent font-semibold">Register →</span>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8 bg-card/50 rounded-lg border border-border">
