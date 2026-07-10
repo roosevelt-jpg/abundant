@@ -21,6 +21,24 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const defaultAuthContext: AuthContextType = {
+  currentUser: null,
+  userData: null,
+  loading: true,
+  signUp: async () => {
+    throw new Error('AuthProvider missing');
+  },
+  signIn: async () => {
+    throw new Error('AuthProvider missing');
+  },
+  logout: async () => {
+    throw new Error('AuthProvider missing');
+  },
+  updateUserProfile: async () => {
+    throw new Error('AuthProvider missing');
+  },
+};
+
 async function syncSessionCookie(user: FirebaseUser | null) {
   try {
     if (user) {
@@ -229,10 +247,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
+  // Default value avoids SSR crashes when the client boundary hydrates
+  return context ?? defaultAuthContext;
 };
