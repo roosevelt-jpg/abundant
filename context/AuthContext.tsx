@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
-import { onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { onAuthStateChanged, signOut, signInWithEmailAndPassword } from 'firebase/auth';
 import { getFirebaseServices } from '@/lib/firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { User, UserRole, MemberProfile } from '@/lib/types';
@@ -100,44 +100,49 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             
             setUserData(userData);
           } else {
-            // Create user document if it doesn't exist
+            // Invite-gated: only auto-provision the primary admin account
             const isAdmin = user.email?.toLowerCase() === PRIMARY_ADMIN_EMAIL.toLowerCase();
-            const newUser: User = {
-              uid: user.uid,
-              email: user.email || '',
-              displayName: user.displayName || 'User',
-              photoURL: user.photoURL || '',
-              role: isAdmin ? 'super_admin' : 'member',
-              permissions: isAdmin ? ALL_ADMIN_PERMISSIONS : undefined,
-              membershipTier: 'member',
-              joinedAt: Date.now(),
-              status: 'active',
-              createdAt: Date.now(),
-              updatedAt: Date.now(),
-            };
-            await setDoc(userRef, newUser);
-            if (isMounted) {
-              setUserData(newUser);
+            if (isAdmin) {
+              const newUser: User = {
+                uid: user.uid,
+                email: user.email || '',
+                displayName: user.displayName || 'User',
+                photoURL: user.photoURL || '',
+                role: 'super_admin',
+                permissions: ALL_ADMIN_PERMISSIONS,
+                membershipTier: 'member',
+                joinedAt: Date.now(),
+                status: 'active',
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+              };
+              await setDoc(userRef, newUser);
+              if (isMounted) setUserData(newUser);
+            } else if (isMounted) {
+              setUserData(null);
             }
           }
         } catch (error) {
           console.error('[v0] Error fetching user data:', error);
-          // Continue even if Firestore fails - set user data with basic info
           const isAdmin = user.email?.toLowerCase() === PRIMARY_ADMIN_EMAIL.toLowerCase();
           if (isMounted) {
-            setUserData({
-              uid: user.uid,
-              email: user.email || '',
-              displayName: user.displayName || 'User',
-              photoURL: user.photoURL || '',
-              role: isAdmin ? 'super_admin' : 'member',
-              permissions: isAdmin ? ALL_ADMIN_PERMISSIONS : undefined,
-              membershipTier: 'member',
-              joinedAt: Date.now(),
-              status: 'active',
-              createdAt: Date.now(),
-              updatedAt: Date.now(),
-            });
+            if (isAdmin) {
+              setUserData({
+                uid: user.uid,
+                email: user.email || '',
+                displayName: user.displayName || 'User',
+                photoURL: user.photoURL || '',
+                role: 'super_admin',
+                permissions: ALL_ADMIN_PERMISSIONS,
+                membershipTier: 'member',
+                joinedAt: Date.now(),
+                status: 'active',
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+              });
+            } else {
+              setUserData(null);
+            }
           }
         }
       } else {
@@ -157,43 +162,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signUp = async (
-    email: string,
-    password: string,
-    displayName: string,
-    profile?: MemberProfile
+    _email: string,
+    _password: string,
+    _displayName: string,
+    _profile?: MemberProfile
   ) => {
-    const { auth, db } = getFirebaseServices();
-    if (!auth || !db) throw new Error('Firebase not initialized');
-    try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(result.user, { displayName });
-
-      const newUser: User = {
-        uid: result.user.uid,
-        email,
-        displayName,
-        role: 'member',
-        membershipTier: 'member',
-        joinedAt: Date.now(),
-        status: 'active',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        country: profile?.country,
-        nationality: profile?.nationality,
-        city: profile?.city,
-        address: profile?.address,
-        locationPlaceId: profile?.locationPlaceId,
-        dateOfBirth: profile?.dateOfBirth,
-        gender: profile?.gender,
-        profession: profile?.profession,
-        joinReason: profile?.joinReason,
-      };
-
-      await setDoc(doc(db, 'users', result.user.uid), newUser);
-    } catch (error) {
-      console.error('Sign up error:', error);
-      throw error;
-    }
+    throw new Error('Open signup is disabled. Apply for membership, then use your invite link.');
   };
 
   const signIn = async (email: string, password: string) => {

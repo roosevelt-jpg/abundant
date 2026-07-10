@@ -8,10 +8,17 @@ import { MemberProfile } from '@/lib/types';
 interface MemberLocationFieldsProps {
   value: MemberProfile;
   onChange: (profile: MemberProfile) => void;
+  /** Show citizenship field (default true) */
+  showCitizenship?: boolean;
 }
 
-export function MemberLocationFields({ value, onChange }: MemberLocationFieldsProps) {
+export function MemberLocationFields({
+  value,
+  onChange,
+  showCitizenship = true,
+}: MemberLocationFieldsProps) {
   const [city, setCity] = useState(value.city || '');
+  const residence = value.countryOfResidence || value.country || '';
 
   useEffect(() => {
     if (value.city) setCity(value.city);
@@ -25,11 +32,13 @@ export function MemberLocationFields({ value, onChange }: MemberLocationFieldsPr
     <div className="space-y-4">
       <CountrySelect
         label="Country of Residence"
-        value={value.country || ''}
+        value={residence}
         onChange={(code) => {
           update({
             country: code,
+            countryOfResidence: code,
             nationality: value.nationality || code,
+            citizenship: value.citizenship || value.nationality || code,
           });
         }}
         required
@@ -37,13 +46,22 @@ export function MemberLocationFields({ value, onChange }: MemberLocationFieldsPr
 
       <CountrySelect
         label="Nationality"
-        value={value.nationality || value.country || ''}
+        value={value.nationality || residence}
         onChange={(code) => update({ nationality: code })}
         required
       />
 
+      {showCitizenship && (
+        <CountrySelect
+          label="Citizenship"
+          value={value.citizenship || value.nationality || residence}
+          onChange={(code) => update({ citizenship: code })}
+          required
+        />
+      )}
+
       <PlacesAutocomplete
-        label="City"
+        label="City / Location"
         value={city}
         onChange={setCity}
         onPlaceSelect={(place) => {
@@ -51,11 +69,13 @@ export function MemberLocationFields({ value, onChange }: MemberLocationFieldsPr
           setCity(nextCity);
           update({
             city: nextCity,
-            country: place.country || value.country,
+            // Keep country fields on ISO codes from CountrySelect; only fill if empty
+            country: value.country || place.country || residence,
+            countryOfResidence: value.countryOfResidence || value.country || place.country || residence,
           });
         }}
         types={['(cities)']}
-        countryCode={value.country}
+        countryCode={residence}
         placeholder="Search for your city..."
         required
       />
@@ -69,14 +89,12 @@ export function MemberLocationFields({ value, onChange }: MemberLocationFieldsPr
             address: place.formattedAddress,
             locationPlaceId: place.placeId,
             city: place.city || value.city || city,
-            country: place.country || value.country,
           });
           if (place.city) setCity(place.city);
         }}
         types={['address']}
-        countryCode={value.country}
+        countryCode={residence}
         placeholder="Search for your address..."
-        required
       />
     </div>
   );

@@ -1,4 +1,8 @@
-import { Event, EventAudienceGender, User } from '@/lib/types';
+import { Event, EventAudienceGender, MemberRecord, User } from '@/lib/types';
+import {
+  hasEventMembershipAccess,
+  MEMBERSHIP_REQUIRED_MESSAGE,
+} from '@/lib/membership-access';
 
 export function getAudienceGenderLabel(audience?: EventAudienceGender): string {
   switch (audience || 'mixed') {
@@ -12,32 +16,44 @@ export function getAudienceGenderLabel(audience?: EventAudienceGender): string {
 }
 
 export function canUserRegisterForEvent(
-  user: Pick<User, 'gender'> | null | undefined,
-  event: Pick<Event, 'audienceGender'>
-): { allowed: boolean; reason?: string } {
+  user: Pick<User, 'gender' | 'subscriptionStatus' | 'membershipTier'> | null | undefined,
+  event: Pick<Event, 'audienceGender'>,
+  member?: Pick<MemberRecord, 'tierStatus' | 'tier'> | null
+): { allowed: boolean; reason?: string; code?: 'GENDER' | 'MEMBERSHIP_REQUIRED' | 'PROFILE' } {
   const audience = event.audienceGender || 'mixed';
-  if (audience === 'mixed') return { allowed: true };
+  if (audience !== 'mixed') {
+    if (!user?.gender) {
+      return {
+        allowed: false,
+        code: 'PROFILE',
+        reason: 'Please complete your profile with gender information to register for this event.',
+      };
+    }
 
-  if (!user?.gender) {
+    if (user.gender === 'other' || user.gender === 'prefer_not_to_say') {
+      return {
+        allowed: false,
+        code: 'GENDER',
+        reason: `This event is ${getAudienceGenderLabel(audience).toLowerCase()}.`,
+      };
+    }
+
+    if (audience === 'men' && user.gender !== 'male') {
+      return { allowed: false, code: 'GENDER', reason: 'This event is for men only.' };
+    }
+
+    if (audience === 'women' && user.gender !== 'female') {
+      return { allowed: false, code: 'GENDER', reason: 'This event is for women only.' };
+    }
+  }
+
+  const membership = hasEventMembershipAccess(user, member);
+  if (!membership.allowed) {
     return {
       allowed: false,
-      reason: 'Please complete your profile with gender information to register for this event.',
+      code: 'MEMBERSHIP_REQUIRED',
+      reason: MEMBERSHIP_REQUIRED_MESSAGE,
     };
-  }
-
-  if (user.gender === 'other' || user.gender === 'prefer_not_to_say') {
-    return {
-      allowed: false,
-      reason: `This event is ${getAudienceGenderLabel(audience).toLowerCase()}.`,
-    };
-  }
-
-  if (audience === 'men' && user.gender !== 'male') {
-    return { allowed: false, reason: 'This event is for men only.' };
-  }
-
-  if (audience === 'women' && user.gender !== 'female') {
-    return { allowed: false, reason: 'This event is for women only.' };
   }
 
   return { allowed: true };

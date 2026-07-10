@@ -21,6 +21,7 @@ export const ADMIN_PERMISSION_DEFS: {
   { id: 'careers', label: 'Careers', description: 'Job postings and applications' },
   { id: 'press', label: 'Press', description: 'Press mentions and media kit' },
   { id: 'legal', label: 'Legal', description: 'Privacy Policy and Terms of Service' },
+  { id: 'applications', label: 'Applications', description: 'Membership application review queue' },
   { id: 'invites', label: 'Invite Admins', description: 'Invite and manage admins (super admin only)' },
   { id: 'settings', label: 'Settings', description: 'Platform settings and integrations' },
 ];
@@ -33,6 +34,7 @@ export const ROUTE_PERMISSIONS: Record<string, AdminPermission> = {
   '/admin/events': 'events',
   '/admin/testimonials': 'testimonials',
   '/admin/billing': 'billing',
+  '/admin/membership-tiers': 'billing',
   '/admin/pages': 'pages',
   '/admin/about': 'about',
   '/admin/forms': 'forms',
@@ -40,9 +42,11 @@ export const ROUTE_PERMISSIONS: Record<string, AdminPermission> = {
   '/admin/chatbot': 'chatbot',
   '/admin/faq': 'faq',
   '/admin/resources': 'resources',
+  '/admin/resource-submissions': 'resources',
   '/admin/careers': 'careers',
   '/admin/press': 'press',
   '/admin/legal': 'legal',
+  '/admin/applications': 'applications',
   '/admin/invites': 'invites',
   '/admin/settings': 'settings',
 };

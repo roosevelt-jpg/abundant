@@ -150,5 +150,34 @@ service cloud.firestore {
       allow create: if true;
       allow read, update, delete: if isAdmin();
     }
+
+    // Intake system — Admin SDK only (no client read/write)
+    match /membershipApplications/{id} {
+      allow read, write: if false;
+    }
+
+    match /membershipInvites/{id} {
+      allow read, write: if false;
+    }
+
+    match /resourceSubmissions/{id} {
+      allow read, write: if false;
+    }
+
+    match /members/{uid} {
+      allow read: if isAdmin() || isOwner(uid);
+      allow create, update: if false; // API / Admin SDK only (tier fields protected server-side)
+      allow delete: if isAdmin();
+    }
+
+    match /membershipTiers/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /taxonomies/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
   }
 }

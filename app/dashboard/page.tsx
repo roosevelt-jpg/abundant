@@ -30,6 +30,29 @@ export default function Dashboard() {
     }
   }, [currentUser, userData, loading, router]);
 
+  // Members who haven't finished onboarding
+  useEffect(() => {
+    if (loading || !currentUser || !userData || isAdminRole(userData.role)) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = await currentUser.getIdToken();
+        const res = await fetch('/api/members/me', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (!cancelled && res.ok && data.member && !data.member.onboardingCompletedAt) {
+          router.replace('/onboarding');
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, currentUser, userData, router]);
+
   const { t } = useLanguage();
   const showUpgradeBanner = !loading && userData && !isWithinFreePeriod() && userData.subscriptionStatus !== 'active' && userData.subscriptionStatus !== 'trialing';
 
@@ -86,8 +109,8 @@ export default function Dashboard() {
           {showUpgradeBanner && (
             <div className="mb-8 p-4 bg-accent/10 border border-accent/20 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <p className="font-semibold">{t('dashboard.upgrade', 'Your free access period has ended')}</p>
-                <p className="text-sm text-muted-foreground">{t('dashboard.upgradeDesc', 'Upgrade to continue enjoying full member benefits.')}</p>
+                <p className="font-semibold">{t('dashboard.upgrade', 'Membership required for events from September 1')}</p>
+                <p className="text-sm text-muted-foreground">{t('dashboard.upgradeDesc', 'Upgrade to unlock free events and member discounts on paid events.')}</p>
               </div>
               <Link href="/membership" className="px-4 py-2 bg-accent text-accent-foreground rounded-lg text-sm font-semibold whitespace-nowrap">
                 {t('dashboard.viewPlans', 'View Plans')}

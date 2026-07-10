@@ -22,10 +22,6 @@ export const metadata: Metadata = {
   title: 'Abundant Global Club',
   description: 'A Global Network of Success',
   generator: 'v0.app',
-  icons: {
-    icon: '/favicon.ico',
-    apple: '/apple-icon.png',
-  },
 }
 
 export const viewport: Viewport = {
@@ -48,9 +44,13 @@ export default async function RootLayout({
     console.error('[layout] Failed to load public settings:', error);
   }
 
+  const faviconUrl = initialSettings.branding?.faviconUrl || '/favicon.ico';
+
   return (
     <html lang="en" className={`${cormorantGaramond.variable} ${inter.variable} dark`}>
       <head>
+        <link rel="icon" href={faviconUrl} />
+        <link rel="apple-touch-icon" href={faviconUrl} />
         {initialSettings.branding?.logoUrl ? (
           <link rel="preload" as="image" href={initialSettings.branding.logoUrl} />
         ) : null}

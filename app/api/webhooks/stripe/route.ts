@@ -47,6 +47,38 @@ export async function POST(req: NextRequest) {
             stripeCustomerId: session.customer,
             updatedAt: Date.now(),
           });
+
+          // Activate member record for event access / discounts
+          const memberRef = db.collection('members').doc(userId);
+          const memberSnap = await memberRef.get();
+          const mappedTier =
+            tier === 'elite' || tier === 'founding_circle'
+              ? 'founding_circle'
+              : tier === 'inner-circle' || tier === 'private'
+                ? 'private'
+                : tier === 'global' || tier === 'member'
+                  ? 'global'
+                  : 'global';
+          if (memberSnap.exists) {
+            await memberRef.update({
+              tier: mappedTier,
+              tierStatus: 'active',
+              updatedAt: Date.now(),
+            });
+          } else {
+            await memberRef.set({
+              uid: userId,
+              tier: mappedTier,
+              tierStatus: 'active',
+              expertiseTags: [],
+              directoryVisibility: 'members_only',
+              socialLinks: {},
+              availableForIntros: true,
+              notificationPrefs: { eventInvites: true, weeklyDigest: true, introRequests: true },
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            });
+          }
         }
 
         if (type === 'event' && userId && eventId) {

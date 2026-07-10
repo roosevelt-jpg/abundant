@@ -4,21 +4,36 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
-import { ContentCtaBlock, ContentHero } from '@/components/content-page-hero';
+import { ContentHero } from '@/components/content-page-hero';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuth } from '@/context/AuthContext';
 import { getDefaultResourcesPage } from '@/lib/content-page-defaults';
-import { ResourceItem } from '@/lib/types';
+import { ResourceItem, Taxonomies } from '@/lib/types';
 import { Lock, Download, FileText } from 'lucide-react';
+import { FileUpload } from '@/components/file-upload';
+import { getDefaultTaxonomies } from '@/lib/intake-defaults';
+import { PRIMARY_ADMIN_EMAIL } from '@/lib/constants';
 
 export default function ResourcesPage() {
   const { settings } = useSettings();
-  const { userData } = useAuth();
+  const { userData, currentUser } = useAuth();
   const page = settings?.resourcesPage ?? getDefaultResourcesPage();
   const [items, setItems] = useState<ResourceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('All');
   const [selected, setSelected] = useState<ResourceItem | null>(null);
+  const [submitOpen, setSubmitOpen] = useState(false);
+  const [taxonomies, setTaxonomies] = useState<Taxonomies>(getDefaultTaxonomies());
+  const [submitForm, setSubmitForm] = useState({
+    name: '',
+    email: '',
+    title: '',
+    category: 'Playbooks',
+    description: '',
+    fileUrl: '',
+  });
+  const [submitMsg, setSubmitMsg] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const isMember = !!userData && (userData.role === 'member' || userData.role === 'admin' || userData.role === 'super_admin');
 
   useEffect(() => {
@@ -27,7 +42,21 @@ export default function ResourcesPage() {
       .then(setItems)
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
+    fetch('/api/public/taxonomies')
+      .then((r) => r.json())
+      .then((d) => d?.resourceCategories && setTaxonomies(d))
+      .catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    if (userData) {
+      setSubmitForm((f) => ({
+        ...f,
+        name: userData.displayName || f.name,
+        email: userData.email || f.email,
+      }));
+    }
+  }, [userData]);
 
   const categories = useMemo(() => ['All', ...(page.categories || [])], [page.categories]);
 
@@ -97,14 +126,113 @@ export default function ResourcesPage() {
           </div>
         </section>
 
-        <ContentCtaBlock
-          title={page.submitCta.title}
-          body={page.submitCta.body}
-          buttonText={page.submitCta.buttonText}
-          buttonLink={page.submitCta.buttonLink}
-        />
+        <section className="py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl mx-auto text-center border border-border rounded-xl p-8 bg-card">
+            <h2 className="font-heading text-2xl font-bold mb-3">{page.submitCta.title}</h2>
+            <p className="text-sm text-muted-foreground mb-5 leading-relaxed whitespace-pre-wrap">{page.submitCta.body}</p>
+            <button
+              type="button"
+              onClick={() => setSubmitOpen(true)}
+              className="inline-flex px-5 py-2.5 bg-gradient-to-r from-[#001F3F] to-[#B8973A] text-white rounded-lg text-sm font-semibold"
+            >
+              {page.submitCta.buttonText}
+            </button>
+          </div>
+        </section>
       </main>
       <Footer />
+
+      {submitOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h2 className="font-heading text-xl font-bold mb-4">Submit a resource</h2>
+            <form
+              className="space-y-3"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setSubmitting(true);
+                setSubmitMsg('');
+                try {
+                  const headers: HeadersInit = { 'Content-Type': 'application/json' };
+                  if (currentUser) {
+                    const token = await currentUser.getIdToken();
+                    headers.Authorization = `Bearer ${token}`;
+                  }
+                  const res = await fetch('/api/resources/submit', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(submitForm),
+                  });
+                  const data = await res.json();
+                  if (!res.ok) throw new Error(data.error || 'Failed');
+                  setSubmitMsg('Submitted for review. Thank you!');
+                  setSubmitForm((f) => ({ ...f, title: '', description: '', fileUrl: '' }));
+                } catch (err) {
+                  setSubmitMsg(err instanceof Error ? err.message : 'Failed');
+                } finally {
+                  setSubmitting(false);
+                }
+              }}
+            >
+              <input
+                required
+                placeholder="Your name"
+                value={submitForm.name}
+                onChange={(e) => setSubmitForm({ ...submitForm, name: e.target.value })}
+                className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm"
+              />
+              <input
+                required
+                type="email"
+                placeholder="Email"
+                value={submitForm.email}
+                onChange={(e) => setSubmitForm({ ...submitForm, email: e.target.value })}
+                className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm"
+              />
+              <input
+                required
+                placeholder="Title"
+                value={submitForm.title}
+                onChange={(e) => setSubmitForm({ ...submitForm, title: e.target.value })}
+                className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm"
+              />
+              <select
+                value={submitForm.category}
+                onChange={(e) => setSubmitForm({ ...submitForm, category: e.target.value })}
+                className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm"
+              >
+                {(taxonomies.resourceCategories.length ? taxonomies.resourceCategories : page.categories).map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              <textarea
+                required
+                rows={4}
+                placeholder="Description"
+                value={submitForm.description}
+                onChange={(e) => setSubmitForm({ ...submitForm, description: e.target.value })}
+                className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm"
+              />
+              <FileUpload
+                label="File (optional)"
+                folder="resource-submissions"
+                value={submitForm.fileUrl}
+                onChange={(url) => setSubmitForm({ ...submitForm, fileUrl: url })}
+              />
+              {submitMsg && <p className="text-sm text-accent">{submitMsg}</p>}
+              <p className="text-[11px] text-muted-foreground">Questions? {PRIMARY_ADMIN_EMAIL}</p>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setSubmitOpen(false)} className="flex-1 py-2 border border-border rounded-lg text-sm">
+                  Close
+                </button>
+                <button type="submit" disabled={submitting} className="flex-1 py-2 bg-gradient-to-r from-[#001F3F] to-[#B8973A] text-white rounded-lg text-sm font-semibold disabled:opacity-50">
+                  {submitting ? 'Sending…' : 'Submit'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {selected && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">

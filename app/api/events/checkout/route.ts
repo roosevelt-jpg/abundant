@@ -5,7 +5,12 @@ import { getAdminDb } from '@/lib/firebase-admin';
 import { canUserRegisterForEvent } from '@/lib/event-eligibility';
 import { validateDiscountCode } from '@/lib/discount-codes';
 import { getEffectiveTicketTiers, isEventFull } from '@/lib/event-utils';
-import { Event, User } from '@/lib/types';
+import {
+  applyMembershipDiscount,
+  getTierPaidEventDiscountPercent,
+  resolveMemberTierId,
+} from '@/lib/membership-access';
+import { Event, MemberRecord, MembershipTier, User } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,7 +29,10 @@ export async function POST(req: NextRequest) {
 
     const event = eventDoc.data() as Event;
     if ((event.registrationMode || 'open') === 'invite_only') {
-      return NextResponse.json({ error: 'This event is invite-only — use free RSVP with an invite code, or contact the host' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'This event is invite-only — use free RSVP with an invite code, or contact the host' },
+        { status: 403 }
+      );
     }
 
     const tiers = getEffectiveTicketTiers(event);
@@ -37,10 +45,15 @@ export async function POST(req: NextRequest) {
 
     const userDoc = await db.collection('users').doc(user.uid).get();
     const userData = userDoc.data() as User | undefined;
+    const memberDoc = await db.collection('members').doc(user.uid).get();
+    const memberData = (memberDoc.exists ? memberDoc.data() : null) as MemberRecord | null;
 
-    const eligibility = canUserRegisterForEvent(userData, event);
+    const eligibility = canUserRegisterForEvent(userData, event, memberData);
     if (!eligibility.allowed) {
-      return NextResponse.json({ error: eligibility.reason }, { status: 403 });
+      return NextResponse.json(
+        { error: eligibility.reason, code: eligibility.code },
+        { status: 403 }
+      );
     }
 
     if (isEventFull(event)) {
@@ -65,12 +78,23 @@ export async function POST(req: NextRequest) {
     let discountId: string | undefined;
     let discountAmount = 0;
     let appliedCode: string | undefined;
+    let membershipDiscountPercent = 0;
+
+    const membershipTiersSnap = await db.collection('membershipTiers').get();
+    const membershipTiers = membershipTiersSnap.docs.map((d) => d.data() as MembershipTier);
+    const tierId = resolveMemberTierId(userData, memberData);
+    membershipDiscountPercent = getTierPaidEventDiscountPercent(tierId, membershipTiers);
+    if (membershipDiscountPercent > 0) {
+      const applied = applyMembershipDiscount(finalPrice, membershipDiscountPercent);
+      finalPrice = applied.finalPrice;
+      discountAmount += applied.discountAmount;
+    }
 
     if (discountCode) {
-      const result = await validateDiscountCode(discountCode, eventId, basePrice);
+      const result = await validateDiscountCode(discountCode, eventId, finalPrice);
+      discountAmount += result.discountAmount;
       finalPrice = result.finalPrice;
       discountId = result.code.id;
-      discountAmount = result.discountAmount;
       appliedCode = result.code.code;
     }
 
@@ -105,11 +129,17 @@ export async function POST(req: NextRequest) {
         discountCodeId: discountId || '',
         discountCode: appliedCode || '',
         discountAmount: String(discountAmount),
+        membershipDiscountPercent: String(membershipDiscountPercent),
         originalPrice: String(basePrice),
       },
     });
 
-    return NextResponse.json({ url: session.url, finalPrice, discountAmount });
+    return NextResponse.json({
+      url: session.url,
+      finalPrice,
+      discountAmount,
+      membershipDiscountPercent,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Checkout failed';
     const status = message === 'Unauthorized' ? 401 : 500;

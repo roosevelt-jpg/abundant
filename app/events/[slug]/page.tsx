@@ -7,8 +7,9 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { useAuth } from '@/context/AuthContext';
 import { useApiAuth } from '@/hooks/useApiAuth';
-import { Event, EventRegistration, EventTag } from '@/lib/types';
+import { Event, EventRegistration, EventTag, MemberRecord } from '@/lib/types';
 import { canUserRegisterForEvent, getAudienceGenderLabel } from '@/lib/event-eligibility';
+import { isWithinFreePeriod } from '@/lib/constants';
 import {
   formatEventWhen,
   getEffectiveTicketTiers,
@@ -48,6 +49,20 @@ export default function PublicEventPage() {
   const [discountCode, setDiscountCode] = useState('');
   const [inviteCode, setInviteCode] = useState(searchParams.get('invite') || '');
   const [ticketQr, setTicketQr] = useState<{ qrUrl: string; checkInCode: string } | null>(null);
+  const [member, setMember] = useState<MemberRecord | null>(null);
+
+  useEffect(() => {
+    if (!currentUser) {
+      setMember(null);
+      return;
+    }
+    authFetch('/api/members/me')
+      .then(async (r) => {
+        const data = await r.json();
+        if (r.ok) setMember(data.member || null);
+      })
+      .catch(() => setMember(null));
+  }, [currentUser, authFetch]);
 
   useEffect(() => {
     if (!slug) return;
@@ -93,7 +108,7 @@ export default function PublicEventPage() {
   const selectedTier = tiers.find((t) => t.id === selectedTierId) || tiers[0];
   const priceInfo = event ? getEventDisplayPrice(event) : { label: 'Free', amount: 0 };
   const full = event ? isEventFull(event) : false;
-  const eligibility = event ? canUserRegisterForEvent(userData, event) : { allowed: true };
+  const eligibility = event ? canUserRegisterForEvent(userData, event, member) : { allowed: true };
 
   const handleRegister = async () => {
     if (!event) return;
@@ -102,6 +117,10 @@ export default function PublicEventPage() {
       return;
     }
     if (!eligibility.allowed) {
+      if (eligibility.code === 'MEMBERSHIP_REQUIRED') {
+        setMessage(eligibility.reason || 'Membership required');
+        return;
+      }
       setMessage(eligibility.reason || 'Not eligible');
       return;
     }
@@ -433,7 +452,28 @@ export default function PublicEventPage() {
                 )}
 
                 {!eligibility.allowed && currentUser && (
-                  <p className="text-xs text-destructive">{eligibility.reason}</p>
+                  <div className="text-xs space-y-2">
+                    <p className="text-destructive">{eligibility.reason}</p>
+                    {eligibility.code === 'MEMBERSHIP_REQUIRED' && (
+                      <Link
+                        href="/membership"
+                        className="inline-flex px-3 py-2 bg-gradient-to-r from-[#001F3F] to-[#B8973A] text-white rounded-lg font-semibold"
+                      >
+                        Upgrade membership →
+                      </Link>
+                    )}
+                    {eligibility.code === 'PROFILE' && (
+                      <Link href="/onboarding" className="inline-flex text-accent font-semibold">
+                        Complete your profile →
+                      </Link>
+                    )}
+                  </div>
+                )}
+
+                {isWithinFreePeriod() && currentUser && eligibility.allowed && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Free access period is active through August 31 — membership upgrades apply from September 1.
+                  </p>
                 )}
 
                 <button
@@ -441,6 +481,7 @@ export default function PublicEventPage() {
                   disabled={
                     registering ||
                     !!ticketQr ||
+                    !eligibility.allowed ||
                     (event.registrationMode === 'invite_only' && !inviteCode.trim())
                   }
                   onClick={handleRegister}

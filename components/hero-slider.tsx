@@ -18,7 +18,7 @@ const DEFAULT_SLIDE: HeroSlide = {
   title: 'Abundant Global Club',
   description:
     'Join an exclusive community of high-achievers, entrepreneurs, and visionaries committed to abundant living and collective success.',
-  cta: { text: 'Join Now', link: '/signup' },
+  cta: { text: 'Join Now', link: '/apply' },
   secondaryCta: { text: 'Learn More', link: '/about' },
   order: 0,
 };

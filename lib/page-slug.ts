@@ -17,6 +17,8 @@ export const RESERVED_PAGE_SLUGS = new Set([
   'press',
   'privacy',
   'terms',
+  'apply',
+  'onboarding',
   'home',
 ]);
 

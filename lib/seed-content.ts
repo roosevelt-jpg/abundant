@@ -9,6 +9,11 @@ import {
   getSeedPressItems,
   getSeedResources,
 } from '@/lib/content-page-defaults';
+import {
+  getDefaultMembershipTiers,
+  getDefaultTaxonomies,
+  TAXONOMIES_DOC_ID,
+} from '@/lib/intake-defaults';
 import { Settings } from '@/lib/types';
 
 let seedPromise: Promise<void> | null = null;
@@ -124,6 +129,21 @@ async function runSeed(): Promise<void> {
     getSeedPressItems().forEach((item, i) => {
       const ref = db.collection('pressItems').doc();
       batch.set(ref, { ...item, id: ref.id, createdAt: now, updatedAt: now, order: i });
+    });
+    await batch.commit();
+  }
+
+  // Intake config only (Phase 9) — taxonomies + membership tiers
+  const taxRef = db.collection('taxonomies').doc(TAXONOMIES_DOC_ID);
+  if (!(await taxRef.get()).exists) {
+    await taxRef.set(getDefaultTaxonomies());
+  }
+
+  const tiersSnap = await db.collection('membershipTiers').limit(1).get();
+  if (tiersSnap.empty) {
+    const batch = db.batch();
+    getDefaultMembershipTiers().forEach((tier) => {
+      batch.set(db.collection('membershipTiers').doc(tier.id), tier);
     });
     await batch.commit();
   }

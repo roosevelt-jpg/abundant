@@ -23,7 +23,7 @@ export function getDefaultHomePage(): HomePageContent {
       title: 'Ready to Join Abundant?',
       subtitle: 'Start your journey towards abundant living and global success today.',
       buttonText: 'Get Started Now',
-      buttonLink: '/signup',
+      buttonLink: '/apply',
     },
     updatedAt: Date.now(),
   };

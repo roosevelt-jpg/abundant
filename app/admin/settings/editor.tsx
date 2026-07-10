@@ -166,7 +166,7 @@ export default function AdminSettingsEditor() {
       badge: 'Welcome to Abundant',
       title: 'New Slide Title',
       description: 'Craft the text that appears on the left when this slide is active.',
-      cta: { text: 'Join Now', link: '/signup' },
+      cta: { text: 'Join Now', link: '/apply' },
       secondaryCta: { text: 'Learn More', link: '/about' },
       order: sliderConfig.slides.length,
     };
@@ -255,7 +255,7 @@ export default function AdminSettingsEditor() {
             {activeTab === 'branding' && (
               <div className="p-6 bg-card rounded-xl border border-border space-y-4">
                 <h2 className="font-heading font-bold text-lg">Branding</h2>
-                <p className="text-sm text-muted-foreground">Logo, footer tagline, and copyright — used site-wide in header and footer</p>
+                <p className="text-sm text-muted-foreground">Logo, favicon, footer tagline, and copyright — used site-wide</p>
                 <p className="text-xs text-muted-foreground p-3 bg-muted/30 rounded-lg border border-border">
                   For a clean look on the navy header, upload a <strong>PNG with a transparent background</strong>. If your logo has a dark box around it, re-export without a background — the site also applies a blend fix, but transparent PNGs look best.
                 </p>
@@ -277,6 +277,18 @@ export default function AdminSettingsEditor() {
                   maxHeight={300}
                   quality={0.9}
                 />
+                <ImageUpload
+                  value={settings.branding?.faviconUrl || ''}
+                  onChange={(v) => update({ branding: { ...settings.branding, faviconUrl: v } })}
+                  folder="branding"
+                  label="Favicon (browser tab icon)"
+                  maxWidth={256}
+                  maxHeight={256}
+                  quality={0.95}
+                />
+                <p className="text-xs text-muted-foreground -mt-2">
+                  Square PNG or WebP works best (32×32 to 256×256). Save settings after uploading for it to appear in browser tabs.
+                </p>
                 <Field
                   label="Footer Tagline"
                   value={settings.branding?.footerTagline || ''}

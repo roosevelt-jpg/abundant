@@ -59,10 +59,15 @@ export async function POST(req: NextRequest) {
 
     const userDoc = await db.collection('users').doc(user.uid).get();
     const userData = userDoc.data() as User | undefined;
+    const memberDoc = await db.collection('members').doc(user.uid).get();
+    const memberData = memberDoc.exists ? memberDoc.data() : null;
 
-    const eligibility = canUserRegisterForEvent(userData, event);
+    const eligibility = canUserRegisterForEvent(userData, event, memberData as never);
     if (!eligibility.allowed) {
-      return NextResponse.json({ error: eligibility.reason }, { status: 403 });
+      return NextResponse.json(
+        { error: eligibility.reason, code: eligibility.code },
+        { status: 403 }
+      );
     }
 
     const existing = await db

@@ -31,8 +31,8 @@ export function getDefaultResourcesPage(): ResourcesPageContent {
     submitCta: {
       title: 'Have something worth sharing with the network?',
       body: `Members can submit resources for consideration. Contact the team at ${PRIMARY_ADMIN_EMAIL} to pitch a playbook, briefing, or template.`,
-      buttonText: 'Contact the team',
-      buttonLink: '/contact',
+      buttonText: 'Submit a resource',
+      buttonLink: '/resources#submit',
     },
     updatedAt: Date.now(),
   };

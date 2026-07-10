@@ -1,6 +1,8 @@
 // User types for Firestore
 export type UserRole = 'member' | 'admin' | 'super_admin';
 
+export type MembershipTierId = 'global' | 'founding_circle' | 'private';
+
 export type AdminPermission =
   | 'dashboard'
   | 'members'
@@ -18,6 +20,7 @@ export type AdminPermission =
   | 'careers'
   | 'press'
   | 'legal'
+  | 'applications'
   | 'invites'
   | 'settings';
 
@@ -28,7 +31,7 @@ export interface User {
   photoURL?: string;
   role: UserRole;
   permissions?: AdminPermission[];
-  membershipTier: 'member' | 'elite' | 'inner-circle';
+  membershipTier: 'member' | 'elite' | 'inner-circle' | MembershipTierId;
   joinedAt: number;
   status: 'active' | 'inactive' | 'suspended';
   createdAt: number;
@@ -36,8 +39,11 @@ export interface User {
   phone?: string;
   bio?: string;
   title?: string;
+  /** ISO country code — country of residence */
   country?: string;
+  countryOfResidence?: string;
   nationality?: string;
+  citizenship?: string;
   city?: string;
   address?: string;
   locationPlaceId?: string;
@@ -52,8 +58,11 @@ export interface User {
 }
 
 export interface MemberProfile {
+  /** ISO country code — country of residence */
   country?: string;
+  countryOfResidence?: string;
   nationality?: string;
+  citizenship?: string;
   city?: string;
   address?: string;
   locationPlaceId?: string;
@@ -239,7 +248,7 @@ export interface EventRegistration {
   inviteCode?: string;
 }
 
-// Membership plans
+// Membership plans (Stripe billing products — may link to membershipTiers)
 export interface MembershipPlan {
   id: string;
   name: string;
@@ -247,11 +256,139 @@ export interface MembershipPlan {
   currency: string;
   interval: 'month' | 'year';
   benefits: string[];
-  tier: 'member' | 'elite' | 'inner-circle';
+  tier: 'member' | 'elite' | 'inner-circle' | MembershipTierId;
   stripePriceId?: string;
   stripeProductId?: string;
   active: boolean;
   order: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/** CMS single source of truth for public tiers, apply form, and onboarding */
+export interface MembershipTier {
+  id: MembershipTierId;
+  name: string;
+  tagline: string;
+  priceMonthly: number;
+  priceAnnual: number;
+  currency: string;
+  features: string[];
+  /** After free period: members with an active paid tier can RSVP to free events */
+  freeEventAccess?: boolean;
+  /** Percent off paid event tickets for active members of this tier */
+  paidEventDiscountPercent?: number;
+  sortOrder: number;
+  visible: boolean;
+  stripePriceIdMonthly?: string;
+  stripePriceIdAnnual?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface Taxonomies {
+  id: 'main';
+  industries: string[];
+  howHeard: string[];
+  eventTopics: string[];
+  resourceCategories: string[];
+  memberGoals: string[];
+  expertiseTags: string[];
+  updatedAt: number;
+}
+
+export type MembershipApplicationStatus = 'pending' | 'under_review' | 'approved' | 'rejected';
+export type TierInterest = MembershipTierId | 'not_sure';
+
+export interface MembershipApplication {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  city: string;
+  country: string;
+  nationality?: string;
+  citizenship?: string;
+  gender: 'male' | 'female' | 'other' | 'prefer_not_to_say';
+  role: string;
+  company: string;
+  industry: string;
+  linkedinUrl?: string;
+  yearsExperience?: number;
+  whyJoin: string;
+  goals: string[];
+  tierInterest: TierInterest;
+  referredByMember: boolean;
+  referrerName?: string;
+  howHeard: string;
+  termsAcceptedAt: number;
+  marketingConsent: boolean;
+  status: MembershipApplicationStatus;
+  reviewedBy?: string;
+  reviewedAt?: number;
+  reviewNotes?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export type MembershipInviteStatus = 'sent' | 'used' | 'expired';
+
+export interface MembershipInvite {
+  id: string;
+  applicationId: string;
+  email: string;
+  token: string;
+  status: MembershipInviteStatus;
+  expiresAt: number;
+  createdAt: number;
+  usedAt?: number;
+}
+
+export type DirectoryVisibility = 'public' | 'members_only' | 'hidden';
+export type MemberTierStatus = 'active' | 'past_due' | 'cancelled' | 'pending';
+
+export interface MemberRecord {
+  uid: string;
+  applicationId?: string;
+  email: string;
+  displayName: string;
+  photoUrl?: string;
+  bio?: string;
+  expertiseTags: string[];
+  directoryVisibility: DirectoryVisibility;
+  socialLinks: {
+    x?: string;
+    instagram?: string;
+    linkedin?: string;
+  };
+  availableForIntros: boolean;
+  tier?: MembershipTierId;
+  tierStatus: MemberTierStatus;
+  notificationPrefs: {
+    eventInvites: boolean;
+    weeklyDigest: boolean;
+    introRequests: boolean;
+  };
+  onboardingCompletedAt?: number | null;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export type ResourceSubmissionStatus = 'pending' | 'approved' | 'rejected';
+
+export interface ResourceSubmission {
+  id: string;
+  submittedByUid?: string;
+  name: string;
+  email: string;
+  title: string;
+  category: string;
+  description: string;
+  fileUrl?: string;
+  status: ResourceSubmissionStatus;
+  reviewedBy?: string;
+  reviewedAt?: number;
+  reviewNotes?: string;
   createdAt: number;
   updatedAt: number;
 }
@@ -677,6 +814,8 @@ export interface HomePageContent {
 export interface BrandingConfig {
   logoUrl?: string;
   logoUrlDark?: string;
+  /** Site favicon / browser tab icon URL */
+  faviconUrl?: string;
   footerTagline?: string;
   copyrightText?: string;
 }

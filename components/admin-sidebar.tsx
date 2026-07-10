@@ -20,6 +20,9 @@ import {
   Briefcase,
   Newspaper,
   Scale,
+  ClipboardList,
+  Layers,
+  Inbox,
 } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
@@ -58,12 +61,15 @@ export const AdminSidebar = () => {
     { icon: Calendar, label: 'Events', href: '/admin/events', permission: 'events' },
     { icon: MessageSquare, label: 'Testimonials', href: '/admin/testimonials', permission: 'testimonials' },
     { icon: CreditCard, label: 'Membership Plans', href: '/admin/billing', permission: 'billing' },
+    { icon: Layers, label: 'Tiers & Taxonomies', href: '/admin/membership-tiers', permission: 'billing' },
+    { icon: ClipboardList, label: 'Applications', href: '/admin/applications', permission: 'applications' },
     { icon: FileText, label: 'Pages', href: '/admin/pages', permission: 'pages' },
     { icon: Info, label: 'About Page', href: '/admin/about', permission: 'about' },
     { icon: FormInput, label: 'Forms', href: '/admin/forms', permission: 'forms' },
     { icon: Image, label: 'Hero Slider', href: '/admin/settings?tab=hero', permission: 'hero' },
     { icon: HelpCircle, label: 'FAQ', href: '/admin/faq', permission: 'faq' },
     { icon: BookOpen, label: 'Resources', href: '/admin/resources', permission: 'resources' },
+    { icon: Inbox, label: 'Resource Submissions', href: '/admin/resource-submissions', permission: 'resources' },
     { icon: Briefcase, label: 'Careers', href: '/admin/careers', permission: 'careers' },
     { icon: Newspaper, label: 'Press', href: '/admin/press', permission: 'press' },
     { icon: Scale, label: 'Legal', href: '/admin/legal', permission: 'legal' },

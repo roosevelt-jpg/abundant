@@ -118,7 +118,7 @@ export const Header = () => {
           ) : (
             <div className="hidden md:flex items-center gap-3">
               <Link href="/login" className={accentLinkCls}>Login</Link>
-              <Link href="/signup" className="text-sm font-medium btn-gradient px-3 sm:px-4 py-2 rounded-lg whitespace-nowrap">Join</Link>
+              <Link href="/apply" className="text-sm font-medium btn-gradient px-3 sm:px-4 py-2 rounded-lg whitespace-nowrap">Join</Link>
             </div>
           )}
           <button type="button" className="lg:hidden p-2 text-white" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu" aria-expanded={mobileOpen}>
@@ -174,7 +174,7 @@ export const Header = () => {
               ) : (
                 <div className="pt-2 space-y-2 border-t border-white/10">
                   <Link href="/login" className={`block ${accentLinkCls}`} onClick={() => setMobileOpen(false)}>Login</Link>
-                  <Link href="/signup" className="block text-sm btn-gradient px-4 py-2.5 rounded-lg text-center" onClick={() => setMobileOpen(false)}>Join</Link>
+                  <Link href="/apply" className="block text-sm btn-gradient px-4 py-2.5 rounded-lg text-center" onClick={() => setMobileOpen(false)}>Join</Link>
                 </div>
               )}
             </div>
