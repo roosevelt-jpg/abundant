@@ -3,6 +3,8 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  // Keep Admin SDK out of the bundler — it must load as a Node package on Vercel.
+  serverExternalPackages: ['firebase-admin', '@google-cloud/firestore', '@google-cloud/storage'],
   images: {
     unoptimized: false,
     formats: ['image/webp', 'image/avif'],
