@@ -220,7 +220,7 @@ export default function DashboardProfilePage() {
         <button
           type="submit"
           disabled={saving}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-accent-foreground rounded-lg font-semibold disabled:opacity-60"
+          className="btn-gradient inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold disabled:opacity-60"
         >
           <Save className="w-4 h-4" />
           {saving ? 'Saving…' : 'Save profile'}

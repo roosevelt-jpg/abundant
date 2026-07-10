@@ -149,7 +149,7 @@ export function EnablePushCard({ className = '' }: { className?: string }) {
               type="button"
               onClick={enable}
               disabled={busy || status === 'granted'}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground text-sm font-semibold disabled:opacity-60"
+              className="btn-gradient inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-60"
             >
               {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}
               {status === 'granted' ? 'Enabled' : 'Enable push notifications'}

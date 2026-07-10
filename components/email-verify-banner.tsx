@@ -41,7 +41,7 @@ export function EmailVerifyBanner() {
         type="button"
         onClick={resend}
         disabled={sending}
-        className="px-3 py-1.5 rounded-lg bg-accent text-accent-foreground text-xs font-semibold disabled:opacity-50"
+        className="btn-gradient px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
       >
         {sending ? 'Sending…' : 'Resend verification email'}
       </button>

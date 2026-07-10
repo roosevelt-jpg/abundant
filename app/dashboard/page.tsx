@@ -50,8 +50,6 @@ export default function Dashboard() {
     );
   }
 
-  const displayName = userData?.displayName || currentUser.email || 'Member';
-  const joinedDate = userData?.joinedAt ? new Date(userData.joinedAt).toLocaleDateString() : 'Recently';
   const status = userData?.status || 'active';
   const membershipTier = userData?.membershipTier || 'member';
 
@@ -73,19 +71,12 @@ export default function Dashboard() {
           </div>
           <Link
             href="/membership"
-            className="px-4 py-2 bg-accent text-accent-foreground rounded-lg text-sm font-semibold whitespace-nowrap"
+            className="btn-gradient px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap"
           >
             {t('dashboard.viewPlans', 'View Plans')}
           </Link>
         </div>
       )}
-
-      <div className="mb-8">
-        <h2 className="font-heading text-3xl font-bold mb-2">
-          {t('dashboard.welcome', 'Welcome')}, {displayName}!
-        </h2>
-        <p className="text-muted-foreground">Member since {joinedDate}</p>
-      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="p-6 bg-card rounded-xl border border-border">

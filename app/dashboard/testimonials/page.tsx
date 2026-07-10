@@ -70,7 +70,7 @@ export default function DashboardTestimonialsPage() {
         <button
           type="submit"
           disabled={saving}
-          className="px-5 py-2.5 bg-accent text-accent-foreground rounded-lg font-semibold disabled:opacity-60"
+          className="btn-gradient px-5 py-2.5 rounded-lg font-semibold disabled:opacity-60"
         >
           {saving ? 'Submitting…' : 'Submit for review'}
         </button>

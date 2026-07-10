@@ -24,7 +24,34 @@ export function MemberHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [currentTime, setCurrentTime] = useState('');
+  const [currentDate, setCurrentDate] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const updateDateTime = () => {
+      const now = new Date();
+      setCurrentTime(
+        now.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true,
+        })
+      );
+      setCurrentDate(
+        now.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })
+      );
+    };
+    updateDateTime();
+    const interval = setInterval(updateDateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -72,6 +99,11 @@ export function MemberHeader() {
         </div>
 
         <div className="flex items-center justify-end gap-2 sm:gap-3">
+          <div className="hidden md:flex flex-col items-end text-right">
+            <span className="font-mono text-sm font-semibold text-accent leading-tight">{currentTime}</span>
+            <span className="text-xs text-muted-foreground leading-tight">{currentDate}</span>
+          </div>
+
           <div className="relative" ref={menuRef}>
             <button
               type="button"
