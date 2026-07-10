@@ -42,23 +42,29 @@ export default function AdminMembers() {
       alert('Please fill in name and email');
       return;
     }
-    const id = doc(collection(getDb(), 'users')).id;
-    const member: User = {
-      uid: id,
-      email: newMember.email,
-      displayName: newMember.displayName,
-      phone: newMember.phone,
-      role: 'member',
-      membershipTier: 'member',
-      joinedAt: Date.now(),
-      status: 'active',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    await setDoc(doc(getDb(), 'users', id), member);
-    setNewMember({ email: '', displayName: '', phone: '' });
-    setShowModal(false);
-    await loadMembers();
+    try {
+      const id = doc(collection(getDb(), 'users')).id;
+      const member: User = {
+        uid: id,
+        email: newMember.email,
+        displayName: newMember.displayName,
+        phone: newMember.phone,
+        role: 'member',
+        membershipTier: 'member',
+        joinedAt: Date.now(),
+        status: 'active',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      await setDoc(doc(getDb(), 'users', id), member);
+      setNewMember({ email: '', displayName: '', phone: '' });
+      setShowModal(false);
+      await loadMembers();
+    } catch (err) {
+      console.error('Error adding member:', err);
+      const message = err instanceof Error ? err.message : 'Failed to add member';
+      alert(message.includes('permission') ? 'Permission denied. Deploy updated Firestore rules, then try again.' : message);
+    }
   };
 
   const handleSuspend = async (member: User) => {
