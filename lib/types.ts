@@ -793,6 +793,22 @@ export interface HomeFeatureCard {
   order: number;
 }
 
+export interface PartnerLogo {
+  id: string;
+  name: string;
+  logoUrl: string;
+  url?: string;
+  order: number;
+}
+
+export interface HomePartnersSection {
+  enabled: boolean;
+  title: string;
+  /** Seconds for one full marquee loop */
+  speed: number;
+  partners: PartnerLogo[];
+}
+
 export interface HomePageContent {
   eventsSection: {
     title: string;
@@ -805,6 +821,7 @@ export interface HomePageContent {
     subtitle: string;
     cards: HomeFeatureCard[];
   };
+  partnersSection: HomePartnersSection;
   ctaSection: {
     enabled: boolean;
     title: string;

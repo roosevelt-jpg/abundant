@@ -9,15 +9,16 @@ import { ArrowRight, Calendar } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Event } from '@/lib/types';
 import { useSettings } from '@/hooks/useSettings';
-import { getDefaultHomePage } from '@/lib/home-page';
+import { resolveHomePage } from '@/lib/home-page';
 import { HomeFeatureIconComponent } from '@/lib/home-icons';
 import { getEventDisplayPrice, getEventPath } from '@/lib/event-utils';
+import { PartnersMarquee } from '@/components/partners-marquee';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const { settings } = useSettings();
-  const home = settings?.homePage ?? getDefaultHomePage();
+  const home = resolveHomePage(settings?.homePage);
 
   useEffect(() => {
     setMounted(true);
@@ -141,6 +142,8 @@ export default function Home() {
             </div>
           </section>
         )}
+
+        <PartnersMarquee section={home.partnersSection} />
       </main>
 
       <Footer />

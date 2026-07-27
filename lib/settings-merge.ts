@@ -352,6 +352,7 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
     const baseHome = existing.homePage ?? defaultHome;
     const incomingEvents = updates.homePage.eventsSection ?? {};
     const incomingFeatures = updates.homePage.featuresSection ?? {};
+    const incomingPartners = updates.homePage.partnersSection ?? {};
     const incomingCta = updates.homePage.ctaSection ?? {};
 
     result.homePage = {
@@ -368,6 +369,21 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
           incomingFeatures.cards?.length
             ? incomingFeatures.cards
             : baseHome.featuresSection?.cards ?? defaultHome.featuresSection.cards,
+      },
+      partnersSection: {
+        enabled: incomingPartners.enabled ?? baseHome.partnersSection?.enabled ?? defaultHome.partnersSection.enabled,
+        title:
+          incomingPartners.title ||
+          baseHome.partnersSection?.title ||
+          defaultHome.partnersSection.title,
+        speed:
+          incomingPartners.speed ??
+          baseHome.partnersSection?.speed ??
+          defaultHome.partnersSection.speed,
+        partners:
+          incomingPartners.partners !== undefined
+            ? incomingPartners.partners
+            : baseHome.partnersSection?.partners ?? defaultHome.partnersSection.partners,
       },
       ctaSection: mergeShallowPreservingBlank(
         baseHome.ctaSection as Record<string, unknown>,

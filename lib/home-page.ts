@@ -25,6 +25,34 @@ export function getDefaultHomePage(): HomePageContent {
       buttonText: 'Get Started Now',
       buttonLink: '/apply',
     },
+    partnersSection: {
+      enabled: false,
+      title: 'Our Partners',
+      speed: 40,
+      partners: [],
+    },
     updatedAt: Date.now(),
+  };
+}
+
+/** Merge stored homepage content with defaults (handles older settings docs). */
+export function resolveHomePage(home?: Partial<HomePageContent> | null): HomePageContent {
+  const defaults = getDefaultHomePage();
+  if (!home) return defaults;
+  return {
+    ...defaults,
+    ...home,
+    eventsSection: { ...defaults.eventsSection, ...home.eventsSection },
+    featuresSection: {
+      ...defaults.featuresSection,
+      ...home.featuresSection,
+      cards: home.featuresSection?.cards?.length ? home.featuresSection.cards : defaults.featuresSection.cards,
+    },
+    partnersSection: {
+      ...defaults.partnersSection,
+      ...home.partnersSection,
+      partners: home.partnersSection?.partners ?? defaults.partnersSection.partners,
+    },
+    ctaSection: { ...defaults.ctaSection, ...home.ctaSection },
   };
 }

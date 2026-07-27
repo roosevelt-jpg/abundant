@@ -5,9 +5,9 @@ import { Save, Plus, Trash2, GripVertical } from 'lucide-react';
 import { ImageUpload } from '@/components/image-upload';
 import { useSettings } from '@/hooks/useSettings';
 import { LoadState } from '@/components/load-state';
-import { Settings, HeroSlide, HeroSliderConfig, HomePageContent, HomeFeatureCard } from '@/lib/types';
+import { Settings, HeroSlide, HeroSliderConfig, HomePageContent, HomeFeatureCard, PartnerLogo } from '@/lib/types';
 import { DEFAULT_HERO_SLIDER_CONFIG, HERO_TRANSITION_OPTIONS } from '@/lib/hero-slider-utils';
-import { getDefaultHomePage } from '@/lib/home-page';
+import { resolveHomePage } from '@/lib/home-page';
 import { HOME_FEATURE_ICONS } from '@/lib/home-icons';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -191,7 +191,7 @@ export default function AdminSettingsEditor() {
     updateSliderConfig({ slides: slides.map((s, i) => ({ ...s, order: i })) });
   };
 
-  const homePage: HomePageContent = settings?.homePage ?? getDefaultHomePage();
+  const homePage = resolveHomePage(settings?.homePage);
 
   const updateHomePage = (partial: Partial<HomePageContent>) => {
     update({ homePage: { ...homePage, ...partial, updatedAt: Date.now() } });
@@ -201,6 +201,26 @@ export default function AdminSettingsEditor() {
     const cards = [...homePage.featuresSection.cards];
     cards[index] = { ...cards[index], ...partial };
     updateHomePage({ featuresSection: { ...homePage.featuresSection, cards } });
+  };
+
+  const partnersSection = homePage.partnersSection;
+
+  const updatePartnersSection = (partial: Partial<typeof partnersSection>) => {
+    updateHomePage({ partnersSection: { ...partnersSection, ...partial } });
+  };
+
+  const updatePartner = (index: number, partial: Partial<PartnerLogo>) => {
+    const partners = [...partnersSection.partners];
+    partners[index] = { ...partners[index], ...partial };
+    updatePartnersSection({ partners });
+  };
+
+  const movePartner = (index: number, direction: -1 | 1) => {
+    const partners = [...partnersSection.partners];
+    const target = index + direction;
+    if (target < 0 || target >= partners.length) return;
+    [partners[index], partners[target]] = [partners[target], partners[index]];
+    updatePartnersSection({ partners: partners.map((p, i) => ({ ...p, order: i })) });
   };
 
   return (
@@ -804,6 +824,123 @@ export default function AdminSettingsEditor() {
                       <textarea value={card.description ?? ''} onChange={(e) => updateFeatureCard(i, { description: e.target.value })} placeholder="Description" rows={2} className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm" />
                     </div>
                   ))}
+                </section>
+
+                <section className="p-5 bg-card rounded-xl border border-border space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <h2 className="font-heading font-bold text-lg">Partners Marquee</h2>
+                    <label className="flex items-center gap-2 text-sm shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={partnersSection.enabled}
+                        onChange={(e) => updatePartnersSection({ enabled: e.target.checked })}
+                      />
+                      Show on homepage
+                    </label>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Logo strip shown above the footer. Add partner logos — they scroll continuously on the homepage.
+                  </p>
+                  <Field
+                    label="Section Title"
+                    value={partnersSection.title}
+                    onChange={(v) => updatePartnersSection({ title: v })}
+                  />
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Scroll speed (seconds per loop)</label>
+                    <input
+                      type="number"
+                      min={10}
+                      max={120}
+                      value={partnersSection.speed}
+                      onChange={(e) => updatePartnersSection({ speed: parseInt(e.target.value, 10) || 40 })}
+                      className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm"
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updatePartnersSection({
+                          partners: [
+                            ...partnersSection.partners,
+                            {
+                              id: `partner-${Date.now()}`,
+                              name: '',
+                              logoUrl: '',
+                              url: '',
+                              order: partnersSection.partners.length,
+                            },
+                          ],
+                        })
+                      }
+                      className="text-sm text-accent flex items-center gap-1"
+                    >
+                      <Plus className="w-4 h-4" /> Add Partner
+                    </button>
+                  </div>
+                  {partnersSection.partners.map((partner, i) => (
+                    <div key={partner.id} className="p-4 bg-background rounded-lg border border-border space-y-3">
+                      <div className="flex justify-between items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Partner {i + 1}</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => movePartner(i, -1)}
+                            disabled={i === 0}
+                            className="px-2 py-1 text-xs border rounded disabled:opacity-30"
+                          >
+                            ↑
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => movePartner(i, 1)}
+                            disabled={i === partnersSection.partners.length - 1}
+                            className="px-2 py-1 text-xs border rounded disabled:opacity-30"
+                          >
+                            ↓
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updatePartnersSection({
+                                partners: partnersSection.partners
+                                  .filter((p) => p.id !== partner.id)
+                                  .map((p, index) => ({ ...p, order: index })),
+                              })
+                            }
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </button>
+                        </div>
+                      </div>
+                      <input
+                        value={partner.name}
+                        onChange={(e) => updatePartner(i, { name: e.target.value })}
+                        placeholder="Partner name (used for alt text)"
+                        className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm"
+                      />
+                      <input
+                        value={partner.url ?? ''}
+                        onChange={(e) => updatePartner(i, { url: e.target.value })}
+                        placeholder="Website URL (optional)"
+                        className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm"
+                      />
+                      <ImageUpload
+                        value={partner.logoUrl}
+                        onChange={(url) => updatePartner(i, { logoUrl: url })}
+                        folder="partners"
+                        label="Partner logo"
+                        maxWidth={800}
+                        maxHeight={400}
+                      />
+                    </div>
+                  ))}
+                  {partnersSection.partners.length === 0 && (
+                    <p className="text-center text-muted-foreground py-4 text-sm">
+                      No partners yet. Add logos to show the marquee on the homepage.
+                    </p>
+                  )}
                 </section>
 
                 <section className="p-5 bg-card rounded-xl border border-border space-y-3">

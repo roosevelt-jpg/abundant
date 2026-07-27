@@ -203,6 +203,12 @@ export function getDefaultSettings(): Settings {
         buttonText: 'Get Started Now',
         buttonLink: '/apply',
       },
+      partnersSection: {
+        enabled: false,
+        title: 'Our Partners',
+        speed: 40,
+        partners: [],
+      },
       updatedAt: Date.now(),
     },
     updatedAt: Date.now(),
