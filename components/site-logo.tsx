@@ -26,10 +26,15 @@ export function SiteLogo({ className = '', height, variant = 'header' }: SiteLog
     (resolvedTheme === 'dark' && settings.branding?.logoUrlDark) ||
     settings.branding?.logoUrl;
 
-  const logoUrl = customLogo || DEFAULT_LOGO;
+  // Public header/footer always use the bundled transparent wordmark — uploaded
+  // branding logos often carry an opaque background that shows as a box on navy.
+  const logoUrl =
+    variant === 'header' || variant === 'footer'
+      ? DEFAULT_LOGO
+      : customLogo || DEFAULT_LOGO;
   const onDarkSurface = variant === 'header' || variant === 'footer';
 
-  if (!customLogo && loading) {
+  if (variant !== 'header' && variant !== 'footer' && !customLogo && loading) {
     return (
       <span
         className={className}
