@@ -22,7 +22,7 @@ import {
   Scale,
   ClipboardList,
   Layers,
-  Inbox,
+  Handshake,
 } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
@@ -45,11 +45,15 @@ export const AdminSidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const isMenuItemActive = (href: string) => {
-    if (href === '/admin/settings?tab=hero') {
+    const hrefBase = href.split('#')[0];
+    if (hrefBase === '/admin/settings?tab=hero') {
       return pathname === '/admin/settings' && searchParams.get('tab') === 'hero';
     }
+    if (hrefBase === '/admin/settings?tab=homepage') {
+      return pathname === '/admin/settings' && searchParams.get('tab') === 'homepage';
+    }
     if (href === '/admin/settings') {
-      return pathname === '/admin/settings' && searchParams.get('tab') !== 'hero';
+      return pathname === '/admin/settings' && (!searchParams.get('tab') || searchParams.get('tab') === 'general');
     }
     const hrefPath = href.split('?')[0];
     return pathname === hrefPath || pathname.startsWith(`${hrefPath}/`);
@@ -67,6 +71,7 @@ export const AdminSidebar = () => {
     { icon: Info, label: 'About Page', href: '/admin/about', permission: 'about' },
     { icon: FormInput, label: 'Forms', href: '/admin/forms', permission: 'forms' },
     { icon: Image, label: 'Hero Slider', href: '/admin/settings?tab=hero', permission: 'hero' },
+    { icon: Handshake, label: 'Partners', href: '/admin/settings?tab=homepage#partners', permission: 'settings' },
     { icon: HelpCircle, label: 'FAQ', href: '/admin/faq', permission: 'faq' },
     { icon: BookOpen, label: 'Resources', href: '/admin/resources', permission: 'resources' },
     { icon: Inbox, label: 'Resource Submissions', href: '/admin/resource-submissions', permission: 'resources' },
