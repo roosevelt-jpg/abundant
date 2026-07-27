@@ -792,17 +792,109 @@ export default function AdminSettingsEditor() {
                     value={partnersSection.title}
                     onChange={(v) => updatePartnersSection({ title: v })}
                   />
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Scroll speed (seconds per loop)</label>
-                    <input
-                      type="number"
-                      min={10}
-                      max={120}
-                      value={partnersSection.speed}
-                      onChange={(e) => updatePartnersSection({ speed: parseInt(e.target.value, 10) || 40 })}
-                      className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm"
-                    />
+
+                  <div className="p-4 bg-background rounded-lg border border-border space-y-4">
+                    <h3 className="text-sm font-semibold">Marquee Behavior</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium mb-1">
+                          Speed (seconds per loop)
+                        </label>
+                        <input
+                          type="number"
+                          min={8}
+                          max={180}
+                          value={partnersSection.speed}
+                          onChange={(e) =>
+                            updatePartnersSection({ speed: parseInt(e.target.value, 10) || 40 })
+                          }
+                          className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm"
+                        />
+                        <p className="text-[11px] text-muted-foreground mt-1">
+                          Lower = faster. Typical: 20–60.
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Direction</label>
+                        <select
+                          value={partnersSection.direction}
+                          onChange={(e) =>
+                            updatePartnersSection({
+                              direction: e.target.value as 'left' | 'right',
+                            })
+                          }
+                          className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm"
+                        >
+                          <option value="left">Left (default)</option>
+                          <option value="right">Right</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Transition / easing</label>
+                        <select
+                          value={partnersSection.easing}
+                          onChange={(e) =>
+                            updatePartnersSection({
+                              easing: e.target.value as 'linear' | 'ease' | 'ease-in-out',
+                            })
+                          }
+                          className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm"
+                        >
+                          <option value="linear">Linear (constant speed)</option>
+                          <option value="ease">Ease</option>
+                          <option value="ease-in-out">Ease in-out</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Logo height (px)</label>
+                        <input
+                          type="number"
+                          min={24}
+                          max={120}
+                          value={partnersSection.logoHeight}
+                          onChange={(e) =>
+                            updatePartnersSection({
+                              logoHeight: parseInt(e.target.value, 10) || 48,
+                            })
+                          }
+                          className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Gap between logos (px)</label>
+                        <input
+                          type="number"
+                          min={16}
+                          max={120}
+                          value={partnersSection.gap}
+                          onChange={(e) =>
+                            updatePartnersSection({ gap: parseInt(e.target.value, 10) || 48 })
+                          }
+                          className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                      {(
+                        [
+                          { key: 'pauseOnHover', label: 'Pause on hover' },
+                          { key: 'grayscale', label: 'Grayscale logos' },
+                          { key: 'showEdgeFade', label: 'Edge fade' },
+                        ] as const
+                      ).map(({ key, label }) => (
+                        <label key={key} className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={partnersSection[key]}
+                            onChange={(e) => updatePartnersSection({ [key]: e.target.checked })}
+                          />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
                   </div>
+
                   <div className="flex justify-end">
                     <button
                       type="button"

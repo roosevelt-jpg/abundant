@@ -801,11 +801,28 @@ export interface PartnerLogo {
   order: number;
 }
 
+export type PartnersMarqueeDirection = 'left' | 'right';
+export type PartnersMarqueeEasing = 'linear' | 'ease' | 'ease-in-out';
+
 export interface HomePartnersSection {
   enabled: boolean;
   title: string;
-  /** Seconds for one full marquee loop */
+  /** Seconds for one full marquee loop (lower = faster) */
   speed: number;
+  /** Scroll direction */
+  direction: PartnersMarqueeDirection;
+  /** CSS animation timing function */
+  easing: PartnersMarqueeEasing;
+  /** Pause animation when hovering the track */
+  pauseOnHover: boolean;
+  /** Soft grayscale logos until hover */
+  grayscale: boolean;
+  /** Fade edges on left/right of the strip */
+  showEdgeFade: boolean;
+  /** Horizontal gap between logos in px */
+  gap: number;
+  /** Logo height in px (desktop; mobile scales down slightly) */
+  logoHeight: number;
   partners: PartnerLogo[];
 }
 

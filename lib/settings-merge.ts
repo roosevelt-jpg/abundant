@@ -380,6 +380,34 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
           incomingPartners.speed ??
           baseHome.partnersSection?.speed ??
           defaultHome.partnersSection.speed,
+        direction:
+          incomingPartners.direction ??
+          baseHome.partnersSection?.direction ??
+          defaultHome.partnersSection.direction,
+        easing:
+          incomingPartners.easing ??
+          baseHome.partnersSection?.easing ??
+          defaultHome.partnersSection.easing,
+        pauseOnHover:
+          incomingPartners.pauseOnHover ??
+          baseHome.partnersSection?.pauseOnHover ??
+          defaultHome.partnersSection.pauseOnHover,
+        grayscale:
+          incomingPartners.grayscale ??
+          baseHome.partnersSection?.grayscale ??
+          defaultHome.partnersSection.grayscale,
+        showEdgeFade:
+          incomingPartners.showEdgeFade ??
+          baseHome.partnersSection?.showEdgeFade ??
+          defaultHome.partnersSection.showEdgeFade,
+        gap:
+          incomingPartners.gap ??
+          baseHome.partnersSection?.gap ??
+          defaultHome.partnersSection.gap,
+        logoHeight:
+          incomingPartners.logoHeight ??
+          baseHome.partnersSection?.logoHeight ??
+          defaultHome.partnersSection.logoHeight,
         partners:
           incomingPartners.partners !== undefined
             ? incomingPartners.partners
