@@ -33,6 +33,8 @@ export function SiteLogo({ className = '', height, variant = 'header' }: SiteLog
 
   const adminHeight = height ?? 36;
   const onDarkSurface = variant === 'header' || variant === 'footer';
+
+  if (variant !== 'header' && variant !== 'footer' && !customLogo && loading) {
     return (
       <span
         className={className}
