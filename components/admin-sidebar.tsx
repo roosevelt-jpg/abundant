@@ -23,6 +23,7 @@ import {
   ClipboardList,
   Layers,
   Handshake,
+  Inbox,
 } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
