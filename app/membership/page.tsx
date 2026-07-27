@@ -9,7 +9,8 @@ import { CustomFormRenderer } from '@/components/custom-form-renderer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useApiAuth } from '@/hooks/useApiAuth';
-import { isWithinFreePeriod } from '@/lib/constants';
+import { isMembershipOpenAccess } from '@/lib/constants';
+import { useSettings } from '@/hooks/useSettings';
 import { MembershipPlan, MembershipTier, CustomForm } from '@/lib/types';
 import { Check } from 'lucide-react';
 import Link from 'next/link';
@@ -18,11 +19,15 @@ export default function Membership() {
   const { t } = useLanguage();
   const { currentUser } = useAuth();
   const { authFetch } = useApiAuth();
+  const { settings } = useSettings();
   const [tiers, setTiers] = useState<MembershipTier[]>([]);
   const [plans, setPlans] = useState<MembershipPlan[]>([]);
   const [form, setForm] = useState<CustomForm | null>(null);
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState<string | null>(null);
+
+  const paidPlansEnabled = settings?.membershipAccess?.paidPlansEnabled === true;
+  const freeAccess = isMembershipOpenAccess(paidPlansEnabled);
 
   useEffect(() => {
     Promise.all([
@@ -42,7 +47,11 @@ export default function Membership() {
       window.location.href = '/apply';
       return;
     }
-    if (isWithinFreePeriod()) {
+    if (freeAccess && !paidPlansEnabled) {
+      alert('Membership is free right now — no subscription needed. Apply or continue to your dashboard.');
+      return;
+    }
+    if (freeAccess) {
       alert('You currently have free access until August 31!');
       return;
     }
@@ -61,8 +70,6 @@ export default function Membership() {
       setSubscribing(null);
     }
   };
-
-  const freePeriod = isWithinFreePeriod();
   const matchingPlan = (tierId: string, interval: 'month' | 'year') =>
     plans.find((p) => p.tier === tierId && p.interval === interval && p.active);
 
@@ -79,18 +86,21 @@ export default function Membership() {
               {t('membership.subtitle', 'Choose the tier that aligns with your ambitions')}
             </p>
             <p className="mt-4 text-sm text-muted-foreground max-w-2xl mx-auto">
-              Accounts are free to create after approval. Through August 31 everyone has full event access.
-              From September 1, upgrade when you register for events — free events require membership, and paid events include tier discounts.
+              {paidPlansEnabled
+                ? 'Accounts are free to create after approval. Through August 31 everyone has full event access. From September 1, upgrade when you register for events.'
+                : 'Membership is free for everyone right now. Fill in the application form to join — no payment required until we activate paid plans.'}
             </p>
             <Link
               href="/apply"
               className="inline-flex mt-6 px-5 py-2.5 bg-gradient-to-r from-[#001F3F] to-[#B8973A] text-white rounded-lg text-sm font-semibold"
             >
-              Apply for membership
+              Join now — apply free
             </Link>
-            {freePeriod && (
+            {freeAccess && (
               <div className="mt-6 inline-block px-4 py-2 bg-green-500/10 text-green-600 rounded-lg text-sm font-medium">
-                {t('membership.free', 'Free full access until August 31!')}
+                {paidPlansEnabled
+                  ? t('membership.free', 'Free full access until August 31!')
+                  : 'Free membership is open — no subscription required'}
               </div>
             )}
           </div>
@@ -133,10 +143,10 @@ export default function Membership() {
                       {currentUser && monthPlan ? (
                         <button
                           onClick={() => handleSubscribe(monthPlan.id)}
-                          disabled={subscribing === monthPlan.id || freePeriod}
+                          disabled={subscribing === monthPlan.id || freeAccess}
                           className="w-full py-2 px-4 rounded-lg font-semibold bg-accent text-accent-foreground disabled:opacity-50"
                         >
-                          {freePeriod
+                          {freeAccess
                             ? t('membership.included', 'Included Free')
                             : subscribing === monthPlan.id
                               ? '...'

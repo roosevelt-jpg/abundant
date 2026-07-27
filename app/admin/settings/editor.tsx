@@ -84,6 +84,7 @@ export default function AdminSettingsEditor() {
           contactEmail: settings.contactEmail,
           phone: settings.phone,
           address: settings.address,
+          membershipAccess: settings.membershipAccess,
         };
       case 'branding':
         return { branding: settings.branding };
@@ -273,13 +274,43 @@ export default function AdminSettingsEditor() {
 
           <div className="max-w-4xl space-y-6">
             {activeTab === 'general' && (
-              <div className="p-6 bg-card rounded-xl border border-border space-y-4">
-                <h2 className="font-heading font-bold text-lg">General Settings</h2>
-                <Field label="Site Name" value={settings.siteName} onChange={(v) => update({ siteName: v })} />
-                <Field label="Description" value={settings.description} onChange={(v) => update({ description: v })} multiline />
-                <Field label="Contact Email" value={settings.contactEmail} onChange={(v) => update({ contactEmail: v })} type="email" />
-                <Field label="Phone" value={settings.phone || ''} onChange={(v) => update({ phone: v })} />
-                <Field label="Address" value={settings.address || ''} onChange={(v) => update({ address: v })} multiline />
+              <div className="space-y-6">
+                <div className="p-6 bg-card rounded-xl border border-border space-y-4">
+                  <h2 className="font-heading font-bold text-lg">General Settings</h2>
+                  <Field label="Site Name" value={settings.siteName} onChange={(v) => update({ siteName: v })} />
+                  <Field label="Description" value={settings.description} onChange={(v) => update({ description: v })} multiline />
+                  <Field label="Contact Email" value={settings.contactEmail} onChange={(v) => update({ contactEmail: v })} type="email" />
+                  <Field label="Phone" value={settings.phone || ''} onChange={(v) => update({ phone: v })} />
+                  <Field label="Address" value={settings.address || ''} onChange={(v) => update({ address: v })} multiline />
+                </div>
+
+                <div className="p-6 bg-card rounded-xl border border-accent/30 space-y-3">
+                  <h2 className="font-heading font-bold text-lg">Membership access</h2>
+                  <p className="text-sm text-muted-foreground">
+                    While paid plans are off, Join goes straight to the application form and nobody is asked to subscribe.
+                    Turn this on when you are ready to charge via Membership Plans / Stripe.
+                  </p>
+                  <label className="flex items-center gap-3 text-sm font-medium">
+                    <input
+                      type="checkbox"
+                      checked={settings.membershipAccess?.paidPlansEnabled === true}
+                      onChange={(e) =>
+                        update({
+                          membershipAccess: { paidPlansEnabled: e.target.checked },
+                        })
+                      }
+                    />
+                    Enable paid membership plans (require subscribe)
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Current mode:{' '}
+                    <strong>
+                      {settings.membershipAccess?.paidPlansEnabled
+                        ? 'Paid plans active'
+                        : 'Free for all'}
+                    </strong>
+                  </p>
+                </div>
               </div>
             )}
 

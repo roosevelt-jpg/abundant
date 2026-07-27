@@ -8,7 +8,6 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import Link from 'next/link';
 import { Lock, Mail } from 'lucide-react';
-import { PRIMARY_ADMIN_EMAIL } from '@/lib/constants';
 import { SocialAuthButtons } from '@/components/social-auth-buttons';
 import { getFirebaseServices } from '@/lib/firebase';
 
@@ -23,14 +22,14 @@ function SignupInner() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [validating, setValidating] = useState(true);
+  const [validating, setValidating] = useState(Boolean(token));
   const [valid, setValid] = useState(false);
   const [verifySent, setVerifySent] = useState(false);
 
   useEffect(() => {
+    // Public Join flow goes straight to the apply form — invite signup only with a token.
     if (!token) {
-      setValidating(false);
-      setValid(false);
+      router.replace('/apply');
       return;
     }
     fetch(`/api/auth/signup-from-invite?token=${encodeURIComponent(token)}`)
@@ -46,7 +45,7 @@ function SignupInner() {
         setValid(false);
       })
       .finally(() => setValidating(false));
-  }, [token]);
+  }, [token, router]);
 
   const afterAccount = async (needsVerification: boolean) => {
     if (needsVerification) {
@@ -81,6 +80,18 @@ function SignupInner() {
     }
   };
 
+  if (!token) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center py-12 px-4">
+          <p className="text-muted-foreground text-sm">Taking you to the application form…</p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -90,10 +101,9 @@ function SignupInner() {
             <p className="text-center text-muted-foreground">Validating invite…</p>
           ) : !valid ? (
             <div className="text-center space-y-4">
-              <h1 className="font-heading text-2xl font-bold">Invite required</h1>
+              <h1 className="font-heading text-2xl font-bold">Invite expired</h1>
               <p className="text-sm text-muted-foreground">
-                {error || 'This invite link is no longer valid.'} Contact{' '}
-                <a href={`mailto:${PRIMARY_ADMIN_EMAIL}`} className="text-accent">{PRIMARY_ADMIN_EMAIL}</a>.
+                {error || 'This invite link is no longer valid.'}
               </p>
               <Link href="/apply" className="inline-block text-sm font-semibold text-accent">
                 Apply for membership →
@@ -128,7 +138,11 @@ function SignupInner() {
                   <label className="block text-sm font-medium mb-2">Email</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
-                    <input value={email} readOnly className="w-full pl-10 pr-4 py-2 bg-muted border border-border rounded-lg text-sm" />
+                    <input
+                      value={email}
+                      readOnly
+                      className="w-full pl-10 pr-4 py-2 bg-muted border border-border rounded-lg text-sm"
+                    />
                   </div>
                 </div>
                 <div>

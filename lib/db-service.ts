@@ -157,6 +157,9 @@ export function getDefaultSettings(): Settings {
       founderWelcomeMessage:
         'Welcome to Abundant Global Club. I am truly glad you are here. This community was built for ambitious people who lift each other up — and I cannot wait to see what you build with us.',
     },
+    membershipAccess: {
+      paidPlansEnabled: false,
+    },
     chatbot: {
       enabled: false,
       assistantName: 'Abundant Assistant',

@@ -18,7 +18,8 @@ export function getAudienceGenderLabel(audience?: EventAudienceGender): string {
 export function canUserRegisterForEvent(
   user: Pick<User, 'gender' | 'subscriptionStatus' | 'membershipTier'> | null | undefined,
   event: Pick<Event, 'audienceGender'>,
-  member?: Pick<MemberRecord, 'tierStatus' | 'tier'> | null
+  member?: Pick<MemberRecord, 'tierStatus' | 'tier'> | null,
+  paidPlansEnabled?: boolean | null
 ): { allowed: boolean; reason?: string; code?: 'GENDER' | 'MEMBERSHIP_REQUIRED' | 'PROFILE' } {
   const audience = event.audienceGender || 'mixed';
   if (audience !== 'mixed') {
@@ -47,7 +48,7 @@ export function canUserRegisterForEvent(
     }
   }
 
-  const membership = hasEventMembershipAccess(user, member);
+  const membership = hasEventMembershipAccess(user, member, paidPlansEnabled);
   if (!membership.allowed) {
     return {
       allowed: false,

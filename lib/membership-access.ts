@@ -1,8 +1,9 @@
-import { isWithinFreePeriod } from '@/lib/constants';
+import { isMembershipOpenAccess } from '@/lib/constants';
 import { MembershipTier, MembershipTierId, MemberRecord, User } from '@/lib/types';
 
 export type MembershipAccessReason =
   | 'free_period'
+  | 'open_access'
   | 'active_subscription'
   | 'active_member_tier'
   | 'membership_required';
@@ -16,13 +17,17 @@ export function mapLegacyUserTier(tier?: string): MembershipTierId | undefined {
   return undefined;
 }
 
-/** True when the member may use free events / member discounts (after Aug 31 requires paid membership). */
+/** True when the member may use free events / member discounts. */
 export function hasEventMembershipAccess(
   user: Pick<User, 'subscriptionStatus' | 'membershipTier'> | null | undefined,
-  member?: Pick<MemberRecord, 'tierStatus' | 'tier'> | null
+  member?: Pick<MemberRecord, 'tierStatus' | 'tier'> | null,
+  paidPlansEnabled?: boolean | null
 ): { allowed: boolean; reason: MembershipAccessReason } {
-  if (isWithinFreePeriod()) {
-    return { allowed: true, reason: 'free_period' };
+  if (isMembershipOpenAccess(paidPlansEnabled)) {
+    return {
+      allowed: true,
+      reason: paidPlansEnabled === true ? 'free_period' : 'open_access',
+    };
   }
 
   const sub = user?.subscriptionStatus;

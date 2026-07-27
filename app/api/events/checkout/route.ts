@@ -10,7 +10,8 @@ import {
   getTierPaidEventDiscountPercent,
   resolveMemberTierId,
 } from '@/lib/membership-access';
-import { Event, MemberRecord, MembershipTier, User } from '@/lib/types';
+import { Event, MemberRecord, MembershipTier, Settings, User } from '@/lib/types';
+import { SETTINGS_DOC_ID } from '@/lib/constants';
 
 export async function POST(req: NextRequest) {
   try {
@@ -47,8 +48,11 @@ export async function POST(req: NextRequest) {
     const userData = userDoc.data() as User | undefined;
     const memberDoc = await db.collection('members').doc(user.uid).get();
     const memberData = (memberDoc.exists ? memberDoc.data() : null) as MemberRecord | null;
+    const settingsSnap = await db.collection('settings').doc(SETTINGS_DOC_ID).get();
+    const paidPlansEnabled =
+      (settingsSnap.data() as Settings | undefined)?.membershipAccess?.paidPlansEnabled === true;
 
-    const eligibility = canUserRegisterForEvent(userData, event, memberData);
+    const eligibility = canUserRegisterForEvent(userData, event, memberData, paidPlansEnabled);
     if (!eligibility.allowed) {
       return NextResponse.json(
         { error: eligibility.reason, code: eligibility.code },

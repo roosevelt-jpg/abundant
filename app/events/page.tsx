@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { Event, EventTag } from '@/lib/types';
 import { canUserRegisterForEvent, getAudienceGenderLabel } from '@/lib/event-eligibility';
+import { useSettings } from '@/hooks/useSettings';
 import { Calendar, MapPin, Users, X, Download, ExternalLink, Tag, Percent } from 'lucide-react';
 import { isSameDay, format } from 'date-fns';
 import { downloadIcs, googleCalendarUrl } from '@/lib/ics';
@@ -28,6 +29,8 @@ function EventsContent() {
   const { t } = useLanguage();
   const { currentUser, userData } = useAuth();
   const { authFetch } = useApiAuth();
+  const { settings } = useSettings();
+  const paidPlansEnabled = settings?.membershipAccess?.paidPlansEnabled === true;
   const searchParams = useSearchParams();
   const [events, setEvents] = useState<Event[]>([]);
   const [tags, setTags] = useState<EventTag[]>([]);
@@ -76,7 +79,8 @@ function EventsContent() {
     return list.sort((a, b) => a.date - b.date);
   }, [events, filter, selectedDate]);
 
-  const getEligibility = (event: Event) => canUserRegisterForEvent(userData, event);
+  const getEligibility = (event: Event) =>
+    canUserRegisterForEvent(userData, event, null, paidPlansEnabled);
 
   const handleValidateDiscount = async () => {
     if (!selectedEvent || !discountCode.trim()) return;

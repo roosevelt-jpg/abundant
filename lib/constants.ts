@@ -11,6 +11,15 @@ export function isWithinFreePeriod(now: Date = new Date()): boolean {
   return now <= getFreeAccessEndDate(now.getFullYear());
 }
 
+/**
+ * True when the platform is in open/free membership mode.
+ * Until admin turns on paid plans, everyone gets free access.
+ */
+export function isMembershipOpenAccess(paidPlansEnabled?: boolean | null): boolean {
+  if (paidPlansEnabled !== true) return true;
+  return isWithinFreePeriod();
+}
+
 export const SETTINGS_DOC_ID = 'main';
 
 /** Primary platform owner — always super admin */

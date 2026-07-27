@@ -277,6 +277,9 @@ export function fillBlankSettingsFromDefaults(settings: Settings, defaults: Sett
     careersPage: settings.careersPage ?? defaults.careersPage,
     pressPage: settings.pressPage ?? defaults.pressPage,
     legalPages: settings.legalPages ?? defaults.legalPages,
+    membershipAccess: {
+      paidPlansEnabled: settings.membershipAccess?.paidPlansEnabled ?? defaults.membershipAccess?.paidPlansEnabled ?? false,
+    },
   };
 }
 
@@ -309,6 +312,15 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
       existing.branding as Record<string, unknown> | undefined,
       updates.branding as Record<string, unknown>
     ) as Settings['branding'];
+  }
+
+  if (updates.membershipAccess) {
+    result.membershipAccess = {
+      paidPlansEnabled:
+        updates.membershipAccess.paidPlansEnabled ??
+        existing.membershipAccess?.paidPlansEnabled ??
+        false,
+    };
   }
 
   if (updates.colors) {

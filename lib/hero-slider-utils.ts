@@ -18,10 +18,23 @@ export function resolveHeroSliderConfig(
   config?: Partial<HeroSliderConfig> | null,
   slides: HeroSliderConfig['slides'] = []
 ): HeroSliderConfig {
+  const normalizedSlides = slides.map((slide) => {
+    const ctaLink = slide.cta?.link === '/signup' ? '/apply' : slide.cta?.link;
+    const secondaryLink =
+      slide.secondaryCta?.link === '/signup' ? '/apply' : slide.secondaryCta?.link;
+    return {
+      ...slide,
+      cta: slide.cta ? { ...slide.cta, link: ctaLink || '/apply' } : slide.cta,
+      secondaryCta: slide.secondaryCta
+        ? { ...slide.secondaryCta, link: secondaryLink || slide.secondaryCta.link }
+        : slide.secondaryCta,
+    };
+  });
+
   return {
     ...DEFAULT_HERO_SLIDER_CONFIG,
     ...config,
-    slides,
+    slides: normalizedSlides,
   };
 }
 

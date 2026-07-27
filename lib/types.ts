@@ -939,6 +939,14 @@ export interface Settings {
   aboutContent?: AboutPageContent;
   homePage?: HomePageContent;
   branding?: BrandingConfig;
+  /**
+   * When paidPlansEnabled is false (default), membership is free for everyone —
+   * Join goes to apply, and subscribe/checkout is not required.
+   * Turn on when ready to charge via Membership Plans / Stripe.
+   */
+  membershipAccess?: {
+    paidPlansEnabled: boolean;
+  };
   resourcesPage?: ResourcesPageContent;
   careersPage?: CareersPageContent;
   pressPage?: PressPageContent;

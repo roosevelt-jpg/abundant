@@ -4,7 +4,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { isWithinFreePeriod } from '@/lib/constants';
+import { isMembershipOpenAccess } from '@/lib/constants';
+import { useSettings } from '@/hooks/useSettings';
 import { isAdminRole } from '@/lib/auth-utils';
 import { useLanguage } from '@/context/LanguageContext';
 import { EmailVerifyBanner } from '@/components/email-verify-banner';
@@ -14,6 +15,8 @@ export default function Dashboard() {
   const { currentUser, userData, loading } = useAuth();
   const router = useRouter();
   const { t } = useLanguage();
+  const { settings } = useSettings();
+  const paidPlansEnabled = settings?.membershipAccess?.paidPlansEnabled === true;
 
   useEffect(() => {
     if (loading || !currentUser || !userData || isAdminRole(userData.role)) return;
@@ -40,7 +43,8 @@ export default function Dashboard() {
   const showUpgradeBanner =
     !loading &&
     userData &&
-    !isWithinFreePeriod() &&
+    paidPlansEnabled &&
+    !isMembershipOpenAccess(true) &&
     userData.subscriptionStatus !== 'active' &&
     userData.subscriptionStatus !== 'trialing';
 

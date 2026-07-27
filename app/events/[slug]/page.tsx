@@ -9,7 +9,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { Event, EventRegistration, EventTag, MemberRecord } from '@/lib/types';
 import { canUserRegisterForEvent, getAudienceGenderLabel } from '@/lib/event-eligibility';
-import { isWithinFreePeriod } from '@/lib/constants';
+import { isMembershipOpenAccess } from '@/lib/constants';
+import { useSettings } from '@/hooks/useSettings';
 import {
   formatEventWhen,
   getEffectiveTicketTiers,
@@ -38,6 +39,8 @@ export default function PublicEventPage() {
   const slug = String(params.slug || '');
   const { currentUser, userData } = useAuth();
   const { authFetch } = useApiAuth();
+  const { settings } = useSettings();
+  const paidPlansEnabled = settings?.membershipAccess?.paidPlansEnabled === true;
 
   const [event, setEvent] = useState<Event | null>(null);
   const [tags, setTags] = useState<EventTag[]>([]);
@@ -108,7 +111,9 @@ export default function PublicEventPage() {
   const selectedTier = tiers.find((t) => t.id === selectedTierId) || tiers[0];
   const priceInfo = event ? getEventDisplayPrice(event) : { label: 'Free', amount: 0 };
   const full = event ? isEventFull(event) : false;
-  const eligibility = event ? canUserRegisterForEvent(userData, event, member) : { allowed: true };
+  const eligibility = event
+    ? canUserRegisterForEvent(userData, event, member, paidPlansEnabled)
+    : { allowed: true };
 
   const handleRegister = async () => {
     if (!event) return;
@@ -470,7 +475,7 @@ export default function PublicEventPage() {
                   </div>
                 )}
 
-                {isWithinFreePeriod() && currentUser && eligibility.allowed && (
+                {isMembershipOpenAccess(paidPlansEnabled) && currentUser && eligibility.allowed && (
                   <p className="text-[11px] text-muted-foreground">
                     Free access period is active through August 31 — membership upgrades apply from September 1.
                   </p>
