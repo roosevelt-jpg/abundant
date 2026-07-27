@@ -303,7 +303,7 @@ export interface Taxonomies {
 }
 
 export type MembershipApplicationStatus = 'pending' | 'under_review' | 'approved' | 'rejected';
-export type TierInterest = MembershipTierId | 'not_sure';
+export type TierInterest = MembershipTierId | 'free' | 'not_sure';
 
 export interface MembershipApplication {
   id: string;

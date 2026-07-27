@@ -81,35 +81,36 @@ export const HeroSlider = ({ fallbackSiteName, fallbackDescription }: HeroSlider
 
   return (
     <section
-      className="relative overflow-hidden py-6 sm:py-10 lg:py-14 px-4 sm:px-6 lg:px-8"
+      className="relative overflow-hidden py-5 sm:py-8 lg:py-14 px-4 sm:px-6 lg:px-8"
       onMouseEnter={() => config.pauseOnHover && setPaused(true)}
       onMouseLeave={() => config.pauseOnHover && setPaused(false)}
       aria-roledescription="carousel"
       aria-label="Hero slider"
     >
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
+      <div className="max-w-7xl mx-auto">
+        {/* Mobile/tablet: stacked full-width. Desktop: ~30% text / ~70% image */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,2.1fr)] gap-5 sm:gap-6 lg:gap-8 items-center">
           {/* Text content */}
           <div
-            className={`relative min-h-[200px] sm:min-h-[240px] flex flex-col justify-center ${textAlign} ${
+            className={`relative flex flex-col justify-center ${textAlign} ${
               config.mobileImageFirst ? 'order-2 lg:order-1' : 'order-1'
             }`}
           >
             {displaySlides.map((s, idx) => {
               const motion = getHeroTextMotion(config.transition, idx === currentSlide, duration);
               return (
-                <div key={s.id} className={motion.className} style={motion.style}>
+                <div key={s.id} className={`${motion.className} w-full`} style={motion.style}>
                   {s.badge && (
                     <span className="inline-block px-3 py-1 bg-accent/10 text-accent rounded-full text-xs font-medium mb-3">
                       {s.badge}
                     </span>
                   )}
-                  <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 leading-tight">
+                  <h1 className="font-heading text-[1.75rem] sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold mb-3 leading-[1.15] break-words">
                     {s.title}
                   </h1>
                   {(s.description || s.subtitle) && (
                     <p
-                      className={`text-sm sm:text-base text-muted-foreground mb-5 leading-relaxed max-w-xl ${
+                      className={`text-sm sm:text-base text-muted-foreground mb-5 leading-relaxed max-w-none lg:max-w-md ${
                         config.contentAlignment === 'center' ? 'mx-auto' : ''
                       }`}
                     >
@@ -117,14 +118,14 @@ export const HeroSlider = ({ fallbackSiteName, fallbackDescription }: HeroSlider
                     </p>
                   )}
                   <div
-                    className={`flex flex-col sm:flex-row gap-3 ${
-                      config.contentAlignment === 'center' ? 'justify-center' : ''
+                    className={`flex flex-col sm:flex-row gap-3 w-full sm:w-auto ${
+                      config.contentAlignment === 'center' ? 'justify-center sm:mx-auto' : ''
                     }`}
                   >
                     {s.cta && (
                       <Link
                         href={s.cta.link}
-                        className="btn-gradient inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm"
+                        className="btn-gradient inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-lg font-semibold text-sm min-h-[44px]"
                       >
                         {s.cta.text} <ArrowRight className="w-4 h-4" />
                       </Link>
@@ -132,7 +133,7 @@ export const HeroSlider = ({ fallbackSiteName, fallbackDescription }: HeroSlider
                     {s.secondaryCta && (
                       <Link
                         href={s.secondaryCta.link}
-                        className="inline-flex items-center justify-center px-5 py-2.5 border border-border hover:bg-card transition-colors rounded-lg font-semibold text-sm"
+                        className="inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 sm:py-2.5 border border-border hover:bg-card transition-colors rounded-lg font-semibold text-sm min-h-[44px]"
                       >
                         {s.secondaryCta.text}
                       </Link>
@@ -145,11 +146,11 @@ export const HeroSlider = ({ fallbackSiteName, fallbackDescription }: HeroSlider
 
           {/* Image */}
           <div
-            className={`relative w-full ${
+            className={`relative w-full min-w-0 ${
               config.mobileImageFirst ? 'order-1 lg:order-2' : 'order-2'
             }`}
           >
-            <div className="relative aspect-[16/10] sm:aspect-[4/3] lg:aspect-square max-h-[220px] sm:max-h-[320px] lg:max-h-[420px] w-full mx-auto lg:mx-0 rounded-2xl overflow-hidden bg-muted/30 ring-1 ring-border/50 shadow-sm">
+            <div className="relative w-full aspect-[16/10] min-h-[180px] max-h-[240px] sm:min-h-[260px] sm:max-h-[360px] md:max-h-[400px] lg:min-h-[320px] lg:max-h-[480px] mx-auto lg:mx-0 rounded-xl sm:rounded-2xl overflow-hidden bg-muted/30 ring-1 ring-border/50 shadow-sm">
               {displaySlides.map((s, idx) => {
                 const motion = getHeroSlideMotion(config.transition, idx === currentSlide, duration);
                 return (
@@ -178,18 +179,18 @@ export const HeroSlider = ({ fallbackSiteName, fallbackDescription }: HeroSlider
                   <button
                     type="button"
                     onClick={() => goTo(currentSlide - 1)}
-                    className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white p-2 rounded-full transition-colors"
+                    className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/60 active:bg-black/70 backdrop-blur-sm text-white p-2.5 sm:p-2 rounded-full transition-colors min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
                     aria-label="Previous slide"
                   >
-                    <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <ChevronLeft className="w-5 h-5 sm:w-5 sm:h-5" />
                   </button>
                   <button
                     type="button"
                     onClick={() => goTo(currentSlide + 1)}
-                    className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white p-2 rounded-full transition-colors"
+                    className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/60 active:bg-black/70 backdrop-blur-sm text-white p-2.5 sm:p-2 rounded-full transition-colors min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
                     aria-label="Next slide"
                   >
-                    <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <ChevronRight className="w-5 h-5 sm:w-5 sm:h-5" />
                   </button>
                 </>
               )}
@@ -207,10 +208,16 @@ export const HeroSlider = ({ fallbackSiteName, fallbackDescription }: HeroSlider
                 aria-selected={idx === currentSlide}
                 aria-label={`Go to slide ${idx + 1}: ${s.title}`}
                 onClick={() => goTo(idx)}
-                className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
-                  idx === currentSlide ? 'bg-accent w-6 sm:w-8' : 'bg-muted-foreground/30 hover:bg-muted-foreground/50 w-1.5 sm:w-2'
-                }`}
-              />
+                className="rounded-full transition-all duration-300 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
+              >
+                <span
+                  className={`block h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
+                    idx === currentSlide
+                      ? 'bg-accent w-6 sm:w-8'
+                      : 'bg-muted-foreground/30 hover:bg-muted-foreground/50 w-1.5 sm:w-2'
+                  }`}
+                />
+              </button>
             ))}
           </div>
         )}

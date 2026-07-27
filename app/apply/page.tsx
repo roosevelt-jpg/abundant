@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
-import { membershipApplicationSchema, MembershipApplicationInput } from '@/lib/intake-schemas';
-import { MembershipTier, Taxonomies } from '@/lib/types';
-import { getDefaultTaxonomies } from '@/lib/intake-defaults';
+import { ApplyPlanPicker } from '@/components/apply-plan-picker';
 import { CountrySelect } from '@/components/country-select';
+import { membershipApplicationSchema, MembershipApplicationInput } from '@/lib/intake-schemas';
+import { getDefaultTaxonomies } from '@/lib/intake-defaults';
+import { MembershipTier, Taxonomies, TierInterest } from '@/lib/types';
 
 const STEPS = ['Identity', 'Professional', 'Fit & intent', 'Trust & legal'];
 
@@ -16,6 +17,7 @@ export default function ApplyPage() {
   const [step, setStep] = useState(0);
   const [tiers, setTiers] = useState<MembershipTier[]>([]);
   const [taxonomies, setTaxonomies] = useState<Taxonomies>(getDefaultTaxonomies());
+  const [paidPlansEnabled, setPaidPlansEnabled] = useState(false);
   const [done, setDone] = useState(false);
   const [serverError, setServerError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -36,7 +38,7 @@ export default function ApplyPage() {
       linkedinUrl: '',
       whyJoin: '',
       goals: [],
-      tierInterest: 'not_sure',
+      tierInterest: 'free',
       referredByMember: false,
       referrerName: '',
       howHeard: '',
@@ -49,6 +51,7 @@ export default function ApplyPage() {
   const { register, handleSubmit, watch, setValue, getValues, formState: { isSubmitting } } = form;
   const referred = watch('referredByMember');
   const goals = watch('goals') || [];
+  const tierInterest = watch('tierInterest');
   const errors = fieldErrors;
 
   useEffect(() => {
@@ -60,12 +63,16 @@ export default function ApplyPage() {
       .then((r) => r.json())
       .then((d) => Array.isArray(d) && setTiers(d))
       .catch(() => undefined);
+    fetch('/api/public/settings')
+      .then((r) => r.json())
+      .then((d) => setPaidPlansEnabled(d?.membershipAccess?.paidPlansEnabled === true))
+      .catch(() => undefined);
   }, []);
 
   const stepFields: (keyof MembershipApplicationInput)[][] = [
     ['fullName', 'email', 'phone', 'city', 'country', 'nationality', 'citizenship', 'gender'],
     ['role', 'company', 'industry', 'linkedinUrl', 'yearsExperience'],
-    ['whyJoin', 'goals', 'tierInterest'],
+    ['whyJoin', 'goals'],
     ['referredByMember', 'referrerName', 'howHeard', 'termsAccepted', 'marketingConsent'],
   ];
 
@@ -167,12 +174,22 @@ export default function ApplyPage() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1 py-10 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="font-heading text-3xl font-bold mb-2">Membership application</h1>
-          <p className="text-sm text-muted-foreground mb-6">
-            Abundant is a reviewed club. Applying does not create an account — we&apos;ll invite you if approved.
-          </p>
+        <div className="max-w-5xl mx-auto">
+          <div className="max-w-2xl mx-auto text-center mb-8">
+            <h1 className="font-heading text-3xl font-bold mb-2">Join Abundant</h1>
+            <p className="text-sm text-muted-foreground">
+              Choose a plan, then complete your application. Applying does not create an account — we&apos;ll invite you if approved.
+            </p>
+          </div>
 
+          <ApplyPlanPicker
+            tiers={tiers}
+            selected={tierInterest}
+            paidPlansEnabled={paidPlansEnabled}
+            onSelect={(tier: TierInterest) => setValue('tierInterest', tier, { shouldValidate: true })}
+          />
+
+          <div className="max-w-2xl mx-auto">
           <div className="flex gap-2 mb-8 flex-wrap">
             {STEPS.map((label, i) => (
               <div
@@ -297,24 +314,20 @@ export default function ApplyPage() {
                   </div>
                   {errors.goals && <p className="text-xs text-destructive mt-1">{errors.goals}</p>}
                 </div>
-                <div>
-                  <p className="text-sm font-medium mb-2">Tier interest</p>
-                  <div className="space-y-2">
-                    {tiers.map((t) => (
-                      <label key={t.id} className="flex items-start gap-2 text-sm p-3 border border-border rounded-lg">
-                        <input type="radio" value={t.id} {...register('tierInterest')} className="mt-1" />
-                        <span>
-                          <strong>{t.name}</strong>
-                          <span className="block text-xs text-muted-foreground">{t.tagline}</span>
-                        </span>
-                      </label>
-                    ))}
-                    <label className="flex items-center gap-2 text-sm p-3 border border-border rounded-lg">
-                      <input type="radio" value="not_sure" {...register('tierInterest')} />
-                      Not sure yet
-                    </label>
-                  </div>
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  Selected plan:{' '}
+                  <strong className="text-foreground capitalize">
+                    {tierInterest === 'free' ? 'Free Member' : tierInterest.replace(/_/g, ' ')}
+                  </strong>
+                  {' '}
+                  <button
+                    type="button"
+                    className="text-accent underline"
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  >
+                    Change
+                  </button>
+                </p>
               </>
             )}
 
@@ -373,6 +386,7 @@ export default function ApplyPage() {
               )}
             </div>
           </form>
+          </div>
         </div>
       </main>
       <Footer />

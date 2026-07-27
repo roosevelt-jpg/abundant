@@ -18,7 +18,7 @@ export const membershipApplicationSchema = z.object({
   yearsExperience: z.coerce.number().min(0).max(80).optional(),
   whyJoin: z.string().min(40, 'Please share at least a few sentences about why you want to join'),
   goals: z.array(z.string()).min(1, 'Select at least one goal'),
-  tierInterest: z.enum(['global', 'founding_circle', 'private', 'not_sure']),
+  tierInterest: z.enum(['free', 'global', 'founding_circle', 'private', 'not_sure']),
   referredByMember: z.boolean(),
   referrerName: z.string().optional(),
   howHeard: z.string().min(1, 'Please tell us how you heard about us'),

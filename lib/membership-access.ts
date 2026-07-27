@@ -49,6 +49,27 @@ export function resolveMemberTierId(
   return member?.tier || mapLegacyUserTier(user?.membershipTier);
 }
 
+/** Map application tier interest to the account membershipTier field. */
+export function membershipTierFromInterest(
+  interest?: string | null
+): User['membershipTier'] {
+  if (!interest || interest === 'not_sure' || interest === 'free') return 'member';
+  if (interest === 'global' || interest === 'founding_circle' || interest === 'private') {
+    return interest;
+  }
+  return 'member';
+}
+
+/** Paid CMS tier from interest, if any. */
+export function paidTierFromInterest(
+  interest?: string | null
+): MembershipTierId | undefined {
+  if (interest === 'global' || interest === 'founding_circle' || interest === 'private') {
+    return interest;
+  }
+  return undefined;
+}
+
 export function getTierPaidEventDiscountPercent(
   tierId: MembershipTierId | undefined,
   tiers: MembershipTier[]

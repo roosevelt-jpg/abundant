@@ -11,6 +11,7 @@ import { stripUndefined } from '@/lib/strip-undefined';
 import { User } from '@/lib/types';
 import { sendBrandedEmailVerification } from '@/lib/auth-emails';
 import { notifyMembersActivity } from '@/lib/notify-activity';
+import { membershipTierFromInterest, paidTierFromInterest } from '@/lib/membership-access';
 
 export async function GET(req: NextRequest) {
   try {
@@ -74,7 +75,7 @@ export async function POST(req: NextRequest) {
       email: invite.email,
       displayName: app?.fullName || invite.email,
       role: 'member' as const,
-      membershipTier: app?.tierInterest && app.tierInterest !== 'not_sure' ? app.tierInterest : 'global',
+      membershipTier: membershipTierFromInterest(app?.tierInterest),
       joinedAt: now,
       status: 'active' as const,
       createdAt: now,
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
       displayName: app?.fullName || invite.email,
       onboardingCompletedAt: null,
       tierStatus: 'pending',
-      tier: app?.tierInterest && app.tierInterest !== 'not_sure' ? app.tierInterest : undefined,
+      tier: paidTierFromInterest(app?.tierInterest),
       socialLinks: app?.linkedinUrl ? { linkedin: app.linkedinUrl } : {},
     });
 

@@ -11,6 +11,7 @@ import { stripUndefined } from '@/lib/strip-undefined';
 import { User } from '@/lib/types';
 import { sendFounderWelcomeEmail, sendBrandedEmailVerification } from '@/lib/auth-emails';
 import { notifyMembersActivity } from '@/lib/notify-activity';
+import { membershipTierFromInterest, paidTierFromInterest } from '@/lib/membership-access';
 
 const schema = z.object({
   token: z.string().min(10),
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
         displayName: app?.fullName || decoded.name || invite.email,
         photoURL: decoded.picture,
         role: 'member' as const,
-        membershipTier: app?.tierInterest && app.tierInterest !== 'not_sure' ? app.tierInterest : 'global',
+        membershipTier: membershipTierFromInterest(app?.tierInterest),
         joinedAt: now,
         status: 'active' as const,
         createdAt: now,
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
         displayName: app?.fullName || decoded.name || invite.email,
         onboardingCompletedAt: null,
         tierStatus: 'pending',
-        tier: app?.tierInterest && app.tierInterest !== 'not_sure' ? app.tierInterest : undefined,
+        tier: paidTierFromInterest(app?.tierInterest),
         socialLinks: app?.linkedinUrl ? { linkedin: app.linkedinUrl } : {},
       });
     }
