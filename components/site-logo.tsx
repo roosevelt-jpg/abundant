@@ -20,8 +20,6 @@ export function SiteLogo({ className = '', height, variant = 'header' }: SiteLog
   const { settings, loading } = useSettings();
   const { resolvedTheme } = useTheme();
 
-  const h = height ?? (variant === 'footer' ? 60 : variant === 'admin' ? 36 : 40);
-
   const customLogo =
     (resolvedTheme === 'dark' && settings.branding?.logoUrlDark) ||
     settings.branding?.logoUrl;
@@ -32,13 +30,13 @@ export function SiteLogo({ className = '', height, variant = 'header' }: SiteLog
     variant === 'header' || variant === 'footer'
       ? DEFAULT_LOGO
       : customLogo || DEFAULT_LOGO;
-  const onDarkSurface = variant === 'header' || variant === 'footer';
 
-  if (variant !== 'header' && variant !== 'footer' && !customLogo && loading) {
+  const adminHeight = height ?? 36;
+  const onDarkSurface = variant === 'header' || variant === 'footer';
     return (
       <span
         className={className}
-        style={{ display: 'inline-block', height: h, minWidth: h * 2 }}
+        style={{ display: 'inline-block', height: adminHeight, minWidth: adminHeight * 2 }}
         aria-hidden
       />
     );
@@ -51,7 +49,11 @@ export function SiteLogo({ className = '', height, variant = 'header' }: SiteLog
         src={logoUrl}
         alt={settings.siteName || 'Abundant Global Club'}
         className={`${onDarkSurface ? DARK_SURFACE_LOGO_CLASS : 'block bg-transparent'} ${className}`}
-        style={{ height: h, width: 'auto', maxWidth: '100%' }}
+        style={
+          variant === 'admin'
+            ? { height: adminHeight, width: 'auto', maxWidth: '100%' }
+            : { width: 'auto', maxWidth: '100%' }
+        }
         fetchPriority={variant === 'header' ? 'high' : 'auto'}
         decoding="async"
       />

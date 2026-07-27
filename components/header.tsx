@@ -74,9 +74,12 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 z-40 bg-gradient-to-r from-[#001F3F] from-30% via-[#002850] to-[#B8973A] border-b border-[#B8973A]/30 shadow-md">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 flex items-center justify-between gap-3">
         <Link href="/" className="flex-shrink-0 min-w-0">
-          <SiteLogo variant="header" className="h-8 sm:h-10 w-auto max-w-[140px] sm:max-w-none object-contain object-left" />
+          <SiteLogo
+            variant="header"
+            className="h-12 sm:h-14 md:h-16 w-auto max-w-[220px] sm:max-w-[280px] md:max-w-[320px] object-contain object-left"
+          />
         </Link>
 
         <div className="hidden lg:flex items-center gap-4 xl:gap-6 flex-wrap justify-end">

@@ -64,7 +64,10 @@ export const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8 text-center sm:text-left">
           <div className="sm:col-span-2 md:col-span-1">
-            <SiteLogo variant="footer" className="mb-4 mx-auto sm:mx-0" />
+            <SiteLogo
+              variant="footer"
+              className="h-16 sm:h-20 md:h-24 w-auto max-w-[280px] sm:max-w-[320px] mb-4 mx-auto sm:mx-0 object-contain object-left"
+            />
             <p className="text-sm text-gray-300">
               {settings?.branding?.footerTagline || settings?.description || 'A global network of success'}
             </p>
