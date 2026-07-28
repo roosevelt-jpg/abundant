@@ -45,7 +45,11 @@ export function SiteLogo({ className = '', height, variant = 'header' }: SiteLog
   }
 
   return (
-    <span className="inline-flex items-center leading-none min-w-0">
+    <span
+      className={`inline-flex items-center leading-none min-w-0 max-w-full ${
+        className.includes('w-full') ? 'w-full' : ''
+      }`}
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={logoUrl}
@@ -54,7 +58,7 @@ export function SiteLogo({ className = '', height, variant = 'header' }: SiteLog
         style={
           variant === 'admin'
             ? { height: adminHeight, width: 'auto', maxWidth: '100%' }
-            : { width: 'auto', maxWidth: '100%' }
+            : undefined
         }
         fetchPriority={variant === 'header' ? 'high' : 'auto'}
         decoding="async"

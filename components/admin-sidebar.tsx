@@ -98,11 +98,18 @@ export const AdminSidebar = () => {
     <aside
       className={`${isCollapsed ? 'w-20' : 'w-64'} app-sidebar border-r transition-all duration-300 flex flex-col h-screen fixed left-0 top-0 z-30`}
     >
-      <div className="p-4 sm:p-6 border-b app-sidebar-divider">
-        <Link href="/admin/dashboard" className="flex items-center gap-2 min-w-0">
+      <div className={`${isCollapsed ? 'px-2 py-2.5' : 'px-3 py-2.5'} border-b app-sidebar-divider`}>
+        <Link
+          href="/admin/dashboard"
+          className="flex items-center justify-start w-full min-w-0 overflow-hidden"
+        >
           <SiteLogo
             variant="header"
-            className={`object-contain object-left ${isCollapsed ? 'h-8' : 'h-9'} w-auto max-w-full`}
+            className={
+              isCollapsed
+                ? 'object-contain object-left h-9 w-9 max-w-full'
+                : 'object-contain object-left w-full h-auto max-h-[52px]'
+            }
           />
         </Link>
       </div>
