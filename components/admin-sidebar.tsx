@@ -97,20 +97,22 @@ export const AdminSidebar = () => {
     <aside
       className={`${isCollapsed ? 'w-20' : 'w-64'} app-sidebar border-r transition-all duration-300 flex flex-col h-screen fixed left-0 top-0 z-30`}
     >
-      <div className={`${isCollapsed ? 'p-2' : 'px-4 py-3'} border-b app-sidebar-divider`}>
+      <div className={`${isCollapsed ? 'p-2' : 'px-4 py-2.5'} border-b app-sidebar-divider`}>
         <Link
           href="/admin/dashboard"
-          className={`block leading-none ${isCollapsed ? '' : 'max-w-[128px]'}`}
+          className="inline-flex items-center leading-none"
           aria-label="Abundant Global Club"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={isCollapsed ? '/logo-text.png' : '/logo-text-sidebar.png'}
             alt="Abundant Global Club"
+            width={isCollapsed ? 20 : 110}
+            height={isCollapsed ? 20 : 22}
             className={
               isCollapsed
-                ? 'block h-5 w-5 object-contain object-center mx-auto mix-blend-lighten'
-                : 'block h-7 w-full max-w-[128px] object-contain object-left mix-blend-lighten'
+                ? 'block h-5 w-5 object-contain object-center mix-blend-lighten'
+                : 'block h-[22px] w-[110px] max-h-[22px] max-w-[110px] object-contain object-left mix-blend-lighten'
             }
           />
         </Link>
