@@ -31,7 +31,6 @@ import { useState } from 'react';
 import { canManageInvites, hasPermission } from '@/lib/auth-utils';
 import { useAuth } from '@/context/AuthContext';
 import { AdminPermission } from '@/lib/types';
-import { SiteLogo } from '@/components/site-logo';
 
 type MenuItem = {
   icon: typeof Home;
@@ -98,17 +97,20 @@ export const AdminSidebar = () => {
     <aside
       className={`${isCollapsed ? 'w-20' : 'w-64'} app-sidebar border-r transition-all duration-300 flex flex-col h-screen fixed left-0 top-0 z-30`}
     >
-      <div className={`${isCollapsed ? 'px-2 py-2.5' : 'px-3 py-2.5'} border-b app-sidebar-divider`}>
+      <div className={`${isCollapsed ? 'p-2' : 'px-2 py-2'} border-b app-sidebar-divider`}>
         <Link
           href="/admin/dashboard"
-          className="flex items-center justify-start w-full min-w-0 overflow-hidden"
+          className="block w-full leading-none"
+          aria-label="Abundant Global Club"
         >
-          <SiteLogo
-            variant="header"
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={isCollapsed ? '/logo-text.png' : '/logo-text-sidebar.png'}
+            alt="Abundant Global Club"
             className={
               isCollapsed
-                ? 'object-contain object-left h-9 w-9 max-w-full'
-                : 'object-contain object-left w-full h-auto max-h-[52px]'
+                ? 'block h-10 w-10 object-contain object-center mx-auto mix-blend-lighten'
+                : 'block w-full h-auto object-contain object-left mix-blend-lighten'
             }
           />
         </Link>
