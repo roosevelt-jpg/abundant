@@ -60,3 +60,58 @@ export async function getSiteHostingStatus(): Promise<SiteHostingStatus | null> 
   }
   return status;
 }
+
+/**
+ * Mark a hosting order paid and set siteHosting to active.
+ * Idempotent: safe to call from checkout complete and Stripe webhooks.
+ */
+export async function finalizeHostingOrderPaid(input: {
+  orderId?: string;
+  paymentIntentId: string;
+  chargeId?: string | null;
+  activatedBy?: string;
+  paidAt?: number;
+}): Promise<{ siteHosting: SiteHostingStatus; alreadyPaid: boolean } | null> {
+  const db = getAdminDb();
+  let orderRef = input.orderId ? db.collection('hostingOrders').doc(input.orderId) : null;
+  let orderSnap = orderRef ? await orderRef.get() : null;
+
+  if (!orderSnap?.exists) {
+    const byPi = await db
+      .collection('hostingOrders')
+      .where('paymentIntentId', '==', input.paymentIntentId)
+      .limit(1)
+      .get();
+    if (byPi.empty) return null;
+    orderRef = byPi.docs[0].ref;
+    orderSnap = byPi.docs[0];
+  }
+
+  const order = orderSnap!.data()!;
+  if (order.paymentIntentId && order.paymentIntentId !== input.paymentIntentId) {
+    throw new Error('Payment mismatch');
+  }
+
+  const paidAt = input.paidAt ?? Date.now();
+  const alreadyPaid = order.status === 'paid';
+
+  if (!alreadyPaid) {
+    await orderRef!.update({
+      status: 'paid',
+      paidAt,
+      updatedAt: paidAt,
+      stripeChargeId: input.chargeId ?? order.stripeChargeId ?? null,
+    });
+  }
+
+  const siteHosting = await activateSiteHosting({
+    planId: order.planId as HostingPlanId,
+    periodMonths: order.periodMonths as HostingPeriodMonths,
+    orderId: order.id || orderRef!.id,
+    paymentIntentId: input.paymentIntentId,
+    activatedBy: input.activatedBy || order.adminEmail || 'stripe-webhook',
+    paidAt: alreadyPaid ? order.paidAt || paidAt : paidAt,
+  });
+
+  return { siteHosting, alreadyPaid };
+}

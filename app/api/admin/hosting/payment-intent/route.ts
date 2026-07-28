@@ -23,6 +23,10 @@ export async function POST(req: NextRequest) {
     const order = calculateHostingOrder(planId as HostingPlanId, periodMonths as HostingPeriodMonths);
     const stripe = await getStripe();
 
+    const now = Date.now();
+    const orderRef = getAdminDb().collection('hostingOrders').doc();
+    const orderId = orderRef.id;
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount: order.amountCents,
       currency: 'usd',
@@ -31,6 +35,7 @@ export async function POST(req: NextRequest) {
         type: 'hosting_plan',
         planId,
         periodMonths: String(periodMonths),
+        orderId,
         adminUid: auth.uid,
         adminEmail: auth.email,
       },
@@ -38,10 +43,8 @@ export async function POST(req: NextRequest) {
       description: `Abundant Hosting — ${order.plan.fullName} (${periodMonths === 1 ? '1 month' : `${periodMonths} months`})`,
     });
 
-    const now = Date.now();
-    const orderRef = getAdminDb().collection('hostingOrders').doc();
     await orderRef.set({
-      id: orderRef.id,
+      id: orderId,
       planId,
       periodMonths,
       amountCents: order.amountCents,
@@ -58,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
-      orderId: orderRef.id,
+      orderId,
       paymentIntentId: paymentIntent.id,
       amountCents: order.amountCents,
       total: order.total,

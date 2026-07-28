@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/api-auth';
 import { getAdminDb } from '@/lib/firebase-admin';
-import { HostingPeriodMonths, HostingPlanId } from '@/lib/hosting-plans';
-import { activateSiteHosting } from '@/lib/site-hosting';
+import { finalizeHostingOrderPaid } from '@/lib/site-hosting';
 import { getStripe } from '@/lib/stripe-server';
 
 const schema = z.object({
@@ -22,8 +21,7 @@ export async function POST(req: NextRequest) {
 
     const { orderId, paymentIntentId } = parsed.data;
     const db = getAdminDb();
-    const orderRef = db.collection('hostingOrders').doc(orderId);
-    const orderSnap = await orderRef.get();
+    const orderSnap = await db.collection('hostingOrders').doc(orderId).get();
 
     if (!orderSnap.exists) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
@@ -47,27 +45,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const paidAt = Date.now();
-    await orderRef.update({
-      status: 'paid',
-      paidAt,
-      updatedAt: paidAt,
-      stripeChargeId: typeof intent.latest_charge === 'string' ? intent.latest_charge : null,
-    });
-
-    const siteHosting = await activateSiteHosting({
-      planId: order.planId as HostingPlanId,
-      periodMonths: order.periodMonths as HostingPeriodMonths,
+    const result = await finalizeHostingOrderPaid({
       orderId,
       paymentIntentId,
+      chargeId: typeof intent.latest_charge === 'string' ? intent.latest_charge : null,
       activatedBy: auth.email,
-      paidAt,
     });
+
+    if (!result) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
 
     return NextResponse.json({
       ok: true,
       status: 'paid',
-      siteHosting,
+      alreadyPaid: result.alreadyPaid,
+      siteHosting: result.siteHosting,
     });
   } catch (error) {
     console.error('[api/admin/hosting/complete]', error);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getStripe, getWebhookSecret } from '@/lib/stripe-server';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { generateEventCode } from '@/lib/event-checkin';
+import { finalizeHostingOrderPaid } from '@/lib/site-hosting';
 import Stripe from 'stripe';
 
 export async function POST(req: NextRequest) {
@@ -159,6 +160,19 @@ export async function POST(req: NextRequest) {
           for (const doc of users.docs) {
             await doc.ref.update({ subscriptionStatus: 'past_due', updatedAt: Date.now() });
           }
+        }
+        break;
+      }
+
+      case 'payment_intent.succeeded': {
+        const intent = event.data.object as Stripe.PaymentIntent;
+        if (intent.metadata?.type === 'hosting_plan') {
+          await finalizeHostingOrderPaid({
+            orderId: intent.metadata.orderId || undefined,
+            paymentIntentId: intent.id,
+            chargeId: typeof intent.latest_charge === 'string' ? intent.latest_charge : null,
+            activatedBy: intent.metadata.adminEmail || 'stripe-webhook',
+          });
         }
         break;
       }
