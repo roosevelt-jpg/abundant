@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Info } from 'lucide-react';
+import { Check, ExternalLink, Info } from 'lucide-react';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { HostingerLogo } from '@/components/hostinger-logo';
 import {
@@ -15,6 +15,8 @@ import {
   SITE_HOSTING_DOMAIN,
 } from '@/lib/hosting-plans';
 import { SiteHostingStatus } from '@/lib/types';
+
+const HOSTINGER_PRO_URL = 'https://www.hostinger.com/pro';
 
 type PlanPayload = {
   id: HostingPlanId;
@@ -99,9 +101,17 @@ export default function AdminHostingPage() {
   return (
     <div className="min-h-full bg-[#0A1220] text-white -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
           <div className="flex flex-wrap items-center gap-3">
-            <HostingerLogo height={40} onDark />
+            <a
+              href={HOSTINGER_PRO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex hover:opacity-90 transition-opacity"
+              title="Open Hostinger Pro pricing"
+            >
+              <HostingerLogo height={40} onDark />
+            </a>
             <span className="text-xs px-2.5 py-1 rounded-full border border-[#B8973A]/40 text-[#D4AF87]">
               for Abundant Global
             </span>
@@ -112,6 +122,21 @@ export default function AdminHostingPage() {
           >
             Configure Stripe
           </Link>
+        </div>
+
+        <div className="mb-8 rounded-xl border border-white/10 bg-white/5 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <p className="text-sm text-white/65">
+            Compare live Hostinger Pro pricing anytime.
+          </p>
+          <a
+            href={HOSTINGER_PRO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#D4AF87] hover:text-[#B8973A] break-all"
+          >
+            hostinger.com/pro
+            <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+          </a>
         </div>
 
         {/* Site status for abundantglobalclub.com */}
