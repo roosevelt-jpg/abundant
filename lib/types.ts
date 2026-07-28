@@ -969,7 +969,7 @@ export interface Settings {
   };
   /**
    * Hostinger hosting subscription for the live site (abundantglobalclub.com).
-   * Set to active after a successful Hosting Plan (Stripe) payment.
+   * Set to active after a successful Hosting payment via Stripe.
    */
   siteHosting?: SiteHostingStatus;
   resourcesPage?: ResourcesPageContent;

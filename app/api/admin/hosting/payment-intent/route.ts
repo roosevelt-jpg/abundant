@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { requireAdmin } from '@/lib/api-auth';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { calculateHostingOrder, HostingPeriodMonths, HostingPlanId } from '@/lib/hosting-plans';
-import { getHostingStripe } from '@/lib/stripe-hosting-server';
+import { getStripe } from '@/lib/stripe-server';
 
 const schema = z.object({
   planId: z.enum(['startup', 'professional', 'growth']),
@@ -21,12 +21,12 @@ export async function POST(req: NextRequest) {
 
     const { planId, periodMonths } = parsed.data;
     const order = calculateHostingOrder(planId as HostingPlanId, periodMonths as HostingPeriodMonths);
-    const stripe = await getHostingStripe();
+    const stripe = await getStripe();
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: order.amountCents,
       currency: 'usd',
-      automatic_payment_methods: { enabled: true },
+      payment_method_types: ['card'],
       metadata: {
         type: 'hosting_plan',
         planId,

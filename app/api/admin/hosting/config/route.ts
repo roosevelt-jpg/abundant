@@ -2,18 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/api-auth';
 import { HOSTING_PLANS } from '@/lib/hosting-plans';
 import { getSiteHostingStatus } from '@/lib/site-hosting';
-import {
-  getHostingStripePublishableKey,
-  isHostingStripeConfigured,
-} from '@/lib/stripe-hosting-server';
+import { getStripePublishableKey, isStripeConfigured } from '@/lib/stripe-server';
 
 export async function GET(req: NextRequest) {
   try {
     await requireAdmin(req);
 
     const [publishableKey, configured, siteHosting] = await Promise.all([
-      getHostingStripePublishableKey(),
-      isHostingStripeConfigured(),
+      getStripePublishableKey(),
+      isStripeConfigured(),
       getSiteHostingStatus(),
     ]);
 

@@ -111,7 +111,7 @@ export default function AdminHostingPage() {
             href="/admin/settings?tab=integrations"
             className="text-sm text-[#D4AF87] hover:text-[#B8973A] underline-offset-2 hover:underline"
           >
-            Configure Hosting Plan (Stripe)
+            Configure Stripe
           </Link>
         </div>
 
@@ -160,9 +160,9 @@ export default function AdminHostingPage() {
 
         {!configured && (
           <div className="mb-6 rounded-xl border border-[#B8973A]/40 bg-[#B8973A]/10 px-4 py-3 text-sm text-[#D4AF87]">
-            Hosting Plan (Stripe) is not configured yet. Add publishable and secret keys under{' '}
+            Stripe is not configured yet. Add publishable and secret keys under{' '}
             <Link href="/admin/settings?tab=integrations" className="underline font-semibold">
-              Settings → Integrations → Hosting Plan (Stripe)
+              Settings → Integrations → Stripe
             </Link>
             , then return here to purchase.
           </div>

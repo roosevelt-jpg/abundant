@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/api-auth';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { HostingPeriodMonths, HostingPlanId } from '@/lib/hosting-plans';
 import { activateSiteHosting } from '@/lib/site-hosting';
-import { getHostingStripe } from '@/lib/stripe-hosting-server';
+import { getStripe } from '@/lib/stripe-server';
 
 const schema = z.object({
   orderId: z.string().min(1),
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Payment mismatch' }, { status: 400 });
     }
 
-    const stripe = await getHostingStripe();
+    const stripe = await getStripe();
     const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
     if (intent.status !== 'succeeded') {

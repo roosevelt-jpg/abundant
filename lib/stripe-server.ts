@@ -20,6 +20,28 @@ export async function getStripe(): Promise<Stripe> {
   return stripe;
 }
 
+export async function getStripePublishableKey(): Promise<string | null> {
+  if (process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+    return process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+  }
+  const settingsSnap = await getAdminDb().collection('settings').doc(SETTINGS_DOC_ID).get();
+  return settingsSnap.data()?.integrations?.stripe?.publishableKey || null;
+}
+
+export async function isStripeConfigured(): Promise<boolean> {
+  try {
+    const pk = await getStripePublishableKey();
+    let secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) {
+      const settingsSnap = await getAdminDb().collection('settings').doc(SETTINGS_DOC_ID).get();
+      secretKey = settingsSnap.data()?.integrations?.stripe?.secretKey;
+    }
+    return Boolean(pk && secretKey);
+  } catch {
+    return false;
+  }
+}
+
 export async function getWebhookSecret(): Promise<string> {
   if (process.env.STRIPE_WEBHOOK_SECRET) return process.env.STRIPE_WEBHOOK_SECRET;
 

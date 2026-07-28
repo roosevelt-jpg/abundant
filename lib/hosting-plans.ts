@@ -72,7 +72,8 @@ export const HOSTING_PLANS: HostingPlan[] = [
       { label: '30-Day money-back guarantee' },
     ],
     periods: {
-      12: period(12, 35, 69, 49),
+      // Same $25/mo advertised on the plan card for the default 12-month term
+      12: period(12, 25, 69, 49),
       24: period(24, 25, 69, 49),
     },
   },
@@ -103,7 +104,7 @@ export const HOSTING_PLANS: HostingPlan[] = [
       { label: '30-Day money-back guarantee' },
     ],
     periods: {
-      12: period(12, 55, 99, 69),
+      12: period(12, 39, 99, 69),
       24: period(24, 39, 99, 69),
     },
   },
@@ -134,14 +135,14 @@ export const HOSTING_PLANS: HostingPlan[] = [
       { label: '30-Day money-back guarantee' },
     ],
     periods: {
-      12: period(12, 85, 149, 99),
+      12: period(12, 59, 149, 99),
       24: period(24, 59, 149, 99),
     },
   },
 ];
 
 /** Flat tax rate applied on checkout summary (matches Hostinger-style tax line). */
-export const HOSTING_TAX_RATE = 0.21;
+export const HOSTING_TAX_RATE = 0;
 
 export function getHostingPlan(id: string): HostingPlan | undefined {
   return HOSTING_PLANS.find((p) => p.id === id);

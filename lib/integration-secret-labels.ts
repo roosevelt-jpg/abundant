@@ -5,7 +5,6 @@ const INTEGRATION_LABELS: Record<string, string> = {
   firebaseClient: 'Firebase Client',
   gmailSmtp: 'Gmail SMTP',
   stripe: 'Stripe',
-  stripeHosting: 'Hosting Plan (Stripe)',
   youtube: 'YouTube',
   googlePlaces: 'Google Maps',
   anthropic: 'Chatbot AI',

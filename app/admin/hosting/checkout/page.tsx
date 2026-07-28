@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FormEvent, Suspense, useEffect, useMemo, useState } from 'react';
-import { Elements, CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
+import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe, Stripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { Check, ChevronLeft, Info, Server } from 'lucide-react';
 import { useApiAuth } from '@/hooks/useApiAuth';
@@ -14,7 +14,7 @@ import {
   HostingPlanId,
 } from '@/lib/hosting-plans';
 
-const CARD_OPTIONS = {
+const FIELD_STYLE = {
   style: {
     base: {
       color: '#0F1B2E',
@@ -29,7 +29,6 @@ const CARD_OPTIONS = {
       iconColor: '#B42318',
     },
   },
-  hidePostalCode: false,
 };
 
 function HostingPaymentInner({
@@ -56,8 +55,8 @@ function HostingPaymentInner({
   const handlePay = async (e: FormEvent) => {
     e.preventDefault();
     if (!stripe || !elements) return;
-    const card = elements.getElement(CardElement);
-    if (!card) {
+    const cardNumber = elements.getElement(CardNumberElement);
+    if (!cardNumber) {
       setError('Card form not ready');
       return;
     }
@@ -66,7 +65,7 @@ function HostingPaymentInner({
     setError('');
     try {
       const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: { card },
+        payment_method: { card: cardNumber },
       });
 
       if (stripeError) {
@@ -93,16 +92,36 @@ function HostingPaymentInner({
     }
   };
 
+  const fieldCls = 'rounded-xl border border-border bg-white px-3 py-3 shadow-sm';
+
   return (
     <form onSubmit={handlePay} className="space-y-5">
       <div>
         <h2 className="font-heading text-xl font-bold text-[#0F1B2E] mb-1">Payment details</h2>
         <p className="text-sm text-muted-foreground mb-4">
-          Enter your card to pay {totalLabel}. Card processing runs behind the scenes — you stay on
-          Abundant (no Stripe Checkout redirect).
+          Enter your card details to pay {totalLabel}.
         </p>
-        <div className="rounded-xl border border-border bg-white px-4 py-4 shadow-sm">
-          <CardElement options={CARD_OPTIONS} />
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-[#0F1B2E]">
+            Card number
+            <div className={`${fieldCls} mt-1.5`}>
+              <CardNumberElement options={{ ...FIELD_STYLE, showIcon: true }} />
+            </div>
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block text-sm font-medium text-[#0F1B2E]">
+              Expiry
+              <div className={`${fieldCls} mt-1.5`}>
+                <CardExpiryElement options={FIELD_STYLE} />
+              </div>
+            </label>
+            <label className="block text-sm font-medium text-[#0F1B2E]">
+              CVC
+              <div className={`${fieldCls} mt-1.5`}>
+                <CardCvcElement options={FIELD_STYLE} />
+              </div>
+            </label>
+          </div>
         </div>
       </div>
 
@@ -249,22 +268,19 @@ function CheckoutContent() {
     );
   }
 
-  const elementsOptions: StripeElementsOptions | undefined = clientSecret
-    ? {
-        clientSecret,
-        appearance: {
-          theme: 'stripe',
-          variables: {
-            colorPrimary: '#B8973A',
-            colorBackground: '#ffffff',
-            colorText: '#0F1B2E',
-            colorDanger: '#B42318',
-            borderRadius: '10px',
-            fontFamily: 'inherit',
-          },
-        },
-      }
-    : undefined;
+  const elementsOptions: StripeElementsOptions = {
+    appearance: {
+      theme: 'stripe',
+      variables: {
+        colorPrimary: '#B8973A',
+        colorBackground: '#ffffff',
+        colorText: '#0F1B2E',
+        colorDanger: '#B42318',
+        borderRadius: '10px',
+        fontFamily: 'inherit',
+      },
+    },
+  };
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -286,9 +302,9 @@ function CheckoutContent() {
 
       {!configured && (
         <div className="mb-6 rounded-xl border border-[#B8973A]/40 bg-[#B8973A]/10 px-4 py-3 text-sm">
-          Add Hosting Plan (Stripe) keys in{' '}
+          Add Stripe keys in{' '}
           <Link href="/admin/settings?tab=integrations" className="font-semibold text-[#B8973A] underline">
-            Settings → Integrations
+            Settings → Integrations → Stripe
           </Link>{' '}
           before continuing.
         </div>
@@ -368,8 +384,7 @@ function CheckoutContent() {
               </p>
             </>
           ) : (
-            stripePromise &&
-            elementsOptions && (
+            stripePromise && clientSecret && (
               <Elements stripe={stripePromise} options={elementsOptions} key={clientSecret}>
                 <HostingPaymentInner
                   clientSecret={clientSecret}
