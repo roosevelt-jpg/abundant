@@ -11,7 +11,7 @@ import { Event, EventTag } from '@/lib/types';
 import { canUserRegisterForEvent, getAudienceGenderLabel } from '@/lib/event-eligibility';
 import { useSettings } from '@/hooks/useSettings';
 import { Calendar, MapPin, Users, X, Download, ExternalLink, Tag, Percent } from 'lucide-react';
-import { isSameDay, format } from 'date-fns';
+import { isSameDay, format, startOfDay, isBefore } from 'date-fns';
 import { downloadIcs, googleCalendarUrl } from '@/lib/ics';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -35,7 +35,7 @@ function EventsContent() {
   const [events, setEvents] = useState<Event[]>([]);
   const [tags, setTags] = useState<EventTag[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<'calendar' | 'list'>('list');
+  const [timeFilter, setTimeFilter] = useState<'upcoming' | 'past' | 'all'>('upcoming');
   const [filter, setFilter] = useState<'all' | 'free' | 'paid'>('all');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -72,12 +72,57 @@ function EventsContent() {
 
   const tagMap = useMemo(() => Object.fromEntries(tags.map((tg) => [tg.id, tg])), [tags]);
 
-  const filtered = useMemo(() => {
-    let list = events.filter((e) => e.date >= Date.now() - 86400000);
+  const today = useMemo(() => startOfDay(new Date()), []);
+
+  const calendarEvents = useMemo(() => {
+    let list = events;
     if (filter !== 'all') list = list.filter((e) => e.pricingType === filter);
-    if (selectedDate) list = list.filter((e) => isSameDay(new Date(e.date), selectedDate));
+    return list;
+  }, [events, filter]);
+
+  const filtered = useMemo(() => {
+    let list = events;
+
+    if (selectedDate) {
+      list = list.filter((e) => isSameDay(new Date(e.date), selectedDate));
+    } else if (timeFilter === 'upcoming') {
+      list = list.filter((e) => !isBefore(startOfDay(new Date(e.date)), today));
+    } else if (timeFilter === 'past') {
+      list = list.filter((e) => isBefore(startOfDay(new Date(e.date)), today));
+    }
+
+    if (filter !== 'all') list = list.filter((e) => e.pricingType === filter);
+
+    if (timeFilter === 'past' && !selectedDate) {
+      return list.sort((a, b) => b.date - a.date);
+    }
     return list.sort((a, b) => a.date - b.date);
-  }, [events, filter, selectedDate]);
+  }, [events, filter, timeFilter, selectedDate, today]);
+
+  const listHeading = selectedDate
+    ? format(selectedDate, 'MMMM d, yyyy')
+    : timeFilter === 'past'
+      ? t('events.past', 'Past Events')
+      : timeFilter === 'all'
+        ? t('events.all', 'All Events')
+        : t('events.upcoming', 'Upcoming Events');
+
+  const emptyMessage = selectedDate
+    ? t('events.none', 'No events on this date')
+    : timeFilter === 'past'
+      ? t('events.emptyPast', 'No past events')
+      : timeFilter === 'all'
+        ? t('events.emptyAll', 'No events found')
+        : t('events.empty', 'No upcoming events');
+
+  const handleSelectDate = (date: Date) => {
+    setSelectedDate((prev) => (prev && isSameDay(date, prev) ? null : date));
+  };
+
+  const handleTimeFilterChange = (value: 'upcoming' | 'past' | 'all') => {
+    setTimeFilter(value);
+    setSelectedDate(null);
+  };
 
   const getEligibility = (event: Event) =>
     canUserRegisterForEvent(userData, event, null, paidPlansEnabled);
@@ -174,56 +219,87 @@ function EventsContent() {
         <section className="py-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-              <div className="flex gap-2">
-                <button onClick={() => setView('list')} className={`px-4 py-2 rounded-lg text-sm font-medium ${view === 'list' ? 'bg-accent text-accent-foreground' : 'border border-border'}`}>
-                  {t('events.list', 'List')}
-                </button>
-                <button onClick={() => setView('calendar')} className={`px-4 py-2 rounded-lg text-sm font-medium ${view === 'calendar' ? 'bg-accent text-accent-foreground' : 'border border-border'}`}>
-                  {t('events.calendar', 'Calendar')}
-                </button>
+              <div className="flex flex-wrap gap-2">
+                {(['upcoming', 'past', 'all'] as const).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => handleTimeFilterChange(f)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                      timeFilter === f && !selectedDate
+                        ? 'bg-accent text-accent-foreground'
+                        : 'border border-border hover:border-accent/50'
+                    }`}
+                  >
+                    {t(`events.filter.${f}`, f === 'upcoming' ? 'Upcoming' : f === 'past' ? 'Past' : 'All')}
+                  </button>
+                ))}
               </div>
               <div className="flex gap-2">
                 {(['all', 'free', 'paid'] as const).map((f) => (
-                  <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-sm capitalize ${filter === f ? 'bg-accent/10 text-accent' : 'text-muted-foreground'}`}>
-                    {f}
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setFilter(f)}
+                    className={`px-3 py-1.5 rounded-lg text-sm capitalize ${
+                      filter === f ? 'bg-accent/10 text-accent' : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {f === 'all' ? t('events.filter.all', 'All') : t(`events.filter.${f}`, f)}
                   </button>
                 ))}
               </div>
             </div>
 
-            {view === 'calendar' ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+              <div className="lg:col-span-2">
                 <EventCalendar
-                  events={events}
+                  events={calendarEvents}
                   selectedDate={selectedDate}
-                  onSelectDate={(d) => setSelectedDate(isSameDay(d, selectedDate || new Date(0)) ? null : d)}
+                  onSelectDate={handleSelectDate}
                 />
-                <div className="space-y-4">
-                  <h3 className="font-heading font-bold">
-                    {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : t('events.upcoming', 'Upcoming Events')}
-                  </h3>
-                  {filtered.length === 0 ? (
-                    <p className="text-muted-foreground text-sm">{t('events.none', 'No events on this date')}</p>
-                  ) : (
-                    filtered.map((e) => <EventCard key={e.id} event={e} tagMap={tagMap} compact />)
+              </div>
+
+              <div className="lg:col-span-3 space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="font-heading font-bold text-lg">{listHeading}</h3>
+                  {selectedDate && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDate(null)}
+                      className="text-sm text-accent font-medium hover:underline"
+                    >
+                      {t('events.clearDate', 'Clear date')}
+                    </button>
                   )}
                 </div>
+
+                {loading ? (
+                  <p className="text-muted-foreground py-8">{t('common.loading', 'Loading...')}</p>
+                ) : filtered.length === 0 ? (
+                  <div className="text-center py-12 rounded-xl border border-dashed border-border">
+                    <Calendar className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground text-sm">{emptyMessage}</p>
+                    {timeFilter === 'upcoming' && !selectedDate && (
+                      <Link href="/contact" className="text-accent text-sm font-semibold mt-2 inline-block">
+                        {t('events.suggest', 'Suggest an event →')}
+                      </Link>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {filtered.map((e) => (
+                      <EventCard
+                        key={e.id}
+                        event={e}
+                        tagMap={tagMap}
+                        isPast={isBefore(startOfDay(new Date(e.date)), today)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : loading ? (
-              <p className="text-center text-muted-foreground py-12">{t('common.loading', 'Loading...')}</p>
-            ) : filtered.length === 0 ? (
-              <div className="text-center py-12">
-                <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">{t('events.empty', 'No upcoming events')}</p>
-                <Link href="/contact" className="text-accent text-sm font-semibold mt-2 inline-block">{t('events.suggest', 'Suggest an event →')}</Link>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filtered.map((e) => (
-                  <EventCard key={e.id} event={e} tagMap={tagMap} />
-                ))}
-              </div>
-            )}
+            </div>
           </div>
         </section>
       </main>
@@ -332,11 +408,14 @@ function EventCard({
   event,
   tagMap,
   compact = false,
+  isPast = false,
 }: {
   event: Event;
   tagMap: Record<string, EventTag>;
   compact?: boolean;
+  isPast?: boolean;
 }) {
+  const { t } = useLanguage();
   const price = getEventDisplayPrice(event);
   return (
     <Link
@@ -353,6 +432,11 @@ function EventCard({
       )}
       <div className={compact ? '' : 'p-6'}>
         <div className="flex flex-wrap gap-1 mb-2">
+          {isPast && (
+            <span className="inline-block px-2 py-0.5 bg-muted text-muted-foreground text-xs font-semibold rounded">
+              {t('events.pastBadge', 'Past')}
+            </span>
+          )}
           <span className="inline-block px-2 py-0.5 bg-accent/10 text-accent text-xs font-semibold rounded capitalize">
             {price.label}
           </span>
