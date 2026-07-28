@@ -91,7 +91,7 @@ export const Footer = () => {
           ))}
         </div>
 
-        <div className="border-t border-gray-700 pt-8">
+        <div className="border-t border-gray-700 pt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p className="text-sm text-gray-400 text-center sm:text-left">
             {settings?.branding?.copyrightText ||
               t('footer.copyright', `© ${new Date().getFullYear()} Abundant Global Club. All rights reserved.`)}
@@ -105,6 +105,12 @@ export const Footer = () => {
               Made with ❤️ by {FOOTER_CREDIT_NAME}
             </a>
           </p>
+          {settings?.siteHosting?.status === 'active' && (
+            <span className="inline-flex items-center justify-center gap-1.5 self-center sm:self-auto text-[11px] font-semibold tracking-wide px-2.5 py-1 rounded-full border border-[#B8973A]/40 text-[#D4AF87] bg-[#B8973A]/10">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              Hosting Active
+            </span>
+          )}
         </div>
       </div>
     </footer>

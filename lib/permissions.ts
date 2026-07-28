@@ -24,6 +24,7 @@ export const ADMIN_PERMISSION_DEFS: {
   { id: 'applications', label: 'Applications', description: 'Membership application review queue' },
   { id: 'invites', label: 'Invite Admins', description: 'Invite and manage admins (super admin only)' },
   { id: 'settings', label: 'Settings', description: 'Platform settings and integrations' },
+  { id: 'hosting', label: 'Hosting', description: 'Purchase Hostinger hosting plans' },
 ];
 
 export const ALL_ADMIN_PERMISSIONS = ADMIN_PERMISSION_DEFS.map((p) => p.id);
@@ -49,11 +50,13 @@ export const ROUTE_PERMISSIONS: Record<string, AdminPermission> = {
   '/admin/applications': 'applications',
   '/admin/invites': 'invites',
   '/admin/settings': 'settings',
+  '/admin/hosting': 'hosting',
 };
 
 export function getPermissionForPath(pathname: string): AdminPermission | null {
   const base = pathname.split('?')[0];
   if (base === '/admin/settings' && pathname.includes('tab=hero')) return 'hero';
+  if (base.startsWith('/admin/hosting')) return 'hosting';
   return ROUTE_PERMISSIONS[base] || null;
 }
 

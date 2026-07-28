@@ -29,6 +29,11 @@ export function sanitizePublicSettings(settings: Settings): Settings {
             configured: settings.integrations.stripe.configured,
           }
         : undefined,
+      stripeHosting: settings.integrations.stripeHosting
+        ? {
+            configured: settings.integrations.stripeHosting.configured,
+          }
+        : undefined,
       sendgrid: settings.integrations.sendgrid
         ? { configured: settings.integrations.sendgrid.configured }
         : undefined,
@@ -70,5 +75,17 @@ export function sanitizePublicSettings(settings: Settings): Settings {
           }
         : undefined,
     },
+    siteHosting: settings.siteHosting
+      ? {
+          status: settings.siteHosting.status,
+          domain: settings.siteHosting.domain || 'abundantglobalclub.com',
+          planId: settings.siteHosting.planId,
+          planName: settings.siteHosting.planName,
+          periodMonths: settings.siteHosting.periodMonths,
+          activatedAt: settings.siteHosting.activatedAt,
+          expiresAt: settings.siteHosting.expiresAt,
+          updatedAt: settings.siteHosting.updatedAt,
+        }
+      : undefined,
   };
 }

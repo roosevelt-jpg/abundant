@@ -537,6 +537,30 @@ export default function AdminSettingsEditor() {
                   }}
                 />
                 <IntegrationBlock
+                  title="Hosting Plan (Stripe)"
+                  configured={integrationConfigured(
+                    'stripeHosting',
+                    settings.integrations.stripeHosting as Record<string, unknown>
+                  )}
+                  secretHints={secretHints.stripeHosting}
+                  secretPreviews={secretPreviews.stripeHosting}
+                  fields={[
+                    { label: 'Publishable Key', key: 'publishableKey', type: 'password' },
+                    { label: 'Secret Key (server only)', key: 'secretKey', type: 'password' },
+                    { label: 'Webhook Secret', key: 'webhookSecret', type: 'password' },
+                  ]}
+                  values={settings.integrations.stripeHosting || {}}
+                  onChange={(key, val) => {
+                    updateIntegrations('stripeHosting', {
+                      ...settings.integrations.stripeHosting,
+                      [key]: val,
+                    });
+                  }}
+                />
+                <p className="text-xs text-muted-foreground -mt-4 px-2">
+                  Separate Stripe account for Admin → Hosting purchases. Membership Stripe above is unchanged.
+                </p>
+                <IntegrationBlock
                   title="YouTube"
                   configured={integrationConfigured('youtube', settings.integrations.youtube as Record<string, unknown>)}
                   secretHints={secretHints.youtube}

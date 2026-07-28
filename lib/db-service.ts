@@ -116,6 +116,7 @@ export function getDefaultSettings(): Settings {
     },
     integrations: {
       stripe: { publishableKey: '', configured: false },
+      stripeHosting: { publishableKey: '', configured: false },
       sendgrid: { configured: false },
       googlePlaces: { configured: false },
       whatsapp: { phoneNumber: '+1234567890', configured: true },
@@ -159,6 +160,11 @@ export function getDefaultSettings(): Settings {
     },
     membershipAccess: {
       paidPlansEnabled: false,
+    },
+    siteHosting: {
+      status: 'inactive',
+      domain: 'abundantglobalclub.com',
+      updatedAt: Date.now(),
     },
     chatbot: {
       enabled: false,

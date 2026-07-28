@@ -24,6 +24,7 @@ import {
   Layers,
   Handshake,
   Inbox,
+  Server,
 } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
@@ -83,6 +84,7 @@ export const AdminSidebar = () => {
     { icon: Bot, label: 'Chatbot', href: '/admin/chatbot', permission: 'chatbot' },
     { icon: UserPlus, label: 'Invite Admins', href: '/admin/invites', permission: 'invites' },
     { icon: Settings, label: 'Settings', href: '/admin/settings', permission: 'settings' },
+    { icon: Server, label: 'Hosting', href: '/admin/hosting', permission: 'hosting' },
   ];
 
   const menuItems = allMenuItems.filter((item) => {

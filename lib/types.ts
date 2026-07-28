@@ -3,6 +3,23 @@ export type UserRole = 'member' | 'admin' | 'super_admin';
 
 export type MembershipTierId = 'global' | 'founding_circle' | 'private';
 
+export type SiteHostingStatusValue = 'inactive' | 'active' | 'expired';
+
+/** Live-site Hostinger plan status (abundantglobalclub.com) */
+export interface SiteHostingStatus {
+  status: SiteHostingStatusValue;
+  domain: string;
+  planId?: 'startup' | 'professional' | 'growth';
+  planName?: string;
+  periodMonths?: 12 | 24;
+  orderId?: string;
+  paymentIntentId?: string;
+  activatedAt?: number;
+  expiresAt?: number;
+  activatedBy?: string;
+  updatedAt: number;
+}
+
 export type AdminPermission =
   | 'dashboard'
   | 'members'
@@ -22,7 +39,8 @@ export type AdminPermission =
   | 'legal'
   | 'applications'
   | 'invites'
-  | 'settings';
+  | 'settings'
+  | 'hosting';
 
 export interface User {
   uid: string;
@@ -888,6 +906,8 @@ export interface Settings {
   };
   integrations: {
     stripe?: { publishableKey?: string; secretKey?: string; webhookSecret?: string; configured: boolean };
+    /** Separate Stripe account for Hostinger hosting plan purchases */
+    stripeHosting?: { publishableKey?: string; secretKey?: string; webhookSecret?: string; configured: boolean };
     sendgrid?: { apiKey?: string; configured: boolean };
     googlePlaces?: { apiKey?: string; configured: boolean };
     whatsapp?: { phoneNumber?: string; configured: boolean };
@@ -947,6 +967,11 @@ export interface Settings {
   membershipAccess?: {
     paidPlansEnabled: boolean;
   };
+  /**
+   * Hostinger hosting subscription for the live site (abundantglobalclub.com).
+   * Set to active after a successful Hosting Plan (Stripe) payment.
+   */
+  siteHosting?: SiteHostingStatus;
   resourcesPage?: ResourcesPageContent;
   careersPage?: CareersPageContent;
   pressPage?: PressPageContent;

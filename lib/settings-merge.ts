@@ -72,6 +72,8 @@ export function computeIntegrationConfigured(
       return hasValue(block, 'user') && hasValue(block, 'password');
     case 'stripe':
       return hasValue(block, 'publishableKey') || hasValue(block, 'secretKey');
+    case 'stripeHosting':
+      return hasValue(block, 'publishableKey') || hasValue(block, 'secretKey');
     case 'youtube':
       return hasValue(block, 'apiKey') || hasValue(block, 'channelId');
     case 'googlePlaces':
@@ -280,6 +282,7 @@ export function fillBlankSettingsFromDefaults(settings: Settings, defaults: Sett
     membershipAccess: {
       paidPlansEnabled: settings.membershipAccess?.paidPlansEnabled ?? defaults.membershipAccess?.paidPlansEnabled ?? false,
     },
+    siteHosting: settings.siteHosting ?? defaults.siteHosting,
   };
 }
 
@@ -320,6 +323,14 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
         updates.membershipAccess.paidPlansEnabled ??
         existing.membershipAccess?.paidPlansEnabled ??
         false,
+    };
+  }
+
+  if (updates.siteHosting) {
+    result.siteHosting = {
+      ...(existing.siteHosting || { status: 'inactive', domain: 'abundantglobalclub.com', updatedAt: Date.now() }),
+      ...updates.siteHosting,
+      updatedAt: Date.now(),
     };
   }
 
