@@ -80,8 +80,8 @@ export const HOSTING_PLANS: HostingPlan[] = [
     ],
     periods: {
       1: period(1, 49, 69, 49),
-      12: period(12, 25, 69, 49),
-      24: period(24, 25, 69, 49),
+      12: period(12, 29, 69, 49),
+      24: period(24, 29, 69, 49),
     },
   },
   {
