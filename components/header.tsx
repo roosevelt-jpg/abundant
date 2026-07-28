@@ -78,7 +78,7 @@ export const Header = () => {
         <Link href="/" className="flex-shrink-0 min-w-0 leading-none">
           <SiteLogo
             variant="header"
-            className="h-14 sm:h-16 md:h-[4.5rem] w-auto max-w-[min(100%,360px)] sm:max-w-[400px] md:max-w-[440px] object-contain object-left"
+            className="h-7 sm:h-8 md:h-9 w-auto max-w-[180px] sm:max-w-[200px] md:max-w-[220px] object-contain object-left"
           />
         </Link>
 

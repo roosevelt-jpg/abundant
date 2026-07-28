@@ -66,7 +66,7 @@ export const Footer = () => {
           <div className="sm:col-span-2 md:col-span-1">
             <SiteLogo
               variant="footer"
-              className="h-20 sm:h-24 md:h-28 w-auto max-w-[min(100%,360px)] sm:max-w-[420px] md:max-w-[480px] mb-3 mx-auto sm:mx-0 object-contain object-left sm:object-left"
+              className="h-10 sm:h-12 md:h-14 w-auto max-w-[180px] sm:max-w-[210px] md:max-w-[240px] mb-3 mx-auto sm:mx-0 object-contain object-left"
             />
             <p className="text-sm text-gray-300">
               {settings?.branding?.footerTagline || settings?.description || 'A global network of success'}
