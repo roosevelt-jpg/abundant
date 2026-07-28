@@ -3,7 +3,9 @@
 export const SITE_HOSTING_DOMAIN = 'abundantglobalclub.com';
 
 export type HostingPlanId = 'startup' | 'professional' | 'growth';
-export type HostingPeriodMonths = 12 | 24;
+export type HostingPeriodMonths = 1 | 12 | 24;
+
+export const HOSTING_PERIOD_OPTIONS: HostingPeriodMonths[] = [1, 12, 24];
 
 export interface HostingPeriodPricing {
   months: HostingPeriodMonths;
@@ -44,6 +46,11 @@ function period(
   };
 }
 
+export function formatHostingPeriodLabel(months: HostingPeriodMonths): string {
+  if (months === 1) return '1 month';
+  return `${months} months`;
+}
+
 export const HOSTING_PLANS: HostingPlan[] = [
   {
     id: 'startup',
@@ -72,7 +79,7 @@ export const HOSTING_PLANS: HostingPlan[] = [
       { label: '30-Day money-back guarantee' },
     ],
     periods: {
-      // Same $25/mo advertised on the plan card for the default 12-month term
+      1: period(1, 49, 69, 49),
       12: period(12, 25, 69, 49),
       24: period(24, 25, 69, 49),
     },
@@ -104,6 +111,7 @@ export const HOSTING_PLANS: HostingPlan[] = [
       { label: '30-Day money-back guarantee' },
     ],
     periods: {
+      1: period(1, 69, 99, 69),
       12: period(12, 39, 99, 69),
       24: period(24, 39, 99, 69),
     },
@@ -135,6 +143,7 @@ export const HOSTING_PLANS: HostingPlan[] = [
       { label: '30-Day money-back guarantee' },
     ],
     periods: {
+      1: period(1, 99, 149, 99),
       12: period(12, 59, 149, 99),
       24: period(24, 59, 149, 99),
     },
@@ -146,6 +155,12 @@ export const HOSTING_TAX_RATE = 0;
 
 export function getHostingPlan(id: string): HostingPlan | undefined {
   return HOSTING_PLANS.find((p) => p.id === id);
+}
+
+export function parseHostingPeriod(value: unknown): HostingPeriodMonths {
+  const n = Number(value);
+  if (n === 1 || n === 12 || n === 24) return n;
+  return 12;
 }
 
 export function calculateHostingOrder(
@@ -163,6 +178,9 @@ export function calculateHostingOrder(
   const originalTotal = originalSubtotal + originalTax;
   const savings = originalTotal - total;
 
+  const periodLabel =
+    periodMonths === 1 ? '1-month period' : `${periodMonths}-month period`;
+
   return {
     plan,
     pricing,
@@ -171,7 +189,7 @@ export function calculateHostingOrder(
     lines: [
       {
         id: 'plan',
-        label: `${plan.fullName} (${periodMonths}-month period)`,
+        label: `${plan.fullName} (${periodLabel})`,
         amount: subtotal,
         originalAmount: originalSubtotal,
       },

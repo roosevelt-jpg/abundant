@@ -11,7 +11,7 @@ export interface SiteHostingStatus {
   domain: string;
   planId?: 'startup' | 'professional' | 'growth';
   planName?: string;
-  periodMonths?: 12 | 24;
+  periodMonths?: 1 | 12 | 24;
   orderId?: string;
   paymentIntentId?: string;
   activatedAt?: number;

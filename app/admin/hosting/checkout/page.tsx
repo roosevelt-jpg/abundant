@@ -9,9 +9,12 @@ import { Check, ChevronLeft, Info, Server } from 'lucide-react';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import {
   calculateHostingOrder,
+  formatHostingPeriodLabel,
   formatUsd,
   HostingPeriodMonths,
   HostingPlanId,
+  HOSTING_PERIOD_OPTIONS,
+  parseHostingPeriod,
 } from '@/lib/hosting-plans';
 
 const FIELD_STYLE = {
@@ -156,7 +159,7 @@ function CheckoutContent() {
   const { authFetch, isAuthenticated } = useApiAuth();
 
   const planId = (searchParams.get('plan') || 'startup') as HostingPlanId;
-  const initialPeriod = (Number(searchParams.get('period')) === 24 ? 24 : 12) as HostingPeriodMonths;
+  const initialPeriod = parseHostingPeriod(searchParams.get('period'));
 
   const [period, setPeriod] = useState<HostingPeriodMonths>(initialPeriod);
   const [step, setStep] = useState<'summary' | 'payment' | 'done'>('summary');
@@ -249,7 +252,7 @@ function CheckoutContent() {
         </div>
         <h1 className="font-heading text-3xl font-bold mb-2">Payment successful</h1>
         <p className="text-muted-foreground mb-2">
-          Your {order.plan.fullName} hosting plan ({period} months) is confirmed.
+          Your {order.plan.fullName} hosting plan ({formatHostingPeriodLabel(period)}) is confirmed.
         </p>
         <p className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1.5 mb-6">
           <Check className="w-4 h-4" strokeWidth={3} />
@@ -334,41 +337,50 @@ function CheckoutContent() {
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
                 <select
                   value={period}
-                  onChange={(e) => setPeriod(Number(e.target.value) as HostingPeriodMonths)}
+                  onChange={(e) => setPeriod(parseHostingPeriod(e.target.value))}
                   className="w-full sm:max-w-[220px] px-3 py-2.5 rounded-xl border border-border bg-background text-sm"
                 >
-                  <option value={12}>12 months</option>
-                  <option value={24}>24 months</option>
+                  {HOSTING_PERIOD_OPTIONS.map((months) => (
+                    <option key={months} value={months}>
+                      {formatHostingPeriodLabel(months)}
+                    </option>
+                  ))}
                 </select>
                 <div className="flex items-baseline gap-2 flex-wrap">
                   <span className="text-2xl font-bold text-[#0F1B2E]">
                     {formatUsd(order.pricing.priceMonthly)}
                     <span className="text-sm font-semibold text-muted-foreground">/mo</span>
                   </span>
-                  <span className="text-sm text-muted-foreground line-through">
-                    {formatUsd(order.pricing.priceOriginalMonthly)}/mo
-                  </span>
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#B8973A]/15 text-[#8A7028]">
-                    Save {formatUsd(order.savings)}
-                  </span>
+                  {order.pricing.savePercent > 0 && (
+                    <>
+                      <span className="text-sm text-muted-foreground line-through">
+                        {formatUsd(order.pricing.priceOriginalMonthly)}/mo
+                      </span>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#B8973A]/15 text-[#8A7028]">
+                        Save {formatUsd(order.savings)}
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
               <p className="text-xs text-muted-foreground mb-5">
-                Renews after {period} months at {formatUsd(order.pricing.renewMonthly)}/mo for {period}{' '}
-                months. Cancel anytime.
+                {period === 1
+                  ? `Billed monthly. Renews at ${formatUsd(order.pricing.renewMonthly)}/mo. Cancel anytime.`
+                  : `Renews after ${formatHostingPeriodLabel(period)} at ${formatUsd(order.pricing.renewMonthly)}/mo. Cancel anytime.`}
               </p>
 
-              {period === 12 && (
+              {(period === 1 || period === 12) && (
                 <div className="mb-5 flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl bg-[#001F3F] text-white px-4 py-3">
                   <div className="flex-1 text-sm">
                     <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-[#B8973A] text-[#001F3F] font-bold text-xs mr-2">
                       %
                     </span>
-                    Switch to a 24-month subscription for the <strong>biggest savings</strong>.
+                    Switch to a {period === 1 ? '12-month' : '24-month'} subscription for{' '}
+                    <strong>bigger savings</strong>.
                   </div>
                   <button
                     type="button"
-                    onClick={() => setPeriod(24)}
+                    onClick={() => setPeriod(period === 1 ? 12 : 24)}
                     className="shrink-0 px-4 py-2 rounded-lg bg-white text-[#001F3F] text-sm font-semibold hover:bg-[#D4AF87]"
                   >
                     Get deal

@@ -7,7 +7,7 @@ import { getStripe } from '@/lib/stripe-server';
 
 const schema = z.object({
   planId: z.enum(['startup', 'professional', 'growth']),
-  periodMonths: z.union([z.literal(12), z.literal(24)]),
+  periodMonths: z.union([z.literal(1), z.literal(12), z.literal(24)]),
 });
 
 export async function POST(req: NextRequest) {
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
         adminEmail: auth.email,
       },
       receipt_email: auth.email,
-      description: `Abundant Hosting — ${order.plan.fullName} (${periodMonths} months)`,
+      description: `Abundant Hosting — ${order.plan.fullName} (${periodMonths === 1 ? '1 month' : `${periodMonths} months`})`,
     });
 
     const now = Date.now();

@@ -6,9 +6,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Check, Info } from 'lucide-react';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import {
+  formatHostingPeriodLabel,
   formatUsd,
   HostingPeriodMonths,
   HostingPlanId,
+  HOSTING_PERIOD_OPTIONS,
   SITE_HOSTING_DOMAIN,
 } from '@/lib/hosting-plans';
 import { SiteHostingStatus } from '@/lib/types';
@@ -21,7 +23,7 @@ type PlanPayload = {
   resources: string[];
   features: Array<{ label: string; badge?: 'NEW' | 'FREE' }>;
   periods: Record<
-    12 | 24,
+    HostingPeriodMonths,
     {
       months: number;
       priceMonthly: number;
@@ -44,7 +46,7 @@ export default function AdminHostingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activePlanId, setActivePlanId] = useState<HostingPlanId>('startup');
-  const [previewPeriod] = useState<HostingPeriodMonths>(12);
+  const [previewPeriod, setPreviewPeriod] = useState<HostingPeriodMonths>(12);
   const [siteHosting, setSiteHosting] = useState<SiteHostingStatus | null>(null);
 
   useEffect(() => {
@@ -252,13 +254,40 @@ export default function AdminHostingPage() {
 
             {/* Right: pricing card */}
             <div className="rounded-2xl bg-[#121C2E] border border-[#B8973A]/25 p-5 sm:p-6 shadow-[0_0_40px_rgba(15,27,46,0.5)] lg:sticky lg:top-6">
+              <label className="block text-xs font-semibold uppercase tracking-wide text-white/50 mb-2">
+                Duration
+              </label>
+              <div className="grid grid-cols-3 gap-2 mb-5">
+                {HOSTING_PERIOD_OPTIONS.map((months) => {
+                  const selected = previewPeriod === months;
+                  return (
+                    <button
+                      key={months}
+                      type="button"
+                      onClick={() => setPreviewPeriod(months)}
+                      className={`rounded-xl px-2 py-2.5 text-xs sm:text-sm font-semibold border transition-colors ${
+                        selected
+                          ? 'border-[#B8973A] bg-[#B8973A]/15 text-[#D4AF87]'
+                          : 'border-white/10 text-white/60 hover:border-white/25'
+                      }`}
+                    >
+                      {formatHostingPeriodLabel(months)}
+                    </button>
+                  );
+                })}
+              </div>
+
               <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <span className="text-white/45 line-through text-lg">
-                  {formatUsd(pricing.priceOriginalMonthly)}
-                </span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#B8973A] text-[#0A1220]">
-                  SAVE {pricing.savePercent}%
-                </span>
+                {pricing.savePercent > 0 && (
+                  <>
+                    <span className="text-white/45 line-through text-lg">
+                      {formatUsd(pricing.priceOriginalMonthly)}
+                    </span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#B8973A] text-[#0A1220]">
+                      SAVE {pricing.savePercent}%
+                    </span>
+                  </>
+                )}
               </div>
               <p className="text-4xl sm:text-5xl font-bold mb-5">
                 {formatUsd(pricing.priceMonthly)}
@@ -275,7 +304,9 @@ export default function AdminHostingPage() {
               </button>
 
               <p className="text-xs text-white/45 mt-3 text-center">
-                For {previewPeriod}-month term. {formatUsd(pricing.renewMonthly)}/mo when you renew
+                For {formatHostingPeriodLabel(previewPeriod)} term
+                {previewPeriod === 1 ? '' : '.'}{' '}
+                {formatUsd(pricing.renewMonthly)}/mo when you renew
               </p>
 
               <ul className="mt-6 space-y-3 border-t border-white/10 pt-5">
