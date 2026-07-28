@@ -58,7 +58,7 @@ export function PartnersMarquee({ section }: PartnersMarqueeProps) {
   const direction = section.direction === 'right' ? 'right' : 'left';
   const easing = section.easing === 'ease' || section.easing === 'ease-in-out' ? section.easing : 'linear';
   const pauseOnHover = section.pauseOnHover !== false;
-  const grayscale = section.grayscale !== false;
+  const grayscale = section.grayscale === true;
   const showEdgeFade = section.showEdgeFade !== false;
   const gap = Math.max(16, Math.min(120, section.gap || 48));
   const logoHeight = Math.max(24, Math.min(120, section.logoHeight || 48));

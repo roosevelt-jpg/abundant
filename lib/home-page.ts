@@ -32,7 +32,7 @@ export function getDefaultHomePage(): HomePageContent {
       direction: 'left',
       easing: 'linear',
       pauseOnHover: true,
-      grayscale: true,
+      grayscale: false,
       showEdgeFade: true,
       gap: 48,
       logoHeight: 48,
@@ -59,6 +59,8 @@ export function resolveHomePage(home?: Partial<HomePageContent> | null): HomePag
       ...defaults.partnersSection,
       ...home.partnersSection,
       partners: home.partnersSection?.partners ?? defaults.partnersSection.partners,
+      // Always show partner logos in their real uploaded colors on the public site
+      grayscale: false,
     },
     ctaSection: { ...defaults.ctaSection, ...home.ctaSection },
   };

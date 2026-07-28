@@ -913,7 +913,7 @@ export default function AdminSettingsEditor() {
                       {(
                         [
                           { key: 'pauseOnHover', label: 'Pause on hover' },
-                          { key: 'grayscale', label: 'Grayscale logos' },
+                          { key: 'grayscale', label: 'Grayscale logos (off = real colors)' },
                           { key: 'showEdgeFade', label: 'Edge fade' },
                         ] as const
                       ).map(({ key, label }) => (

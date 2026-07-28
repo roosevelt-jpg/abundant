@@ -219,7 +219,7 @@ export function getDefaultSettings(): Settings {
         direction: 'left',
         easing: 'linear',
         pauseOnHover: true,
-        grayscale: true,
+        grayscale: false,
         showEdgeFade: true,
         gap: 48,
         logoHeight: 48,
