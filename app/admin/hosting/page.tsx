@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Check, Info } from 'lucide-react';
 import { useApiAuth } from '@/hooks/useApiAuth';
+import { HostingerLogo } from '@/components/hostinger-logo';
 import {
   formatHostingPeriodLabel,
   formatUsd,
@@ -99,13 +100,9 @@ export default function AdminHostingPage() {
     <div className="min-h-full bg-[#0A1220] text-white -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-2 text-white font-bold tracking-tight">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/hostinger-logo.svg" alt="" className="h-8 w-8" />
-              Hostinger
-            </span>
-            <span className="text-xs px-2 py-0.5 rounded-full border border-[#B8973A]/40 text-[#D4AF87]">
+          <div className="flex flex-wrap items-center gap-3">
+            <HostingerLogo height={40} onDark />
+            <span className="text-xs px-2.5 py-1 rounded-full border border-[#B8973A]/40 text-[#D4AF87]">
               for Abundant Global
             </span>
           </div>

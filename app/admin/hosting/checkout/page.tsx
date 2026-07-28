@@ -7,6 +7,7 @@ import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useElem
 import { loadStripe, Stripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { Check, ChevronLeft, Info, Server } from 'lucide-react';
 import { useApiAuth } from '@/hooks/useApiAuth';
+import { HostingerLogo } from '@/components/hostinger-logo';
 import {
   calculateHostingOrder,
   formatHostingPeriodLabel,
@@ -296,11 +297,7 @@ function CheckoutContent() {
           <ChevronLeft className="w-4 h-4" />
           {step === 'payment' ? 'Order summary' : 'Plans'}
         </button>
-        <span className="inline-flex items-center gap-2 font-bold text-[#0F1B2E]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/hostinger-logo.svg" alt="" className="h-7 w-7" />
-          Hostinger
-        </span>
+        <HostingerLogo height={32} />
       </div>
 
       {!configured && (
