@@ -4,6 +4,8 @@ import { useSettings } from '@/hooks/useSettings';
 import { useTheme } from '@/context/ThemeContext';
 
 const DEFAULT_LOGO = '/logo-text.png';
+/** Tight crop of the wordmark — no square padding around the text */
+const CROPPED_WORDMARK = '/logo-text-sidebar.png';
 
 interface SiteLogoProps {
   className?: string;
@@ -24,11 +26,11 @@ export function SiteLogo({ className = '', height, variant = 'header' }: SiteLog
     (resolvedTheme === 'dark' && settings.branding?.logoUrlDark) ||
     settings.branding?.logoUrl;
 
-  // Public header/footer always use the bundled transparent wordmark — uploaded
-  // branding logos often carry an opaque background that shows as a box on navy.
+  // Public header/footer use the tight-cropped wordmark so text fills the bar.
+  // Uploaded branding logos often carry opaque padding that shrinks the mark.
   const logoUrl =
     variant === 'header' || variant === 'footer'
-      ? DEFAULT_LOGO
+      ? CROPPED_WORDMARK
       : customLogo || DEFAULT_LOGO;
 
   const adminHeight = height ?? 36;
