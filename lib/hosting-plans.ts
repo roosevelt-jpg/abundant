@@ -32,7 +32,9 @@ function period(
   months: HostingPeriodMonths,
   priceMonthly: number,
   priceOriginalMonthly: number,
-  renewMonthly: number
+  renewMonthly: number,
+  /** Optional billed term total (overrides priceMonthly × months). */
+  billedTotal?: number
 ): HostingPeriodPricing {
   const savePercent = Math.round((1 - priceMonthly / priceOriginalMonthly) * 100);
   return {
@@ -41,8 +43,8 @@ function period(
     priceOriginalMonthly,
     renewMonthly,
     savePercent,
-    getTotal: () => priceMonthly * months,
-    getOriginalTotal: () => priceOriginalMonthly * months,
+    getTotal: () => billedTotal ?? Math.round(priceMonthly * months * 100) / 100,
+    getOriginalTotal: () => Math.round(priceOriginalMonthly * months * 100) / 100,
   };
 }
 
@@ -79,9 +81,10 @@ export const HOSTING_PLANS: HostingPlan[] = [
       { label: '30-Day money-back guarantee' },
     ],
     periods: {
-      1: period(1, 49, 69, 49),
-      12: period(12, 29, 69, 49),
-      24: period(24, 29, 69, 49),
+      // $14.99/mo — 12-month term billed as $188.87
+      1: period(1, 14.99, 29, 14.99),
+      12: period(12, 14.99, 29, 14.99, 188.87),
+      24: period(24, 14.99, 29, 14.99),
     },
   },
   {
