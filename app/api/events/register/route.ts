@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/api-auth';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { canUserRegisterForEvent } from '@/lib/event-eligibility';
-import { getEffectiveTicketTiers, isEventFull, getEventPath } from '@/lib/event-utils';
+import { getEffectiveTicketTiers, isEventFull, getEventPath, getEventRegistrationBlockReason } from '@/lib/event-utils';
 import { generateEventCode } from '@/lib/event-checkin';
 import { SETTINGS_DOC_ID } from '@/lib/constants';
 import { Event, Settings, User } from '@/lib/types';
 import { notifyUserPush, notifyMembersActivity } from '@/lib/notify-activity';
+import { sendEventRegistrationConfirmationEmail } from '@/lib/event-emails';
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,6 +25,10 @@ export async function POST(req: NextRequest) {
     }
 
     const event = eventDoc.data() as Event;
+    const block = getEventRegistrationBlockReason(event);
+    if (block) {
+      return NextResponse.json({ error: block }, { status: 400 });
+    }
     const mode = event.registrationMode || 'open';
 
     let usedInviteCode: string | undefined;
@@ -159,6 +164,19 @@ export async function POST(req: NextRequest) {
       body: `A member registered for ${event.title}.`,
       link: path,
     });
+
+    try {
+      await sendEventRegistrationConfirmationEmail({
+        to: user.email,
+        userName: userData?.displayName || undefined,
+        event,
+        status,
+        checkInCode: status === 'registered' ? checkInCode : undefined,
+        ticketTierName: tier?.name,
+      });
+    } catch (emailErr) {
+      console.error('[api/events/register] confirmation email failed', emailErr);
+    }
 
     return NextResponse.json({
       registrationId: regRef.id,

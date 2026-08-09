@@ -7,11 +7,11 @@ export async function POST(req: NextRequest) {
     await requireAuth(req);
     const { code, eventId, price } = await req.json();
 
-    if (!code || !eventId || !price) {
+    if (!code || !eventId || price == null || Number.isNaN(Number(price))) {
       return NextResponse.json({ error: 'code, eventId, and price required' }, { status: 400 });
     }
 
-    const result = await validateDiscountCode(code, eventId, price);
+    const result = await validateDiscountCode(code, eventId, Number(price));
     return NextResponse.json({
       valid: true,
       code: result.code.code,

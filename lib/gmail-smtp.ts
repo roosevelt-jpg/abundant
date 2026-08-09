@@ -27,6 +27,11 @@ export async function sendGmailEmail(options: {
   subject: string;
   text: string;
   html?: string;
+  attachments?: Array<{
+    filename: string;
+    content: string | Buffer;
+    contentType?: string;
+  }>;
 }): Promise<void> {
   const config = await getGmailConfig();
 
@@ -43,6 +48,7 @@ export async function sendGmailEmail(options: {
     subject: options.subject,
     text: options.text,
     html: options.html || options.text.replace(/\n/g, '<br>'),
+    attachments: options.attachments,
   });
 }
 

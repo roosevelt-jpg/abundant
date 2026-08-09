@@ -50,6 +50,20 @@ export function isEventFull(event: Event): boolean {
   return (event.registered || 0) >= event.capacity;
 }
 
+/** Returns a user-facing reason when registration/checkout should be blocked. */
+export function getEventRegistrationBlockReason(event: Event): string | null {
+  if (event.status === 'draft') return 'This event is not published yet';
+  if (event.status === 'cancelled') return 'This event has been cancelled';
+  if (event.status === 'completed') return 'This event has ended';
+  if (event.isPublic === false) return 'This event is not open for public registration';
+  const endMs = event.endDate || event.date;
+  // 2-hour grace after end so late check-ins / lingering RSVPs still work briefly
+  if (typeof endMs === 'number' && endMs < Date.now() - 2 * 60 * 60 * 1000) {
+    return 'This event has ended';
+  }
+  return null;
+}
+
 export function formatEventWhen(event: Event): string {
   const start = new Date(event.date);
   const end = event.endDate ? new Date(event.endDate) : null;

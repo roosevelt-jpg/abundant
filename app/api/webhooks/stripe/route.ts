@@ -3,6 +3,8 @@ import { getStripe, getWebhookSecret } from '@/lib/stripe-server';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { generateEventCode } from '@/lib/event-checkin';
 import { finalizeHostingOrderPaid } from '@/lib/site-hosting';
+import { sendEventRegistrationConfirmationEmail } from '@/lib/event-emails';
+import { Event } from '@/lib/types';
 import Stripe from 'stripe';
 
 export async function POST(req: NextRequest) {
@@ -87,9 +89,45 @@ export async function POST(req: NextRequest) {
           const eventDoc = await db.collection('events').doc(eventId).get();
 
           if (eventDoc.exists) {
+            // Idempotency: skip if this Checkout session already created a registration
+            const bySession = await db
+              .collection('eventRegistrations')
+              .where('stripeCheckoutSessionId', '==', session.id)
+              .limit(1)
+              .get();
+            if (!bySession.empty) {
+              break;
+            }
+
+            const existingRegs = await db
+              .collection('eventRegistrations')
+              .where('eventId', '==', eventId)
+              .where('userId', '==', userId)
+              .get();
+            const activeReg = existingRegs.docs.find((d) => {
+              const s = d.data().status;
+              return s === 'registered' || s === 'attended' || s === 'pending';
+            });
+            if (activeReg) {
+              // Payment arrived for an existing reg — mark paid without double-counting
+              await activeReg.ref.update({
+                paymentStatus: 'paid',
+                stripePaymentId: session.payment_intent,
+                stripeCheckoutSessionId: session.id,
+                amountPaid: (session.amount_total || 0) / 100,
+                updatedAt: Date.now(),
+              });
+              break;
+            }
+
             const discountCodeId = session.metadata?.discountCodeId;
             const discountCode = session.metadata?.discountCode;
             const discountAmount = parseFloat(session.metadata?.discountAmount || '0');
+            const inviteCode = session.metadata?.inviteCode || undefined;
+            const registrationMode = session.metadata?.registrationMode || 'open';
+            const status =
+              registrationMode === 'approval' ? 'pending' : 'registered';
+            const checkInCode = generateEventCode(8);
 
             const regRef = db.collection('eventRegistrations').doc();
             await regRef.set({
@@ -99,19 +137,40 @@ export async function POST(req: NextRequest) {
               userName: userDoc.data()?.displayName || session.customer_email,
               userEmail: session.customer_email,
               registeredAt: Date.now(),
-              status: 'registered',
+              status,
               paymentStatus: 'paid',
               stripePaymentId: session.payment_intent,
+              stripeCheckoutSessionId: session.id,
               amountPaid: (session.amount_total || 0) / 100,
               discountCode: discountCode || undefined,
               discountAmount: discountAmount || undefined,
               ticketTierId: session.metadata?.ticketTierId || undefined,
               ticketTierName: session.metadata?.ticketTierName || undefined,
-              checkInCode: generateEventCode(8),
+              checkInCode,
+              inviteCode: inviteCode || undefined,
             });
 
-            const ev = eventDoc.data()!;
-            await eventDoc.ref.update({ registered: (ev.registered || 0) + 1 });
+            if (status === 'registered') {
+              await eventDoc.ref.update({
+                registered: (eventDoc.data()?.registered || 0) + 1,
+              });
+            }
+
+            if (inviteCode) {
+              const inviteSnap = await db
+                .collection('eventInvites')
+                .where('eventId', '==', eventId)
+                .where('code', '==', inviteCode)
+                .limit(1)
+                .get();
+              if (!inviteSnap.empty) {
+                await inviteSnap.docs[0].ref.update({
+                  status: 'accepted',
+                  acceptedAt: Date.now(),
+                  acceptedBy: userId,
+                });
+              }
+            }
 
             if (discountCodeId) {
               const codeRef = db.collection('eventDiscountCodes').doc(discountCodeId);
@@ -120,6 +179,23 @@ export async function POST(req: NextRequest) {
                 const codeData = codeDoc.data()!;
                 await codeRef.update({ usedCount: (codeData.usedCount || 0) + 1 });
               }
+            }
+
+            try {
+              const ev = eventDoc.data() as Event;
+              const to = session.customer_email || userDoc.data()?.email;
+              if (to) {
+                await sendEventRegistrationConfirmationEmail({
+                  to,
+                  userName: userDoc.data()?.displayName || undefined,
+                  event: { ...ev, id: eventId },
+                  status,
+                  checkInCode: status === 'registered' ? checkInCode : undefined,
+                  ticketTierName: session.metadata?.ticketTierName || undefined,
+                });
+              }
+            } catch (emailErr) {
+              console.error('[webhook] event confirmation email failed', emailErr);
             }
           }
         }

@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
@@ -17,7 +17,7 @@ import {
   getEventDisplayPrice,
   isEventFull,
 } from '@/lib/event-utils';
-import { downloadIcs, googleCalendarUrl } from '@/lib/ics';
+import { downloadIcs, googleCalendarUrl, outlookCalendarUrl } from '@/lib/ics';
 import {
   Calendar,
   MapPin,
@@ -31,9 +31,24 @@ import {
   User,
   Link2,
 } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
 
 export default function PublicEventPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex flex-col">
+          <Header />
+          <main className="flex-1 flex items-center justify-center text-muted-foreground">Loading event...</main>
+          <Footer />
+        </div>
+      }
+    >
+      <PublicEventContent />
+    </Suspense>
+  );
+}
+
+function PublicEventContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const slug = String(params.slug || '');
@@ -106,6 +121,48 @@ export default function PublicEventPage() {
       .catch(() => setTicketQr(null));
   }, [event?.id, currentUser, authFetch, message]);
 
+  // After Stripe Checkout return
+  useEffect(() => {
+    if (!event?.id) return;
+    const registered = searchParams.get('registered');
+    const cancelled = searchParams.get('cancelled');
+    if (cancelled === '1') {
+      setMessage('Checkout cancelled. You can try again when ready.');
+      return;
+    }
+    if (registered !== '1' || !currentUser) return;
+
+    setMessage('Payment received! Confirming your ticket…');
+    let cancelledPoll = false;
+    let tries = 0;
+
+    const poll = async () => {
+      if (cancelledPoll) return;
+      try {
+        const r = await authFetch(`/api/events/my-ticket?eventId=${event.id}`);
+        const data = r.ok ? await r.json() : null;
+        if (data?.qrUrl) {
+          setTicketQr({ qrUrl: data.qrUrl, checkInCode: data.checkInCode });
+          setMessage("You're registered! Show your ticket QR at the door.");
+          return;
+        }
+      } catch {
+        // keep polling
+      }
+      tries += 1;
+      if (tries < 10) {
+        setTimeout(poll, 1500);
+      } else {
+        setMessage('Payment received. Refresh in a moment if your ticket QR is not yet visible.');
+      }
+    };
+
+    poll();
+    return () => {
+      cancelledPoll = true;
+    };
+  }, [event?.id, currentUser, authFetch, searchParams]);
+
   const tagMap = useMemo(() => Object.fromEntries(tags.map((t) => [t.id, t])), [tags]);
   const tiers = event ? getEffectiveTicketTiers(event) : [];
   const selectedTier = tiers.find((t) => t.id === selectedTierId) || tiers[0];
@@ -114,6 +171,8 @@ export default function PublicEventPage() {
   const eligibility = event
     ? canUserRegisterForEvent(userData, event, member, paidPlansEnabled)
     : { allowed: true };
+  const tierPrice = selectedTier?.price ?? 0;
+  const needsPaidCheckout = tierPrice > 0;
 
   const handleRegister = async () => {
     if (!event) return;
@@ -133,17 +192,53 @@ export default function PublicEventPage() {
     setRegistering(true);
     setMessage('');
     try {
-      const isPaid = (selectedTier?.price ?? 0) > 0 || event.pricingType === 'paid';
-      if (isPaid && !full) {
+      const doFreeRegister = async () => {
+        const res = await authFetch('/api/events/register', {
+          method: 'POST',
+          body: JSON.stringify({
+            eventId: event.id,
+            ticketTierId: selectedTier?.id,
+            joinWaitlist: full && event.enableWaitlist,
+            inviteCode: inviteCode.trim() || undefined,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Registration failed');
+
+        if (data.status === 'waitlisted') {
+          setMessage("You're on the waitlist. We'll notify you if a spot opens.");
+        } else if (data.status === 'pending') {
+          setMessage('Request sent. The host will review your RSVP.');
+        } else {
+          setMessage("You're registered! Add this event to your calendar below.");
+        }
+        setEvent((prev) =>
+          prev
+            ? {
+                ...prev,
+                registered: (prev.registered || 0) + (data.status === 'registered' ? 1 : 0),
+                waitlistCount:
+                  data.status === 'waitlisted' ? (prev.waitlistCount || 0) + 1 : prev.waitlistCount,
+              }
+            : prev
+        );
+      };
+
+      if (needsPaidCheckout && !full) {
         const res = await authFetch('/api/events/checkout', {
           method: 'POST',
           body: JSON.stringify({
             eventId: event.id,
             ticketTierId: selectedTier?.id,
             discountCode: discountCode.trim() || undefined,
+            inviteCode: inviteCode.trim() || undefined,
           }),
         });
         const data = await res.json();
+        if (data.freeRegistration) {
+          await doFreeRegister();
+          return;
+        }
         if (!res.ok) throw new Error(data.error || 'Checkout failed');
         if (data.url) {
           window.location.href = data.url;
@@ -151,35 +246,7 @@ export default function PublicEventPage() {
         }
       }
 
-      const res = await authFetch('/api/events/register', {
-        method: 'POST',
-        body: JSON.stringify({
-          eventId: event.id,
-          ticketTierId: selectedTier?.id,
-          joinWaitlist: full && event.enableWaitlist,
-          inviteCode: inviteCode.trim() || undefined,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Registration failed');
-
-      if (data.status === 'waitlisted') {
-        setMessage('You’re on the waitlist. We’ll notify you if a spot opens.');
-      } else if (data.status === 'pending') {
-        setMessage('Request sent. The host will review your RSVP.');
-      } else {
-        setMessage('You’re registered! Add this event to your calendar below.');
-      }
-      setEvent((prev) =>
-        prev
-          ? {
-              ...prev,
-              registered: (prev.registered || 0) + (data.status === 'registered' ? 1 : 0),
-              waitlistCount:
-                data.status === 'waitlisted' ? (prev.waitlistCount || 0) + 1 : prev.waitlistCount,
-            }
-          : prev
-      );
+      await doFreeRegister();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -267,9 +334,23 @@ export default function PublicEventPage() {
                     <MapPin className="w-4 h-4 text-accent" /> {event.location || 'Location TBA'}
                   </p>
                   {event.virtualLink && (
-                    <p className="flex items-center gap-2">
-                      <Video className="w-4 h-4 text-accent" /> Virtual access after registration
-                    </p>
+                    ticketQr ? (
+                      <p className="flex items-center gap-2">
+                        <Video className="w-4 h-4 text-accent" />
+                        <a
+                          href={event.virtualLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-accent font-semibold hover:underline"
+                        >
+                          Join virtual event
+                        </a>
+                      </p>
+                    ) : (
+                      <p className="flex items-center gap-2">
+                        <Video className="w-4 h-4 text-accent" /> Virtual access after registration
+                      </p>
+                    )
                   )}
                   <p className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-accent" />
@@ -452,6 +533,40 @@ export default function PublicEventPage() {
                   </div>
                 )}
 
+                {(ticketQr || message.toLowerCase().includes('registered') || message.toLowerCase().includes('payment received')) && (
+                  <div className="rounded-lg border border-border bg-background p-3 space-y-2">
+                    <p className="text-xs font-semibold text-foreground">Add to your calendar</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      A confirmation email with a calendar invite (.ics) was also sent to your inbox.
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <button
+                        type="button"
+                        onClick={() => downloadIcs(event)}
+                        className="w-full text-xs py-2 border border-border rounded-lg flex items-center justify-center gap-1.5 hover:bg-accent/10"
+                      >
+                        <Download className="w-3.5 h-3.5" /> Download .ics
+                      </button>
+                      <a
+                        href={googleCalendarUrl(event)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full text-xs py-2 border border-border rounded-lg flex items-center justify-center gap-1.5 hover:bg-accent/10"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" /> Google Calendar
+                      </a>
+                      <a
+                        href={outlookCalendarUrl(event)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full text-xs py-2 border border-border rounded-lg flex items-center justify-center gap-1.5 hover:bg-accent/10"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" /> Outlook
+                      </a>
+                    </div>
+                  </div>
+                )}
+
                 {message && (
                   <p className="text-xs p-2 rounded-lg bg-accent/10 text-accent">{message}</p>
                 )}
@@ -486,26 +601,29 @@ export default function PublicEventPage() {
                   disabled={
                     registering ||
                     !!ticketQr ||
-                    !eligibility.allowed ||
-                    (event.registrationMode === 'invite_only' && !inviteCode.trim())
+                    (full && !event.enableWaitlist) ||
+                    (currentUser ? !eligibility.allowed : false) ||
+                    (event.registrationMode === 'invite_only' && !inviteCode.trim() && !!currentUser)
                   }
                   onClick={handleRegister}
                   className="w-full py-2.5 rounded-lg bg-accent text-accent-foreground font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Ticket className="w-4 h-4" />
                   {ticketQr
-                    ? 'You’re registered'
+                    ? "You're registered"
                     : registering
                       ? 'Please wait...'
-                      : full && event.enableWaitlist
-                        ? 'Join waitlist'
-                        : full
-                          ? 'Sold out'
-                          : event.registrationMode === 'approval'
-                            ? 'Request to join'
-                            : (selectedTier?.price ?? 0) > 0
-                              ? 'Get tickets'
-                              : 'RSVP'}
+                      : !currentUser
+                        ? 'Sign in to RSVP'
+                        : full && event.enableWaitlist
+                          ? 'Join waitlist'
+                          : full
+                            ? 'Sold out'
+                            : event.registrationMode === 'approval'
+                              ? 'Request to join'
+                              : needsPaidCheckout
+                                ? 'Get tickets'
+                                : 'RSVP'}
                 </button>
 
                 <div className="flex gap-2">
