@@ -1,6 +1,6 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Cormorant_Garamond, Inter } from 'next/font/google'
+import { Cormorant_Garamond, Inter, Noto_Sans_Arabic } from 'next/font/google'
 import './globals.css'
 import { AppProviders } from '@/components/app-providers'
 import { getPublicSettings } from '@/lib/settings-server'
@@ -16,6 +16,12 @@ const cormorantGaramond = Cormorant_Garamond({
 const inter = Inter({ 
   variable: '--font-sans',
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+})
+
+const notoSansArabic = Noto_Sans_Arabic({
+  variable: '--font-arabic',
+  subsets: ['arabic'],
   weight: ['400', '500', '600', '700'],
 })
 
@@ -110,7 +116,7 @@ export default async function RootLayout({
   const ogImage = `${SITE_URL}/opengraph-image`;
 
   return (
-    <html lang="en" className={`${cormorantGaramond.variable} ${inter.variable} dark`}>
+    <html lang="en" className={`${cormorantGaramond.variable} ${inter.variable} ${notoSansArabic.variable} dark`}>
       <head>
         <link rel="icon" href={faviconUrl} />
         <link rel="apple-touch-icon" href={faviconUrl} />

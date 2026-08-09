@@ -1,12 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { useLanguage } from '@/context/LanguageContext';
 import { FaqItem } from '@/lib/types';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function FaqPage() {
+  const { t } = useLanguage();
   const [faqs, setFaqs] = useState<FaqItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -26,9 +29,11 @@ export default function FaqPage() {
       <main className="flex-1">
         <section className="py-12 md:py-20 px-4 sm:px-6 lg:px-8 bg-card/50">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-4">Frequently Asked Questions</h1>
+            <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+              {t('faq.title', 'Frequently Asked Questions')}
+            </h1>
             <p className="text-base sm:text-lg text-muted-foreground">
-              Find answers to common questions about Abundant Global Club
+              {t('faq.subtitle', 'Find answers to common questions about Abundant Global Club')}
             </p>
           </div>
         </section>
@@ -36,9 +41,11 @@ export default function FaqPage() {
         <section className="py-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto">
             {loading ? (
-              <p className="text-center text-muted-foreground">Loading...</p>
+              <p className="text-center text-muted-foreground">{t('common.loading', 'Loading...')}</p>
             ) : faqs.length === 0 ? (
-              <p className="text-center text-muted-foreground py-12">No FAQs published yet. Check back soon.</p>
+              <p className="text-center text-muted-foreground py-12">
+                {t('faq.empty', 'No FAQs available yet.')}
+              </p>
             ) : (
               <div className="space-y-3">
                 {faqs.map((faq) => {
@@ -62,6 +69,15 @@ export default function FaqPage() {
                 })}
               </div>
             )}
+
+            <div className="mt-12 text-center">
+              <p className="text-muted-foreground mb-2">
+                {t('faq.stillHaveQuestions', 'Still have questions?')}
+              </p>
+              <Link href="/contact" className="text-accent font-semibold hover:text-accent/80">
+                {t('faq.contactUs', 'Contact us')}
+              </Link>
+            </div>
           </div>
         </section>
       </main>

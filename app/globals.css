@@ -280,3 +280,23 @@
     animation: hero-ken-burns 8s ease-out forwards;
   }
 }
+
+/* RTL layout polish */
+html[dir='rtl'] body {
+  font-family: var(--font-arabic), var(--font-sans), system-ui, sans-serif;
+}
+
+html[dir='rtl'] .font-heading {
+  font-family: var(--font-arabic), var(--font-heading), serif;
+}
+
+html[dir='rtl'] .app-sidebar {
+  left: auto;
+  right: 0;
+  border-right: none;
+  border-left-width: 1px;
+}
+
+html[dir='rtl'] .object-left {
+  object-position: right;
+}

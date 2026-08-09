@@ -47,7 +47,7 @@ export const LanguageSwitcher = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 bg-card border border-border rounded-lg shadow-lg z-50 min-w-[180px] max-h-[min(360px,70dvh)] overflow-y-auto">
+        <div className="absolute end-0 mt-2 bg-card border border-border rounded-lg shadow-lg z-50 min-w-[180px] max-h-[min(360px,70dvh)] overflow-y-auto">
           {languages.map((lang) => (
             <button
               key={lang.code}
@@ -56,7 +56,7 @@ export const LanguageSwitcher = () => {
                 setLanguage(lang.code);
                 setIsOpen(false);
               }}
-              className={`w-full px-4 py-2.5 text-left hover:bg-accent/20 transition-colors flex items-center gap-2.5 ${
+              className={`w-full px-4 py-2.5 text-start hover:bg-accent/20 transition-colors flex items-center gap-2.5 ${
                 language === lang.code ? 'bg-accent/20' : ''
               }`}
             >

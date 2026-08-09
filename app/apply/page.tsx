@@ -7,6 +7,7 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { ApplyPlanPicker } from '@/components/apply-plan-picker';
 import { CountrySelect } from '@/components/country-select';
+import { useLanguage } from '@/context/LanguageContext';
 import { membershipApplicationSchema, MembershipApplicationInput } from '@/lib/intake-schemas';
 import { getDefaultTaxonomies } from '@/lib/intake-defaults';
 import { MembershipTier, Taxonomies, TierInterest } from '@/lib/types';
@@ -14,6 +15,7 @@ import { MembershipTier, Taxonomies, TierInterest } from '@/lib/types';
 const STEPS = ['Identity', 'Professional', 'Fit & intent', 'Trust & legal'];
 
 export default function ApplyPage() {
+  const { t } = useLanguage();
   const [step, setStep] = useState(0);
   const [tiers, setTiers] = useState<MembershipTier[]>([]);
   const [taxonomies, setTaxonomies] = useState<Taxonomies>(getDefaultTaxonomies());
@@ -154,12 +156,14 @@ export default function ApplyPage() {
         <Header />
         <main className="flex-1 flex items-center justify-center px-4 py-16">
           <div className="max-w-lg text-center bg-card border border-border rounded-xl p-8">
-            <h1 className="font-heading text-3xl font-bold mb-3">Thank you</h1>
+            <h1 className="font-heading text-3xl font-bold mb-3">
+              {t('apply.success', 'Application submitted successfully!')}
+            </h1>
             <p className="text-muted-foreground mb-6">
               We&apos;ll review your application and follow up within 5–7 business days. No account is created until you&apos;re approved.
             </p>
             <Link href="/" className="text-accent font-semibold">
-              Return home
+              {t('nav.home', 'Home')}
             </Link>
           </div>
         </main>
@@ -176,9 +180,11 @@ export default function ApplyPage() {
       <main className="flex-1 py-10 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           <div className="max-w-2xl mx-auto text-center mb-8">
-            <h1 className="font-heading text-3xl font-bold mb-2">Join Abundant</h1>
+            <h1 className="font-heading text-3xl font-bold mb-2">
+              {t('apply.title', 'Apply for Membership')}
+            </h1>
             <p className="text-sm text-muted-foreground">
-              Choose a plan, then complete your application. Applying does not create an account — we&apos;ll invite you if approved.
+              {t('apply.subtitle', 'Join Abundant Global Club')}
             </p>
           </div>
 
@@ -373,15 +379,17 @@ export default function ApplyPage() {
                 onClick={() => setStep((s) => s - 1)}
                 className="px-4 py-2 border border-border rounded-lg text-sm disabled:opacity-40"
               >
-                Back
+                {t('apply.back', 'Back')}
               </button>
               {step < STEPS.length - 1 ? (
                 <button type="button" onClick={next} className="px-4 py-2 bg-gradient-to-r from-[#001F3F] to-[#B8973A] text-white rounded-lg text-sm font-semibold">
-                  Continue
+                  {t('apply.continue', 'Continue')}
                 </button>
               ) : (
                 <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-gradient-to-r from-[#001F3F] to-[#B8973A] text-white rounded-lg text-sm font-semibold disabled:opacity-50">
-                  {isSubmitting ? 'Submitting…' : 'Submit application'}
+                  {isSubmitting
+                    ? t('apply.submitting', 'Submitting...')
+                    : t('apply.submit', 'Submit application')}
                 </button>
               )}
             </div>

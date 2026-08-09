@@ -5,6 +5,7 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { ContentHero } from '@/components/content-page-hero';
 import { useSettings } from '@/hooks/useSettings';
+import { useLanguage } from '@/context/LanguageContext';
 import { getDefaultCareersPage } from '@/lib/content-page-defaults';
 import { JobPosting } from '@/lib/types';
 import { MapPin, Briefcase, X } from 'lucide-react';
@@ -18,6 +19,7 @@ const EMPTY_FORM = {
 
 export default function CareersPage() {
   const { settings } = useSettings();
+  const { t } = useLanguage();
   const page = settings?.careersPage ?? getDefaultCareersPage();
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,14 +82,20 @@ export default function CareersPage() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1">
-        <ContentHero eyebrow={page.hero.eyebrow} headline={page.hero.headline} subtext={page.hero.subtext} />
+        <ContentHero
+          eyebrow={page.hero.eyebrow || t('careers.title', 'Careers')}
+          headline={page.hero.headline || t('careers.title', 'Careers')}
+          subtext={page.hero.subtext || t('careers.subtitle', 'Join the Abundant team')}
+        />
 
         <section className="py-10 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto space-y-4">
             {loading ? (
-              <p className="text-center text-muted-foreground">Loading...</p>
+              <p className="text-center text-muted-foreground">{t('common.loading', 'Loading...')}</p>
             ) : jobs.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No open roles right now.</p>
+              <p className="text-center text-muted-foreground py-8">
+                {t('careers.empty', 'No open positions right now.')}
+              </p>
             ) : (
               jobs.map((job) => (
                 <div key={job.id} className="bg-card border border-border rounded-xl p-5">

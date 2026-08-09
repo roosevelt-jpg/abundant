@@ -121,14 +121,14 @@ export const Header = () => {
           {currentUser ? (
             <div className="hidden md:flex items-center gap-3">
               <Link href={dashboardHref} className={accentLinkCls}>
-                Dashboard
+                {t('nav.dashboard', 'Dashboard')}
               </Link>
-              <button type="button" onClick={handleLogout} className="text-sm text-white/70 hover:text-white transition-colors">Logout</button>
+              <button type="button" onClick={handleLogout} className="text-sm text-white/70 hover:text-white transition-colors">{t('nav.logout', 'Logout')}</button>
             </div>
           ) : (
             <div className="hidden md:flex items-center gap-3">
-              <Link href="/login" className={accentLinkCls}>Login</Link>
-              <Link href="/apply" className="text-sm font-medium btn-gradient px-3 sm:px-4 py-2 rounded-lg whitespace-nowrap">Join</Link>
+              <Link href="/login" className={accentLinkCls}>{t('nav.login', 'Login')}</Link>
+              <Link href="/apply" className="text-sm font-medium btn-gradient px-3 sm:px-4 py-2 rounded-lg whitespace-nowrap">{t('nav.join', 'Join')}</Link>
             </div>
           )}
           <button type="button" className="lg:hidden p-2 text-white" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu" aria-expanded={mobileOpen}>
@@ -178,13 +178,13 @@ export const Header = () => {
               </div>
               {currentUser ? (
                 <div className="pt-2 space-y-2 border-t border-white/10">
-                  <Link href={dashboardHref} className={`block ${accentLinkCls}`} onClick={() => setMobileOpen(false)}>Dashboard</Link>
-                  <button type="button" onClick={handleLogout} className="text-sm text-white/70 hover:text-white">Logout</button>
+                  <Link href={dashboardHref} className={`block ${accentLinkCls}`} onClick={() => setMobileOpen(false)}>{t('nav.dashboard', 'Dashboard')}</Link>
+                  <button type="button" onClick={handleLogout} className="text-sm text-white/70 hover:text-white">{t('nav.logout', 'Logout')}</button>
                 </div>
               ) : (
                 <div className="pt-2 space-y-2 border-t border-white/10">
-                  <Link href="/login" className={`block ${accentLinkCls}`} onClick={() => setMobileOpen(false)}>Login</Link>
-                  <Link href="/apply" className="block text-sm btn-gradient px-4 py-2.5 rounded-lg text-center" onClick={() => setMobileOpen(false)}>Join</Link>
+                  <Link href="/login" className={`block ${accentLinkCls}`} onClick={() => setMobileOpen(false)}>{t('nav.login', 'Login')}</Link>
+                  <Link href="/apply" className="block text-sm btn-gradient px-4 py-2.5 rounded-lg text-center" onClick={() => setMobileOpen(false)}>{t('nav.join', 'Join')}</Link>
                 </div>
               )}
             </div>

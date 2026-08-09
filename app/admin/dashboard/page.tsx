@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Users, Calendar, MessageSquare, Mail } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -14,19 +15,20 @@ interface DashboardStats {
   newContactSubmissions: number;
 }
 
-function timeAgo(ts: number): string {
+function timeAgo(ts: number, t: (key: string, fallback?: string) => string): string {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins} minute${mins === 1 ? '' : 's'} ago`;
+  if (mins < 1) return t('common.justNow', 'just now');
+  if (mins < 60) return `${mins} ${t('common.minutesAgo', 'min ago')}`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  if (hours < 24) return `${hours} ${t('common.hoursAgo', 'hr ago')}`;
   const days = Math.floor(hours / 24);
-  return `${days} day${days === 1 ? '' : 's'} ago`;
+  return `${days} ${t('common.daysAgo', 'days ago')}`;
 }
 
 export default function AdminDashboard() {
   const { currentUser } = useAuth();
+  const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activity, setActivity] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,14 +44,14 @@ export default function AdminDashboard() {
         const res = await fetch('/api/admin/dashboard', {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) throw new Error('Failed to load dashboard data');
+        if (!res.ok) throw new Error(t('common.error', 'Failed to load dashboard data'));
         const data = await res.json();
         if (!cancelled) {
           setStats(data.stats);
           setActivity(data.activity || []);
         }
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load');
+        if (!cancelled) setError(err instanceof Error ? err.message : t('common.error', 'Failed to load'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -57,14 +59,14 @@ export default function AdminDashboard() {
 
     load();
     return () => { cancelled = true; };
-  }, [currentUser]);
+  }, [currentUser, t]);
 
   const statCards = stats
     ? [
-        { icon: Users, label: 'Total Members', value: String(stats.totalMembers), href: '/admin/members' },
-        { icon: Calendar, label: 'Upcoming Events', value: String(stats.upcomingEvents), href: '/admin/events' },
-        { icon: MessageSquare, label: 'Pending Testimonials', value: String(stats.pendingTestimonials), href: '/admin/testimonials' },
-        { icon: Mail, label: 'New Contact Messages', value: String(stats.newContactSubmissions), href: '/admin/contact' },
+        { icon: Users, label: t('admin.stats.members', 'Total Members'), value: String(stats.totalMembers), href: '/admin/members' },
+        { icon: Calendar, label: t('admin.stats.events', 'Upcoming Events'), value: String(stats.upcomingEvents), href: '/admin/events' },
+        { icon: MessageSquare, label: t('admin.stats.testimonials', 'Pending Testimonials'), value: String(stats.pendingTestimonials), href: '/admin/testimonials' },
+        { icon: Mail, label: t('admin.stats.messages', 'New Contact Messages'), value: String(stats.newContactSubmissions), href: '/admin/contact' },
       ]
     : [];
 
@@ -113,7 +115,7 @@ export default function AdminDashboard() {
               {activity.map((item) => (
                 <div key={item.id} className="p-4 bg-background rounded-lg border border-border text-sm">
                   <p className="font-medium mb-1">{item.description}</p>
-                  <p className="text-muted-foreground text-xs">{timeAgo(item.createdAt)}</p>
+                  <p className="text-muted-foreground text-xs">{timeAgo(item.createdAt, t)}</p>
                 </div>
               ))}
             </div>

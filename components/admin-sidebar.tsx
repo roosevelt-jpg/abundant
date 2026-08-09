@@ -30,17 +30,19 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { canManageInvites, hasPermission } from '@/lib/auth-utils';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { AdminPermission } from '@/lib/types';
 
 type MenuItem = {
   icon: typeof Home;
-  label: string;
+  labelKey: string;
   href: string;
   permission: AdminPermission;
 };
 
 export const AdminSidebar = () => {
   const { userData, currentUser } = useAuth();
+  const { t } = useLanguage();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -61,29 +63,29 @@ export const AdminSidebar = () => {
   };
 
   const allMenuItems: MenuItem[] = [
-    { icon: Home, label: 'Dashboard', href: '/admin/dashboard', permission: 'dashboard' },
-    { icon: Users, label: 'Members', href: '/admin/members', permission: 'members' },
-    { icon: Calendar, label: 'Events', href: '/admin/events', permission: 'events' },
-    { icon: MessageSquare, label: 'Testimonials', href: '/admin/testimonials', permission: 'testimonials' },
-    { icon: CreditCard, label: 'Membership Plans', href: '/admin/billing', permission: 'billing' },
-    { icon: Layers, label: 'Tiers & Taxonomies', href: '/admin/membership-tiers', permission: 'billing' },
-    { icon: ClipboardList, label: 'Applications', href: '/admin/applications', permission: 'applications' },
-    { icon: FileText, label: 'Pages', href: '/admin/pages', permission: 'pages' },
-    { icon: Info, label: 'About Page', href: '/admin/about', permission: 'about' },
-    { icon: FormInput, label: 'Forms', href: '/admin/forms', permission: 'forms' },
-    { icon: Image, label: 'Hero Slider', href: '/admin/settings?tab=hero', permission: 'hero' },
-    { icon: Handshake, label: 'Partners', href: '/admin/settings?tab=homepage#partners', permission: 'settings' },
-    { icon: HelpCircle, label: 'FAQ', href: '/admin/faq', permission: 'faq' },
-    { icon: BookOpen, label: 'Resources', href: '/admin/resources', permission: 'resources' },
-    { icon: Inbox, label: 'Resource Submissions', href: '/admin/resource-submissions', permission: 'resources' },
-    { icon: Briefcase, label: 'Careers', href: '/admin/careers', permission: 'careers' },
-    { icon: Newspaper, label: 'Press', href: '/admin/press', permission: 'press' },
-    { icon: Scale, label: 'Legal', href: '/admin/legal', permission: 'legal' },
-    { icon: Mail, label: 'Contact Submissions', href: '/admin/contact', permission: 'contact' },
-    { icon: Bot, label: 'Chatbot', href: '/admin/chatbot', permission: 'chatbot' },
-    { icon: UserPlus, label: 'Invite Admins', href: '/admin/invites', permission: 'invites' },
-    { icon: Settings, label: 'Settings', href: '/admin/settings', permission: 'settings' },
-    { icon: Server, label: 'Hosting', href: '/admin/hosting', permission: 'hosting' },
+    { icon: Home, labelKey: 'admin.nav.dashboard', href: '/admin/dashboard', permission: 'dashboard' },
+    { icon: Users, labelKey: 'admin.nav.members', href: '/admin/members', permission: 'members' },
+    { icon: Calendar, labelKey: 'admin.nav.events', href: '/admin/events', permission: 'events' },
+    { icon: MessageSquare, labelKey: 'admin.nav.testimonials', href: '/admin/testimonials', permission: 'testimonials' },
+    { icon: CreditCard, labelKey: 'admin.nav.billing', href: '/admin/billing', permission: 'billing' },
+    { icon: Layers, labelKey: 'admin.nav.tiers', href: '/admin/membership-tiers', permission: 'billing' },
+    { icon: ClipboardList, labelKey: 'admin.nav.applications', href: '/admin/applications', permission: 'applications' },
+    { icon: FileText, labelKey: 'admin.nav.pages', href: '/admin/pages', permission: 'pages' },
+    { icon: Info, labelKey: 'admin.nav.about', href: '/admin/about', permission: 'about' },
+    { icon: FormInput, labelKey: 'admin.nav.forms', href: '/admin/forms', permission: 'forms' },
+    { icon: Image, labelKey: 'admin.nav.hero', href: '/admin/settings?tab=hero', permission: 'hero' },
+    { icon: Handshake, labelKey: 'admin.nav.partners', href: '/admin/settings?tab=homepage#partners', permission: 'settings' },
+    { icon: HelpCircle, labelKey: 'admin.nav.faq', href: '/admin/faq', permission: 'faq' },
+    { icon: BookOpen, labelKey: 'admin.nav.resources', href: '/admin/resources', permission: 'resources' },
+    { icon: Inbox, labelKey: 'admin.nav.resourceSubmissions', href: '/admin/resource-submissions', permission: 'resources' },
+    { icon: Briefcase, labelKey: 'admin.nav.careers', href: '/admin/careers', permission: 'careers' },
+    { icon: Newspaper, labelKey: 'admin.nav.press', href: '/admin/press', permission: 'press' },
+    { icon: Scale, labelKey: 'admin.nav.legal', href: '/admin/legal', permission: 'legal' },
+    { icon: Mail, labelKey: 'admin.nav.contact', href: '/admin/contact', permission: 'contact' },
+    { icon: Bot, labelKey: 'admin.nav.chatbot', href: '/admin/chatbot', permission: 'chatbot' },
+    { icon: UserPlus, labelKey: 'admin.nav.invites', href: '/admin/invites', permission: 'invites' },
+    { icon: Settings, labelKey: 'admin.nav.settings', href: '/admin/settings', permission: 'settings' },
+    { icon: Server, labelKey: 'admin.nav.hosting', href: '/admin/hosting', permission: 'hosting' },
   ];
 
   const menuItems = allMenuItems.filter((item) => {
@@ -95,7 +97,7 @@ export const AdminSidebar = () => {
 
   return (
     <aside
-      className={`${isCollapsed ? 'w-20' : 'w-64'} app-sidebar border-r transition-all duration-300 flex flex-col h-screen fixed left-0 top-0 z-30`}
+      className={`${isCollapsed ? 'w-20' : 'w-64'} app-sidebar border-r transition-all duration-300 flex flex-col h-screen fixed start-0 top-0 z-30`}
     >
       <div className={`${isCollapsed ? 'p-2' : 'px-4 py-2.5'} border-b app-sidebar-divider`}>
         <Link
@@ -131,7 +133,7 @@ export const AdminSidebar = () => {
               }`}
             >
               <Icon className="w-5 h-5 flex-shrink-0" />
-              {!isCollapsed && <span>{item.label}</span>}
+              {!isCollapsed && <span>{t(item.labelKey)}</span>}
             </Link>
           );
         })}

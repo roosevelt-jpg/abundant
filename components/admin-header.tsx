@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { LogOut, User, Settings, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -10,18 +11,20 @@ import { LanguageSwitcher } from './language-switcher';
 
 export const AdminHeader = () => {
   const { currentUser, userData, logout } = useAuth();
+  const { t, language } = useLanguage();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
+  const locale = language === 'ar' ? 'ar' : language;
 
   useEffect(() => {
     const updateDateTime = () => {
       const now = new Date();
       setCurrentTime(
-        now.toLocaleTimeString('en-US', {
+        now.toLocaleTimeString(locale, {
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit',
@@ -29,7 +32,7 @@ export const AdminHeader = () => {
         })
       );
       setCurrentDate(
-        now.toLocaleDateString('en-US', {
+        now.toLocaleDateString(locale, {
           weekday: 'long',
           year: 'numeric',
           month: 'long',
@@ -40,7 +43,7 @@ export const AdminHeader = () => {
     updateDateTime();
     const interval = setInterval(updateDateTime, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -66,10 +69,10 @@ export const AdminHeader = () => {
   return (
     <header className="bg-card border-b border-border">
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 sm:px-8 py-4">
-        <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">Admin Dashboard</h1>
+        <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">{t('admin.title', 'Admin Dashboard')}</h1>
 
         <p className="hidden sm:block text-sm text-muted-foreground text-center whitespace-nowrap">
-          Welcome back, <span className="font-medium text-foreground">{userData?.displayName || 'Admin'}</span>
+          {t('admin.welcomeBack', 'Welcome back,')} <span className="font-medium text-foreground">{userData?.displayName || 'Admin'}</span>
         </p>
 
         <div className="flex items-center justify-end gap-2 sm:gap-4">
@@ -101,21 +104,21 @@ export const AdminHeader = () => {
                   onClick={() => setMenuOpen(false)}
                   className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent/10 transition-colors"
                 >
-                  <User className="w-4 h-4" /> View Profile
+                  <User className="w-4 h-4" /> {t('admin.profile', 'Profile')}
                 </Link>
                 <Link
                   href="/admin/settings"
                   onClick={() => setMenuOpen(false)}
                   className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent/10 transition-colors"
                 >
-                  <Settings className="w-4 h-4" /> Settings
+                  <Settings className="w-4 h-4" /> {t('admin.settings', 'Settings')}
                 </Link>
                 <button
                   onClick={() => { setMenuOpen(false); handleLogout(); }}
                   disabled={loggingOut}
                   className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-destructive/10 text-destructive transition-colors disabled:opacity-50"
                 >
-                  <LogOut className="w-4 h-4" /> {loggingOut ? 'Logging out...' : 'Logout'}
+                  <LogOut className="w-4 h-4" /> {loggingOut ? t('admin.loggingOut', 'Logging out...') : t('admin.logout', 'Logout')}
                 </button>
               </div>
             )}

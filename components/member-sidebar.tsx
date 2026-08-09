@@ -14,19 +14,21 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { SiteLogo } from '@/components/site-logo';
+import { useLanguage } from '@/context/LanguageContext';
 
 const menuItems = [
-  { icon: Home, label: 'Dashboard', href: '/dashboard' },
-  { icon: User, label: 'My Profile', href: '/dashboard/profile' },
-  { icon: Calendar, label: 'Events', href: '/events' },
-  { icon: CreditCard, label: 'Membership', href: '/membership' },
-  { icon: MessageSquare, label: 'Testimonials', href: '/dashboard/testimonials' },
-  { icon: BookOpen, label: 'Resources', href: '/resources' },
-  { icon: Bell, label: 'Notifications', href: '/dashboard#notifications' },
+  { icon: Home, labelKey: 'admin.nav.dashboard', href: '/dashboard' },
+  { icon: User, labelKey: 'dashboard.myProfile', href: '/dashboard/profile' },
+  { icon: Calendar, labelKey: 'nav.events', href: '/events' },
+  { icon: CreditCard, labelKey: 'nav.membership', href: '/membership' },
+  { icon: MessageSquare, labelKey: 'admin.nav.testimonials', href: '/dashboard/testimonials' },
+  { icon: BookOpen, labelKey: 'nav.resources', href: '/resources' },
+  { icon: Bell, labelKey: 'dashboard.notifications', href: '/dashboard#notifications' },
 ];
 
 export function MemberSidebar() {
   const pathname = usePathname();
+  const { t } = useLanguage();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const isActive = (href: string) => {
@@ -40,7 +42,7 @@ export function MemberSidebar() {
 
   return (
     <aside
-      className={`${isCollapsed ? 'w-20' : 'w-64'} app-sidebar border-r transition-all duration-300 flex flex-col h-screen fixed left-0 top-0 z-30 hidden md:flex`}
+      className={`${isCollapsed ? 'w-20' : 'w-64'} app-sidebar border-r transition-all duration-300 flex flex-col h-screen fixed start-0 top-0 z-30 hidden md:flex`}
     >
       <div className="p-4 sm:p-6 border-b app-sidebar-divider">
         <Link href="/dashboard" className="flex items-center gap-2 min-w-0">
@@ -50,7 +52,7 @@ export function MemberSidebar() {
           />
         </Link>
         {!isCollapsed && (
-          <p className="mt-2 text-[11px] uppercase tracking-wide text-white/55">Member area</p>
+          <p className="mt-2 text-[11px] uppercase tracking-wide text-white/55">{t('dashboard.memberArea', 'Member area')}</p>
         )}
       </div>
 
@@ -67,7 +69,7 @@ export function MemberSidebar() {
               }`}
             >
               <Icon className="w-5 h-5 flex-shrink-0" />
-              {!isCollapsed && <span>{item.label}</span>}
+              {!isCollapsed && <span>{t(item.labelKey)}</span>}
             </Link>
           );
         })}
@@ -79,14 +81,14 @@ export function MemberSidebar() {
           className="app-sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium"
         >
           <ExternalLink className="w-5 h-5 flex-shrink-0" />
-          {!isCollapsed && <span>View website</span>}
+          {!isCollapsed && <span>{t('dashboard.viewWebsite', 'View website')}</span>}
         </Link>
         <button
           type="button"
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="app-sidebar-link w-full text-left px-4 py-2 text-xs text-white/70 rounded-lg"
         >
-          {isCollapsed ? '→ Expand' : '← Collapse'}
+          {isCollapsed ? `→ ${t('common.expand', 'Expand')}` : `← ${t('common.collapse', 'Collapse')}`}
         </button>
       </div>
     </aside>

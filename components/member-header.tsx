@@ -1,24 +1,17 @@
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { LogOut, User, ChevronDown, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { ThemeToggle } from './theme-toggle';
 import { LanguageSwitcher } from './language-switcher';
 
-const mobileLinks = [
-  { label: 'Dashboard', href: '/dashboard' },
-  { label: 'My Profile', href: '/dashboard/profile' },
-  { label: 'Events', href: '/events' },
-  { label: 'Membership', href: '/membership' },
-  { label: 'Testimonials', href: '/dashboard/testimonials' },
-  { label: 'Resources', href: '/resources' },
-];
-
 export function MemberHeader() {
   const { currentUser, userData, logout } = useAuth();
+  const { t, language } = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -27,12 +20,25 @@ export function MemberHeader() {
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
+  const locale = language === 'ar' ? 'ar' : language;
+
+  const mobileLinks = useMemo(
+    () => [
+      { label: t('admin.nav.dashboard', 'Dashboard'), href: '/dashboard' },
+      { label: t('dashboard.myProfile', 'My Profile'), href: '/dashboard/profile' },
+      { label: t('nav.events', 'Events'), href: '/events' },
+      { label: t('nav.membership', 'Membership'), href: '/membership' },
+      { label: t('admin.nav.testimonials', 'Testimonials'), href: '/dashboard/testimonials' },
+      { label: t('nav.resources', 'Resources'), href: '/resources' },
+    ],
+    [t]
+  );
 
   useEffect(() => {
     const updateDateTime = () => {
       const now = new Date();
       setCurrentTime(
-        now.toLocaleTimeString('en-US', {
+        now.toLocaleTimeString(locale, {
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit',
@@ -40,7 +46,7 @@ export function MemberHeader() {
         })
       );
       setCurrentDate(
-        now.toLocaleDateString('en-US', {
+        now.toLocaleDateString(locale, {
           weekday: 'long',
           year: 'numeric',
           month: 'long',
@@ -51,7 +57,7 @@ export function MemberHeader() {
     updateDateTime();
     const interval = setInterval(updateDateTime, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -91,9 +97,14 @@ export function MemberHeader() {
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
           <div className="min-w-0">
-            <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">Member Dashboard</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">
+              {t('dashboard.title', 'Member Dashboard')}
+            </h1>
             <p className="hidden sm:block text-xs text-muted-foreground truncate">
-              Welcome back, <span className="font-medium text-foreground">{userData?.displayName || 'Member'}</span>
+              {t('admin.welcomeBack', 'Welcome back,')}{' '}
+              <span className="font-medium text-foreground">
+                {userData?.displayName || t('dashboard.welcome', 'Welcome')}
+              </span>
             </p>
           </div>
         </div>
@@ -128,7 +139,7 @@ export function MemberHeader() {
                   onClick={() => setMenuOpen(false)}
                   className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent/10 transition-colors"
                 >
-                  <User className="w-4 h-4" /> My Profile
+                  <User className="w-4 h-4" /> {t('dashboard.myProfile', 'My Profile')}
                 </Link>
                 <button
                   type="button"
@@ -139,7 +150,10 @@ export function MemberHeader() {
                   disabled={loggingOut}
                   className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-destructive/10 text-destructive transition-colors disabled:opacity-50"
                 >
-                  <LogOut className="w-4 h-4" /> {loggingOut ? 'Logging out...' : 'Logout'}
+                  <LogOut className="w-4 h-4" />{' '}
+                  {loggingOut
+                    ? t('admin.loggingOut', 'Logging out...')
+                    : t('admin.logout', 'Logout')}
                 </button>
               </div>
             )}
@@ -166,7 +180,7 @@ export function MemberHeader() {
             </Link>
           ))}
           <Link href="/" className="block px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent/10">
-            View website
+            {t('dashboard.viewWebsite', 'View website')}
           </Link>
         </nav>
       )}

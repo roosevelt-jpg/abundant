@@ -9,26 +9,25 @@ import { SocialLinks } from './social-links';
 import { useEffect, useState } from 'react';
 import { FOOTER_CREDIT_NAME, FOOTER_CREDIT_URL } from '@/lib/constants';
 
-const COLUMN_LABELS: Record<FooterPlacement, string> = {
-  platform: 'Platform',
-  company: 'Company',
-  connect: 'Connect',
-  none: '',
+const COLUMN_LABEL_KEYS: Record<Exclude<FooterPlacement, 'none'>, string> = {
+  platform: 'footer.platform',
+  company: 'footer.company',
+  connect: 'footer.connect',
 };
 
-const DEFAULT_LINKS: Record<FooterPlacement, { href: string; label: string }[]> = {
+const DEFAULT_LINKS: Record<FooterPlacement, { href: string; labelKey: string }[]> = {
   platform: [
-    { href: '/membership', label: 'Membership' },
-    { href: '/events', label: 'Events' },
-    { href: '/resources', label: 'Resources' },
+    { href: '/membership', labelKey: 'nav.membership' },
+    { href: '/events', labelKey: 'nav.events' },
+    { href: '/resources', labelKey: 'nav.resources' },
   ],
   company: [
-    { href: '/about', label: 'About' },
-    { href: '/contact', label: 'Contact' },
-    { href: '/careers', label: 'Careers' },
-    { href: '/press', label: 'Press' },
-    { href: '/privacy', label: 'Privacy Policy' },
-    { href: '/terms', label: 'Terms of Service' },
+    { href: '/about', labelKey: 'nav.about' },
+    { href: '/contact', labelKey: 'nav.contact' },
+    { href: '/careers', labelKey: 'nav.careers' },
+    { href: '/press', labelKey: 'nav.press' },
+    { href: '/privacy', labelKey: 'nav.privacy' },
+    { href: '/terms', labelKey: 'nav.terms' },
   ],
   connect: [],
   none: [],
@@ -47,10 +46,14 @@ export const Footer = () => {
   }, []);
 
   const getColumnLinks = (column: FooterPlacement) => {
+    const defaults = DEFAULT_LINKS[column].map((l) => ({
+      href: l.href,
+      label: t(l.labelKey),
+    }));
     const cms = cmsPages
       .filter((p) => p.footerPlacement === column)
       .map((p) => ({ href: `/${p.slug}`, label: p.title }));
-    const merged = [...DEFAULT_LINKS[column], ...cms];
+    const merged = [...defaults, ...cms];
     const seen = new Set<string>();
     return merged.filter((link) => {
       if (seen.has(link.href)) return false;
@@ -69,15 +72,15 @@ export const Footer = () => {
               className="h-7 sm:h-8 md:h-9 w-auto max-w-[180px] sm:max-w-[200px] md:max-w-[220px] mb-3 mx-auto sm:mx-0 object-contain object-left"
             />
             <p className="text-sm text-gray-300">
-              {settings?.branding?.footerTagline || settings?.description || 'A global network of success'}
+              {settings?.branding?.footerTagline || settings?.description || t('footer.tagline', 'A global network of success')}
             </p>
           </div>
 
-          {(['platform', 'company', 'connect'] as FooterPlacement[]).map((col) => (
+          {(['platform', 'company', 'connect'] as Exclude<FooterPlacement, 'none'>[]).map((col) => (
             <div key={col}>
-              <h3 className="font-heading font-bold mb-4 text-[#B8973A]">{COLUMN_LABELS[col]}</h3>
+              <h3 className="font-heading font-bold mb-4 text-[#B8973A]">{t(COLUMN_LABEL_KEYS[col])}</h3>
               {col === 'connect' ? (
-                settings ? <SocialLinks settings={settings} /> : <p className="text-sm text-gray-400">Follow us on social media</p>
+                settings ? <SocialLinks settings={settings} /> : <p className="text-sm text-gray-400">{t('footer.followUs', 'Follow us on social media')}</p>
               ) : (
                 <ul className="space-y-2 text-sm">
                   {getColumnLinks(col).map((link) => (
@@ -102,13 +105,13 @@ export const Footer = () => {
               rel="noopener noreferrer"
               className="hover:text-white transition-colors"
             >
-              Made with ❤️ by {FOOTER_CREDIT_NAME}
+              {t('footer.madeBy', 'Made with ❤️ by')} {FOOTER_CREDIT_NAME}
             </a>
           </p>
           {settings?.siteHosting?.status === 'active' && (
             <span className="inline-flex items-center justify-center gap-1.5 self-center sm:self-auto text-[11px] font-semibold tracking-wide px-2.5 py-1 rounded-full border border-[#B8973A]/40 text-[#D4AF87] bg-[#B8973A]/10">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              Hosting Active
+              {t('footer.hostingActive', 'Hosting Active')}
             </span>
           )}
         </div>

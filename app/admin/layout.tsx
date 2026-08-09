@@ -9,7 +9,7 @@ function AdminShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen bg-background">
       <AdminSidebar />
-      <div className="flex-1 flex flex-col md:ml-64">
+      <div className="flex-1 flex flex-col md:ms-64">
         <AdminHeader />
         <main className="flex-1 overflow-auto">
           <div className="p-8">{children}</div>

@@ -9,7 +9,7 @@ function MemberShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-background">
       <MemberSidebar />
-      <div className="flex-1 flex flex-col md:ml-64 min-w-0">
+      <div className="flex-1 flex flex-col md:ms-64 min-w-0">
         <MemberHeader />
         <main className="flex-1 overflow-auto">
           <div className="p-4 sm:p-8">{children}</div>

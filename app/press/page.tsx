@@ -5,12 +5,14 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { ContentHero } from '@/components/content-page-hero';
 import { useSettings } from '@/hooks/useSettings';
+import { useLanguage } from '@/context/LanguageContext';
 import { getDefaultPressPage } from '@/lib/content-page-defaults';
 import { PressItem } from '@/lib/types';
 import { ExternalLink, Download } from 'lucide-react';
 
 export default function PressPage() {
   const { settings } = useSettings();
+  const { t } = useLanguage();
   const page = settings?.pressPage ?? getDefaultPressPage();
   const [items, setItems] = useState<PressItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,15 +29,19 @@ export default function PressPage() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1">
-        <ContentHero eyebrow={page.hero.eyebrow} headline={page.hero.headline} subtext={page.hero.subtext} />
+        <ContentHero
+          eyebrow={page.hero.eyebrow || t('press.title', 'Press')}
+          headline={page.hero.headline || t('press.title', 'Press')}
+          subtext={page.hero.subtext || t('press.subtitle', 'News and media')}
+        />
 
         <section className="py-10 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <h2 className="font-heading text-2xl font-bold mb-6">{page.inThePressTitle}</h2>
             {loading ? (
-              <p className="text-muted-foreground">Loading...</p>
+              <p className="text-muted-foreground">{t('common.loading', 'Loading...')}</p>
             ) : items.length === 0 ? (
-              <p className="text-muted-foreground">No press coverage listed yet.</p>
+              <p className="text-muted-foreground">{t('press.empty', 'No press items yet.')}</p>
             ) : (
               <div className="space-y-4">
                 {items.map((item) => (

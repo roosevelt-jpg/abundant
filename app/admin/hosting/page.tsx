@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Check, ExternalLink, Info } from 'lucide-react';
 import { useApiAuth } from '@/hooks/useApiAuth';
+import { useLanguage } from '@/context/LanguageContext';
 import { HostingerLogo } from '@/components/hostinger-logo';
 import {
   formatHostingPeriodLabel,
@@ -43,6 +44,7 @@ const PLAN_ORDER: HostingPlanId[] = ['startup', 'professional', 'growth'];
 
 export default function AdminHostingPage() {
   const { authFetch, isAuthenticated } = useApiAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const [plans, setPlans] = useState<PlanPayload[]>([]);
   const [configured, setConfigured] = useState(false);
@@ -176,10 +178,10 @@ export default function AdminHostingPage() {
           >
             {siteHosting?.status === 'active' && <Check className="w-4 h-4" strokeWidth={3} />}
             {siteHosting?.status === 'active'
-              ? 'Paid'
+              ? t('admin.hosting.paid', 'Paid')
               : siteHosting?.status === 'expired'
-                ? 'Expired'
-                : 'Inactive'}
+                ? t('common.inactive', 'Expired')
+                : t('common.inactive', 'Inactive')}
           </span>
         </div>
 
@@ -330,10 +332,10 @@ export default function AdminHostingPage() {
                 {isPaid ? (
                   <span className="inline-flex items-center justify-center gap-2">
                     <Check className="w-4 h-4" strokeWidth={3} />
-                    Paid
+                    {t('admin.hosting.paid', 'Paid')}
                   </span>
                 ) : (
-                  'Choose plan'
+                  t('admin.hosting.choosePlan', 'Choose plan')
                 )}
               </button>
 

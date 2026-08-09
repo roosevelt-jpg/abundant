@@ -7,6 +7,7 @@ import { Footer } from '@/components/footer';
 import { ContentHero } from '@/components/content-page-hero';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { getDefaultResourcesPage } from '@/lib/content-page-defaults';
 import { ResourceItem, Taxonomies } from '@/lib/types';
 import { Lock, Download, FileText } from 'lucide-react';
@@ -17,6 +18,7 @@ import { PRIMARY_ADMIN_EMAIL } from '@/lib/constants';
 export default function ResourcesPage() {
   const { settings } = useSettings();
   const { userData, currentUser } = useAuth();
+  const { t } = useLanguage();
   const page = settings?.resourcesPage ?? getDefaultResourcesPage();
   const [items, setItems] = useState<ResourceItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +73,11 @@ export default function ResourcesPage() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1">
-        <ContentHero eyebrow={page.hero.eyebrow} headline={page.hero.headline} subtext={page.hero.subtext} />
+        <ContentHero
+          eyebrow={page.hero.eyebrow || t('resources.title', 'Resources')}
+          headline={page.hero.headline || t('resources.title', 'Resources')}
+          subtext={page.hero.subtext || t('resources.subtitle', 'Tools and materials for our community')}
+        />
 
         <section className="py-8 px-4 sm:px-6 lg:px-8">
           <div className="max-w-5xl mx-auto">
@@ -93,9 +99,11 @@ export default function ResourcesPage() {
             </div>
 
             {loading ? (
-              <p className="text-center text-muted-foreground">Loading...</p>
+              <p className="text-center text-muted-foreground">{t('common.loading', 'Loading...')}</p>
             ) : filtered.length === 0 ? (
-              <p className="text-center text-muted-foreground py-12">No resources published yet.</p>
+              <p className="text-center text-muted-foreground py-12">
+                {t('resources.empty', 'No resources available yet.')}
+              </p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {filtered.map((item) => (

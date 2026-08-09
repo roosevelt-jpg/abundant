@@ -2,8 +2,9 @@
 export const dynamic = 'force-dynamic';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { getFirebaseServices } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { isAdminRole, isPrimaryAdmin } from '@/lib/auth-utils';
@@ -14,8 +15,9 @@ import { Mail, Lock } from 'lucide-react';
 import { SocialAuthButtons } from '@/components/social-auth-buttons';
 
 export default function Login() {
+  const { t } = useLanguage();
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">{t('common.loading', 'Loading...')}</div>}>
       <LoginContent />
     </Suspense>
   );
@@ -55,9 +57,9 @@ function LoginContent() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { signIn, currentUser, userData, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
 
   // Already signed in (Firebase) but stuck on /login — leave for admin/member area
   useEffect(() => {
@@ -109,7 +111,7 @@ function LoginContent() {
       const path = await resolvePostLoginPath(email, redirect);
       window.location.assign(path);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in');
+      setError(err instanceof Error ? err.message : t('auth.error', 'Authentication failed. Please try again.'));
       setLoading(false);
     }
   };
@@ -121,7 +123,7 @@ function LoginContent() {
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-3">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-accent mx-auto" />
-            <p className="text-sm text-muted-foreground">Taking you to your dashboard…</p>
+            <p className="text-sm text-muted-foreground">{t('common.loading', 'Loading...')}</p>
           </div>
         </main>
       </div>
@@ -135,8 +137,12 @@ function LoginContent() {
       <main className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-md bg-card rounded-xl border border-border p-8">
           <div className="text-center mb-8">
-            <h1 className="font-heading text-3xl font-bold mb-2">Welcome Back</h1>
-            <p className="text-muted-foreground">Sign in to your Abundant account</p>
+            <h1 className="font-heading text-3xl font-bold mb-2">
+              {t('auth.loginTitle', 'Sign in')}
+            </h1>
+            <p className="text-muted-foreground">
+              {t('auth.loginSubtitle', 'Welcome back to Abundant Global Club')}
+            </p>
           </div>
 
           {error && (
@@ -147,7 +153,7 @@ function LoginContent() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
+              <label className="block text-sm font-medium mb-2">{t('auth.email', 'Email')}</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
                 <input
@@ -162,7 +168,7 @@ function LoginContent() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Password</label>
+              <label className="block text-sm font-medium mb-2">{t('auth.password', 'Password')}</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
                 <input
@@ -176,7 +182,7 @@ function LoginContent() {
               </div>
               <div className="mt-2 text-right">
                 <Link href="/forgot-password" className="text-xs text-accent hover:text-accent/80 font-medium">
-                  Forgot password?
+                  {t('auth.forgotPassword', 'Forgot password?')}
                 </Link>
               </div>
             </div>
@@ -186,7 +192,9 @@ function LoginContent() {
               disabled={loading}
               className="btn-gradient w-full disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Signing In...' : 'Sign In'}
+              {loading
+                ? t('auth.signingIn', 'Signing in...')
+                : t('auth.signIn', 'Sign in')}
             </button>
           </form>
 
@@ -210,7 +218,7 @@ function LoginContent() {
                 const path = await resolvePostLoginPath(auth?.currentUser?.email || '', redirect);
                 window.location.assign(path);
               } catch (err) {
-                setError(err instanceof Error ? err.message : 'Sign-in failed');
+                setError(err instanceof Error ? err.message : t('auth.error', 'Authentication failed. Please try again.'));
               } finally {
                 setLoading(false);
               }
@@ -218,9 +226,13 @@ function LoginContent() {
           />
 
           <div className="mt-6 text-center text-sm">
-            Don&apos;t have an account?{' '}
+            {t('auth.noAccount', "Don't have an account?")}{' '}
             <Link href="/apply" className="text-accent hover:text-accent/80 font-semibold">
-              Apply for membership
+              {t('auth.createAccount', 'Create account')}
+            </Link>
+            {' / '}
+            <Link href="/apply" className="text-accent hover:text-accent/80 font-semibold">
+              {t('nav.join', 'Join')}
             </Link>
           </div>
         </div>
