@@ -16,7 +16,9 @@ import {
   HostingPlanId,
   HOSTING_PERIOD_OPTIONS,
   parseHostingPeriod,
+  SITE_HOSTING_DOMAIN,
 } from '@/lib/hosting-plans';
+import { SiteHostingStatus } from '@/lib/types';
 
 const FIELD_STYLE = {
   style: {
@@ -173,6 +175,7 @@ function CheckoutContent() {
   const [clientSecret, setClientSecret] = useState('');
   const [orderId, setOrderId] = useState('');
   const [paymentIntentId, setPaymentIntentId] = useState('');
+  const [siteHosting, setSiteHosting] = useState<SiteHostingStatus | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -185,6 +188,10 @@ function CheckoutContent() {
         if (cancelled) return;
         setConfigured(!!data.configured);
         setPublishableKey(data.publishableKey || null);
+        setSiteHosting(data.siteHosting || null);
+        if (data.siteHosting?.status === 'active') {
+          setStep('done');
+        }
         if (data.publishableKey) {
           setStripePromise(loadStripe(data.publishableKey));
         }
@@ -208,8 +215,10 @@ function CheckoutContent() {
     }
   }, [planId, period]);
 
+  const isPaid = siteHosting?.status === 'active';
+
   const startPayment = async () => {
-    if (!order || !configured) return;
+    if (!order || !configured || isPaid) return;
     setStarting(true);
     setError('');
     try {
@@ -218,6 +227,11 @@ function CheckoutContent() {
         body: JSON.stringify({ planId, periodMonths: period }),
       });
       const data = await res.json();
+      if (res.status === 409 || data.alreadyPaid) {
+        setSiteHosting(data.siteHosting || siteHosting);
+        setStep('done');
+        return;
+      }
       if (!res.ok) throw new Error(data.error || 'Could not start payment');
       setClientSecret(data.clientSecret);
       setOrderId(data.orderId);
@@ -245,29 +259,43 @@ function CheckoutContent() {
     );
   }
 
-  if (step === 'done') {
+  if (step === 'done' || isPaid) {
     return (
       <div className="max-w-lg mx-auto text-center py-16 px-4">
-        <div className="mx-auto w-14 h-14 rounded-full bg-[#B8973A]/15 flex items-center justify-center mb-4">
-          <Check className="w-7 h-7 text-[#B8973A]" strokeWidth={3} />
+        <div className="mx-auto w-14 h-14 rounded-full bg-emerald-500/15 flex items-center justify-center mb-4">
+          <Check className="w-7 h-7 text-emerald-600" strokeWidth={3} />
         </div>
-        <h1 className="font-heading text-3xl font-bold mb-2">Payment successful</h1>
+        <h1 className="font-heading text-3xl font-bold mb-2">Paid</h1>
         <p className="text-muted-foreground mb-2">
-          Your {order.plan.fullName} hosting plan ({formatHostingPeriodLabel(period)}) is confirmed.
+          {(siteHosting?.planName || order.plan.fullName)} hosting
+          {siteHosting?.periodMonths
+            ? ` (${formatHostingPeriodLabel(siteHosting.periodMonths as HostingPeriodMonths)})`
+            : ` (${formatHostingPeriodLabel(period)})`}{' '}
+          is paid and active.
         </p>
-        <p className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1.5 mb-6">
+        <p className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1.5 mb-2">
           <Check className="w-4 h-4" strokeWidth={3} />
-          abundantglobalclub.com — Hosting Active
+          {siteHosting?.domain || SITE_HOSTING_DOMAIN} — Paid
         </p>
-        <p className="text-sm text-muted-foreground mb-6">
-          A receipt will be sent to your admin email.
-        </p>
-        <Link
-          href="/admin/hosting"
-          className="inline-flex px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#001F3F] to-[#B8973A]"
+        {siteHosting?.expiresAt && (
+          <p className="text-sm text-muted-foreground mb-6">
+            Active through {new Date(siteHosting.expiresAt).toLocaleDateString()}
+          </p>
+        )}
+        {!siteHosting?.expiresAt && <div className="mb-6" />}
+        <button
+          type="button"
+          disabled
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-emerald-500 text-white cursor-default mb-4"
         >
-          Back to Hosting
-        </Link>
+          <Check className="w-4 h-4" strokeWidth={3} />
+          Paid
+        </button>
+        <div>
+          <Link href="/admin/hosting" className="text-[#B8973A] text-sm font-semibold hover:underline">
+            Back to Hosting
+          </Link>
+        </div>
       </div>
     );
   }

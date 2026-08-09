@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAdmin } from '@/lib/api-auth';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { calculateHostingOrder, HostingPeriodMonths, HostingPlanId } from '@/lib/hosting-plans';
+import { getSiteHostingStatus } from '@/lib/site-hosting';
 import { getStripe } from '@/lib/stripe-server';
 
 const schema = z.object({
@@ -17,6 +18,18 @@ export async function POST(req: NextRequest) {
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid plan or period' }, { status: 400 });
+    }
+
+    const existing = await getSiteHostingStatus();
+    if (existing?.status === 'active') {
+      return NextResponse.json(
+        {
+          error: 'Hosting is already paid',
+          alreadyPaid: true,
+          siteHosting: existing,
+        },
+        { status: 409 }
+      );
     }
 
     const { planId, periodMonths } = parsed.data;

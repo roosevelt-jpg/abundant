@@ -84,9 +84,10 @@ export default function AdminHostingPage() {
     [plans, activePlanId]
   );
   const pricing = activePlan?.periods[previewPeriod];
+  const isPaid = siteHosting?.status === 'active';
 
   const choosePlan = () => {
-    if (!activePlan) return;
+    if (!activePlan || isPaid) return;
     router.push(`/admin/hosting/checkout?plan=${activePlan.id}&period=${previewPeriod}`);
   };
 
@@ -175,7 +176,7 @@ export default function AdminHostingPage() {
           >
             {siteHosting?.status === 'active' && <Check className="w-4 h-4" strokeWidth={3} />}
             {siteHosting?.status === 'active'
-              ? 'Active'
+              ? 'Paid'
               : siteHosting?.status === 'expired'
                 ? 'Expired'
                 : 'Inactive'}
@@ -319,16 +320,31 @@ export default function AdminHostingPage() {
               <button
                 type="button"
                 onClick={choosePlan}
-                disabled={!configured}
-                className="w-full min-h-[48px] rounded-xl font-semibold text-sm sm:text-base bg-gradient-to-r from-[#001F3F] to-[#B8973A] hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+                disabled={!configured || isPaid}
+                className={`w-full min-h-[48px] rounded-xl font-semibold text-sm sm:text-base transition-opacity ${
+                  isPaid
+                    ? 'bg-emerald-500 text-[#0A1220] cursor-default'
+                    : 'bg-gradient-to-r from-[#001F3F] to-[#B8973A] hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed'
+                }`}
               >
-                Choose plan
+                {isPaid ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <Check className="w-4 h-4" strokeWidth={3} />
+                    Paid
+                  </span>
+                ) : (
+                  'Choose plan'
+                )}
               </button>
 
               <p className="text-xs text-white/45 mt-3 text-center">
-                For {formatHostingPeriodLabel(previewPeriod)} term
-                {previewPeriod === 1 ? '' : '.'}{' '}
-                {formatUsd(pricing.renewMonthly)}/mo when you renew
+                {isPaid
+                  ? siteHosting?.expiresAt
+                    ? `Paid through ${new Date(siteHosting.expiresAt).toLocaleDateString()}`
+                    : 'Hosting plan is paid and active'
+                  : `For ${formatHostingPeriodLabel(previewPeriod)} term${
+                      previewPeriod === 1 ? '' : '.'
+                    } ${formatUsd(pricing.renewMonthly)}/mo when you renew`}
               </p>
 
               <ul className="mt-6 space-y-3 border-t border-white/10 pt-5">
@@ -349,7 +365,9 @@ export default function AdminHostingPage() {
 
               <p className="mt-5 flex items-start gap-2 text-xs text-white/45">
                 <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                You&apos;ll confirm period and total on the next step before entering card details.
+                {isPaid
+                  ? 'This site hosting plan is already paid. No further payment is required.'
+                  : "You'll confirm period and total on the next step before entering card details."}
               </p>
             </div>
           </div>
