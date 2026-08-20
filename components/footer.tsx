@@ -45,19 +45,33 @@ export const Footer = () => {
       .catch(() => setCmsPages([]));
   }, []);
 
+  const normalizeHref = (href: string) => {
+    const trimmed = href.trim().toLowerCase().replace(/\/+$/, '');
+    if (!trimmed) return '/';
+    return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  };
+
   const getColumnLinks = (column: FooterPlacement) => {
     const defaults = DEFAULT_LINKS[column].map((l) => ({
       href: l.href,
       label: t(l.labelKey),
     }));
+    const defaultHrefs = new Set(defaults.map((l) => normalizeHref(l.href)));
     const cms = cmsPages
       .filter((p) => p.footerPlacement === column)
-      .map((p) => ({ href: `/${p.slug}`, label: p.title }));
+      .map((p) => ({ href: `/${String(p.slug || '').replace(/^\/+/, '')}`, label: p.title }))
+      // Skip CMS pages that duplicate a built-in footer path (e.g. /resources)
+      .filter((l) => !defaultHrefs.has(normalizeHref(l.href)));
+
     const merged = [...defaults, ...cms];
-    const seen = new Set<string>();
+    const seenHref = new Set<string>();
+    const seenLabel = new Set<string>();
     return merged.filter((link) => {
-      if (seen.has(link.href)) return false;
-      seen.add(link.href);
+      const hrefKey = normalizeHref(link.href);
+      const labelKey = link.label.trim().toLowerCase();
+      if (seenHref.has(hrefKey) || seenLabel.has(labelKey)) return false;
+      seenHref.add(hrefKey);
+      seenLabel.add(labelKey);
       return true;
     });
   };
@@ -94,7 +108,7 @@ export const Footer = () => {
           ))}
         </div>
 
-        <div className="border-t border-gray-700 pt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="border-t border-gray-700 pt-8">
           <p className="text-sm text-gray-400 text-center sm:text-left">
             {settings?.branding?.copyrightText ||
               t('footer.copyright', `© ${new Date().getFullYear()} Abundant Global Club. All rights reserved.`)}
@@ -108,12 +122,6 @@ export const Footer = () => {
               {t('footer.madeBy', 'Made with ❤️ by')} {FOOTER_CREDIT_NAME}
             </a>
           </p>
-          {settings?.siteHosting?.status === 'active' && (
-            <span className="inline-flex items-center justify-center gap-1.5 self-center sm:self-auto text-[11px] font-semibold tracking-wide px-2.5 py-1 rounded-full border border-[#B8973A]/40 text-[#D4AF87] bg-[#B8973A]/10">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              {t('footer.hostingActive', 'Hosting Active')}
-            </span>
-          )}
         </div>
       </div>
     </footer>
