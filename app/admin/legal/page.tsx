@@ -13,7 +13,7 @@ import { getDefaultLegalPages } from '@/lib/content-page-defaults';
 export default function AdminLegalPage() {
   const { userData } = useAuth();
   const router = useRouter();
-  const { settings: live, retry } = useSettings();
+  const { settings: live } = useSettings();
   const { authFetch } = useApiAuth();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [docKey, setDocKey] = useState<'privacy' | 'terms'>('privacy');
@@ -98,7 +98,6 @@ export default function AdminLegalPage() {
       if (!res.ok) throw new Error(data.error || 'Failed');
       setSettings((prev) => (prev ? { ...prev, legalPages: data.legalPages } : prev));
       setDirty(false);
-      retry();
       setMsg('Legal page saved (effective date updated)');
     } catch {
       setMsg('Error saving');

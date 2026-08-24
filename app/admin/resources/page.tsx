@@ -31,7 +31,7 @@ const EMPTY_ITEM = {
 export default function AdminResourcesPage() {
   const { userData } = useAuth();
   const router = useRouter();
-  const { settings: live, retry } = useSettings();
+  const { settings: live } = useSettings();
   const { authFetch } = useApiAuth();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [items, setItems] = useState<ResourceItem[]>([]);
@@ -86,7 +86,6 @@ export default function AdminResourcesPage() {
       if (!res.ok) throw new Error(data.error || 'Failed');
       setSettings((prev) => (prev ? { ...prev, resourcesPage: data.resourcesPage } : prev));
       setDirty(false);
-      retry();
       setMsg('Page content saved');
     } catch {
       setMsg('Error saving page');

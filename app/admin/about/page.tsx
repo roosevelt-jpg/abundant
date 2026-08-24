@@ -18,6 +18,7 @@ export default function AboutPageBuilder() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
+  const [msgError, setMsgError] = useState(false);
   const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
@@ -25,7 +26,6 @@ export default function AboutPageBuilder() {
   }, [live, dirty]);
 
   const content: AboutPageContent = settings?.aboutContent ?? {
-    coreValues: [],
     teamMembers: [],
     updatedAt: Date.now(),
   };
@@ -51,11 +51,12 @@ export default function AboutPageBuilder() {
       }
       setSettings((prev) => (prev ? { ...prev, aboutContent: data.aboutContent } : prev));
       setDirty(false);
-      retry();
+      setMsgError(false);
       setMsg('About page saved!');
       setTimeout(() => setMsg(''), 3000);
-    } catch {
-      setMsg('Error saving');
+    } catch (err) {
+      setMsgError(true);
+      setMsg(err instanceof Error ? err.message : 'Error saving');
     } finally {
       setSaving(false);
     }
@@ -63,12 +64,6 @@ export default function AboutPageBuilder() {
 
   const updateCard = (key: 'foundersMessage' | 'missionVision', card: SideBySideCard) => {
     updateContent({ [key]: card });
-  };
-
-  const addValue = () => {
-    updateContent({
-      coreValues: [...content.coreValues, { id: `v-${Date.now()}`, title: '', description: '', order: content.coreValues.length }],
-    });
   };
 
   const addMember = () => {
@@ -98,7 +93,17 @@ export default function AboutPageBuilder() {
             <p className="text-muted-foreground">Edit modular sections — changes appear on the public About page</p>
           </div>
 
-          {msg && <div className="mb-4 p-3 bg-green-500/10 text-green-600 rounded-lg text-sm">{msg}</div>}
+          {msg && (
+            <div
+              className={`fixed bottom-6 right-6 z-50 p-3 rounded-lg text-sm shadow-lg border ${
+                msgError
+                  ? 'bg-destructive/10 text-destructive border-destructive/30'
+                  : 'bg-green-500/10 text-green-600 border-green-600/30'
+              }`}
+            >
+              {msg}
+            </div>
+          )}
 
           <div className="space-y-8">
             <section className="p-6 bg-card rounded-xl border border-border space-y-4">
@@ -192,33 +197,6 @@ export default function AboutPageBuilder() {
 
             <section className="p-6 bg-card rounded-xl border border-border">
               <div className="flex justify-between mb-4">
-                <h2 className="font-heading font-bold text-lg">Core Values</h2>
-                <button onClick={addValue} className="text-sm text-accent flex items-center gap-1"><Plus className="w-4 h-4" /> Add</button>
-              </div>
-              {content.coreValues.map((v, i) => (
-                <div key={v.id} className="mb-4 p-4 bg-background rounded-lg space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-xs text-muted-foreground">Value {i + 1}</span>
-                    <button onClick={() => updateContent({ coreValues: content.coreValues.filter((x) => x.id !== v.id) })}>
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </button>
-                  </div>
-                  <input value={v.title} onChange={(e) => {
-                    const vals = [...content.coreValues];
-                    vals[i] = { ...v, title: e.target.value };
-                    updateContent({ coreValues: vals });
-                  }} placeholder="Title" className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm" />
-                  <textarea value={v.description} onChange={(e) => {
-                    const vals = [...content.coreValues];
-                    vals[i] = { ...v, description: e.target.value };
-                    updateContent({ coreValues: vals });
-                  }} placeholder="Description" rows={2} className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm" />
-                </div>
-              ))}
-            </section>
-
-            <section className="p-6 bg-card rounded-xl border border-border">
-              <div className="flex justify-between mb-4">
                 <h2 className="font-heading font-bold text-lg">Team Members</h2>
                 <button onClick={addMember} className="text-sm text-accent flex items-center gap-1"><Plus className="w-4 h-4" /> Add</button>
               </div>
@@ -248,7 +226,10 @@ export default function AboutPageBuilder() {
                     <input value={m.name} onChange={(e) => { const members = [...content.teamMembers]; members[i] = { ...m, name: e.target.value }; updateContent({ teamMembers: members }); }} placeholder="Name" className="px-3 py-2 bg-input border border-border rounded-lg text-sm" />
                     <input value={m.title} onChange={(e) => { const members = [...content.teamMembers]; members[i] = { ...m, title: e.target.value }; updateContent({ teamMembers: members }); }} placeholder="Title" className="px-3 py-2 bg-input border border-border rounded-lg text-sm" />
                   </div>
-                  <textarea value={m.bio} onChange={(e) => { const members = [...content.teamMembers]; members[i] = { ...m, bio: e.target.value }; updateContent({ teamMembers: members }); }} placeholder="Bio" rows={2} className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm" />
+                  <div>
+                    <textarea value={m.bio} onChange={(e) => { const members = [...content.teamMembers]; members[i] = { ...m, bio: e.target.value }; updateContent({ teamMembers: members }); }} placeholder="Bio — leave a blank line between paragraphs" rows={5} className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm" />
+                    <p className="text-xs text-muted-foreground mt-1">Leave a blank line between paragraphs; line breaks are preserved on the public page.</p>
+                  </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {(['linkedin', 'twitter', 'instagram', 'facebook', 'email', 'phone', 'whatsapp'] as const).map((key) => (
                       <input key={key} value={m.social[key] || ''} onChange={(e) => {

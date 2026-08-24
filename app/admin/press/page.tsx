@@ -29,7 +29,7 @@ const EMPTY_ITEM = {
 export default function AdminPressPage() {
   const { userData } = useAuth();
   const router = useRouter();
-  const { settings: live, retry } = useSettings();
+  const { settings: live } = useSettings();
   const { authFetch } = useApiAuth();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [items, setItems] = useState<PressItem[]>([]);
@@ -82,7 +82,6 @@ export default function AdminPressPage() {
       if (!res.ok) throw new Error(data.error || 'Failed');
       setSettings((prev) => (prev ? { ...prev, pressPage: data.pressPage } : prev));
       setDirty(false);
-      retry();
       setMsg('Page content saved');
     } catch {
       setMsg('Error saving');
