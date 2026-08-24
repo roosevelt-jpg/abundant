@@ -4,7 +4,7 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { useSettings } from '@/hooks/useSettings';
 import { useLanguage } from '@/context/LanguageContext';
-import { SideBySideSection, CoreValuesGrid, TeamGrid, HighlightCardsGrid } from '@/components/about-sections';
+import { SideBySideSection, TeamGrid, HighlightCardsGrid } from '@/components/about-sections';
 import { LoadState } from '@/components/load-state';
 
 function hasCardContent(card?: { title?: string; text?: string; imageUrl?: string }) {
@@ -25,9 +25,8 @@ export default function About() {
   const hasHighlights = highlightCards.length > 0;
   const hasFounders = hasCardContent(content?.foundersMessage);
   const hasMissionVision = hasCardContent(content?.missionVision);
-  const hasCoreValues = (content?.coreValues?.length ?? 0) > 0;
   const hasTeam = (content?.teamMembers?.filter((m) => !m.suspended && m.name?.trim()).length ?? 0) > 0;
-  const hasAnyContent = hasHighlights || hasFounders || hasMissionVision || hasCoreValues || hasTeam;
+  const hasAnyContent = hasHighlights || hasFounders || hasMissionVision || hasTeam;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -67,17 +66,6 @@ export default function About() {
                     {hasMissionVision && content?.missionVision && (
                       <SideBySideSection card={content.missionVision} />
                     )}
-                  </div>
-                </section>
-              )}
-
-              {hasCoreValues && (
-                <section className="py-12 md:py-16 px-4 sm:px-6 lg:px-8 bg-card/50">
-                  <div className="max-w-4xl mx-auto">
-                    <h2 className="font-heading text-3xl font-bold text-center mb-10">
-                      {t('about.values', 'Core Values')}
-                    </h2>
-                    <CoreValuesGrid values={content!.coreValues} />
                   </div>
                 </section>
               )}

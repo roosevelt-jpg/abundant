@@ -389,7 +389,7 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
           incomingFeatures as Record<string, unknown>
         ) as HomePageContent['featuresSection']),
         cards:
-          incomingFeatures.cards?.length
+          incomingFeatures.cards !== undefined
             ? incomingFeatures.cards
             : baseHome.featuresSection?.cards ?? defaultHome.featuresSection.cards,
       },
@@ -453,15 +453,15 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
     result.chatbot = {
       ...mergedScalars,
       knowledgeSnippets:
-        updates.chatbot.knowledgeSnippets?.length
+        updates.chatbot.knowledgeSnippets !== undefined
           ? updates.chatbot.knowledgeSnippets
           : existing.chatbot?.knowledgeSnippets ?? [],
       whatsappGroups:
-        updates.chatbot.whatsappGroups?.length
+        updates.chatbot.whatsappGroups !== undefined
           ? updates.chatbot.whatsappGroups
           : existing.chatbot?.whatsappGroups ?? [],
       resources:
-        updates.chatbot.resources?.length ? updates.chatbot.resources : existing.chatbot?.resources ?? [],
+        updates.chatbot.resources !== undefined ? updates.chatbot.resources : existing.chatbot?.resources ?? [],
       updatedAt: updates.chatbot.updatedAt ?? Date.now(),
     } as Settings['chatbot'];
   }
@@ -485,11 +485,11 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
             incoming.missionVision as unknown as Record<string, unknown>
           ) as NonNullable<Settings['aboutContent']>['missionVision'])
         : existing.aboutContent?.missionVision,
-      coreValues: incoming.coreValues?.length ? incoming.coreValues : existing.aboutContent?.coreValues ?? [],
-      teamMembers: incoming.teamMembers?.length ? incoming.teamMembers : existing.aboutContent?.teamMembers ?? [],
-      highlightCards: incoming.highlightCards?.length
-        ? incoming.highlightCards
-        : existing.aboutContent?.highlightCards ?? [],
+      teamMembers: incoming.teamMembers !== undefined ? incoming.teamMembers : existing.aboutContent?.teamMembers ?? [],
+      highlightCards:
+        incoming.highlightCards !== undefined
+          ? incoming.highlightCards
+          : existing.aboutContent?.highlightCards ?? [],
       updatedAt: incoming.updatedAt ?? Date.now(),
     };
   }
@@ -500,9 +500,10 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
       ...updates.resourcesPage,
       hero: { ...existing.resourcesPage?.hero, ...updates.resourcesPage.hero },
       submitCta: { ...existing.resourcesPage?.submitCta, ...updates.resourcesPage.submitCta },
-      categories: updates.resourcesPage.categories?.length
-        ? updates.resourcesPage.categories
-        : existing.resourcesPage?.categories ?? [],
+      categories:
+        updates.resourcesPage.categories !== undefined
+          ? updates.resourcesPage.categories
+          : existing.resourcesPage?.categories ?? [],
       updatedAt: updates.resourcesPage.updatedAt ?? Date.now(),
     };
   }
@@ -521,9 +522,10 @@ export function mergeSettingsUpdates(existing: Settings, updates: Partial<Settin
       ...existing.pressPage,
       ...updates.pressPage,
       hero: { ...existing.pressPage?.hero, ...updates.pressPage.hero },
-      mediaKitDownloads: updates.pressPage.mediaKitDownloads?.length
-        ? updates.pressPage.mediaKitDownloads
-        : existing.pressPage?.mediaKitDownloads ?? [],
+      mediaKitDownloads:
+        updates.pressPage.mediaKitDownloads !== undefined
+          ? updates.pressPage.mediaKitDownloads
+          : existing.pressPage?.mediaKitDownloads ?? [],
       updatedAt: updates.pressPage.updatedAt ?? Date.now(),
     };
   }

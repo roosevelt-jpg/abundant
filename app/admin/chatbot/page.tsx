@@ -107,7 +107,6 @@ export default function ChatbotAdminPage() {
       }
       setSettings((prev) => (prev ? { ...prev, chatbot: data.chatbot ?? settings.chatbot } : prev));
       setDirty(false);
-      retry();
       setMessageIsError(false);
       setMessage('Chatbot configuration saved. Visit the homepage to see the floating button when enabled.');
       setTimeout(() => setMessage(''), 5000);

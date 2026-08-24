@@ -476,13 +476,6 @@ export interface SideBySideCard {
   order: number;
 }
 
-export interface CoreValue {
-  id: string;
-  title: string;
-  description: string;
-  order: number;
-}
-
 export interface TeamMemberSocial {
   linkedin?: string;
   twitter?: string;
@@ -517,7 +510,6 @@ export interface AboutPageContent {
   highlightCards?: AboutHighlightCard[];
   foundersMessage?: SideBySideCard;
   missionVision?: SideBySideCard;
-  coreValues: CoreValue[];
   teamMembers: TeamMember[];
   updatedAt: number;
 }

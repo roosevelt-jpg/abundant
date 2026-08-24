@@ -45,7 +45,6 @@ export async function buildChatContext(): Promise<string> {
       about.highlightCards?.forEach((c) => lines.push(`${c.title}: ${c.text}`));
       if (about.foundersMessage?.text) lines.push(`Founder's message: ${about.foundersMessage.text.slice(0, 400)}`);
       if (about.missionVision?.text) lines.push(`Mission/Vision: ${about.missionVision.text.slice(0, 400)}`);
-      about.coreValues?.forEach((v) => lines.push(`Value ${v.title}: ${v.description}`));
     }
 
     if (settings.homePage) {

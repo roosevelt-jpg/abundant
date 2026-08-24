@@ -38,7 +38,7 @@ const EMPTY_JOB = {
 export default function AdminCareersPage() {
   const { userData } = useAuth();
   const router = useRouter();
-  const { settings: live, retry } = useSettings();
+  const { settings: live } = useSettings();
   const { authFetch } = useApiAuth();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [jobs, setJobs] = useState<JobPosting[]>([]);
@@ -101,7 +101,6 @@ export default function AdminCareersPage() {
       if (!res.ok) throw new Error(data.error || 'Failed');
       setSettings((prev) => (prev ? { ...prev, careersPage: data.careersPage } : prev));
       setDirty(false);
-      retry();
       setMsg('Page content saved');
     } catch {
       setMsg('Error saving');

@@ -180,7 +180,6 @@ export function getDefaultSettings(): Settings {
       updatedAt: Date.now(),
     },
     aboutContent: {
-      coreValues: [],
       teamMembers: [],
       updatedAt: Date.now(),
     },

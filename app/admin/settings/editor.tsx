@@ -119,7 +119,6 @@ export default function AdminSettingsEditor() {
       }
       applyAdminResponse(data);
       setDirty(false);
-      retry();
       const savedSecrets = formatStoredSecrets(data._secretHints ?? {});
       setSuccessMessage(
         activeTab === 'integrations'
