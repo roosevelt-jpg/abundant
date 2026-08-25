@@ -24,9 +24,8 @@ export default function About() {
   const highlightCards = (content?.highlightCards || []).filter((c) => c.title?.trim() || c.text?.trim());
   const hasHighlights = highlightCards.length > 0;
   const hasFounders = hasCardContent(content?.foundersMessage);
-  const hasMissionVision = hasCardContent(content?.missionVision);
   const hasTeam = (content?.teamMembers?.filter((m) => !m.suspended && m.name?.trim()).length ?? 0) > 0;
-  const hasAnyContent = hasHighlights || hasFounders || hasMissionVision || hasTeam;
+  const hasAnyContent = hasHighlights || hasFounders || hasTeam;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -57,15 +56,10 @@ export default function About() {
                 </section>
               )}
 
-              {(hasFounders || hasMissionVision) && (
+              {hasFounders && content?.foundersMessage && (
                 <section className="py-12 md:py-16 px-4 sm:px-6 lg:px-8">
-                  <div className="max-w-6xl mx-auto space-y-12 md:space-y-16">
-                    {hasFounders && content?.foundersMessage && (
-                      <SideBySideSection card={content.foundersMessage} />
-                    )}
-                    {hasMissionVision && content?.missionVision && (
-                      <SideBySideSection card={content.missionVision} />
-                    )}
+                  <div className="max-w-6xl mx-auto">
+                    <SideBySideSection card={content.foundersMessage} />
                   </div>
                 </section>
               )}
