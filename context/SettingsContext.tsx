@@ -16,7 +16,9 @@ interface UseSettingsResult {
 const SettingsContext = createContext<UseSettingsResult | null>(null);
 
 async function fetchPublicSettings(): Promise<Settings> {
-  const res = await fetch('/api/public/settings');
+  const res = await fetch('/api/public/settings', {
+    cache: 'no-store',
+  });
   if (!res.ok) return getDefaultSettings();
   return res.json();
 }
@@ -24,6 +26,7 @@ async function fetchPublicSettings(): Promise<Settings> {
 async function fetchAdminSettings(token: string): Promise<Settings> {
   const res = await fetch('/api/admin/settings', {
     headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
