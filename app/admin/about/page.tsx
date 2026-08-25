@@ -62,10 +62,6 @@ export default function AboutPageBuilder() {
     }
   };
 
-  const updateCard = (key: 'foundersMessage' | 'missionVision', card: SideBySideCard) => {
-    updateContent({ [key]: card });
-  };
-
   const addMember = () => {
     updateContent({
       teamMembers: [
@@ -185,14 +181,8 @@ export default function AboutPageBuilder() {
             <CardEditor
               title="Founder's Message"
               card={content.foundersMessage}
-              onChange={(c) => updateCard('foundersMessage', c)}
+              onChange={(c) => updateContent({ foundersMessage: c })}
               defaultId="founder"
-            />
-            <CardEditor
-              title="Mission / Vision"
-              card={content.missionVision}
-              onChange={(c) => updateCard('missionVision', c)}
-              defaultId="mission"
             />
 
             <section className="p-6 bg-card rounded-xl border border-border">
